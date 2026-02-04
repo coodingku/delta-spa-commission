@@ -6,7 +6,7 @@
     <title>Delta SPA - Driver Commission System</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body {
             font-family: 'Urbanist', sans-serif;
@@ -24,190 +24,239 @@
         .nav-btn.active {
             background-color: #c5a059;
             color: white;
+            box-shadow: 0 4px 15px rgba(197, 160, 89, 0.3);
         }
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: #0f172a; }
         ::-webkit-scrollbar-thumb { background: #c5a059; border-radius: 10px; }
+        
+        .login-screen {
+            background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+        }
+        .animate-in {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
     </style>
 </head>
-<body class="min-h-screen p-4 md:p-8">
+<body class="min-h-screen">
 
-    <div class="max-w-5xl mx-auto">
-        <!-- Header -->
-        <header class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
-            <div>
-                <h1 class="text-3xl font-bold text-[#c5a059]">DELTA SPA</h1>
-                <p class="text-slate-400">Driver Commission Management System</p>
-            </div>
-            <div class="flex gap-2">
-                <div id="status-badge" class="px-4 py-2 rounded-full bg-red-900/30 text-red-400 border border-red-800 text-sm">
-                    Supabase Not Connected
+    <!-- Login Section -->
+    <div id="login-page" class="login-screen fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div class="card w-full max-w-md p-8 rounded-3xl shadow-2xl text-center">
+            <h1 class="text-4xl font-bold text-[#c5a059] mb-2">DELTA SPA</h1>
+            <p class="text-slate-400 mb-8 uppercase tracking-widest text-sm">Commission System</p>
+            
+            <form id="login-form" class="space-y-4">
+                <div class="text-left">
+                    <label class="block text-sm font-medium mb-2 text-slate-300">Admin Password</label>
+                    <input type="password" id="admin-password" required placeholder="••••••••" 
+                        class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 focus:outline-none focus:border-[#c5a059] transition-all text-white text-center tracking-widest">
                 </div>
-            </div>
-        </header>
-
-        <!-- Navigation Tabs -->
-        <div class="flex bg-slate-800/50 p-1 rounded-xl mb-8 w-fit">
-            <button onclick="switchTab('input')" id="tab-input" class="nav-btn active px-6 py-2 rounded-lg font-semibold transition-all">Input Transaksi</button>
-            <button onclick="switchTab('report')" id="tab-report" class="nav-btn px-6 py-2 rounded-lg font-semibold transition-all">Laporan & Riwayat</button>
+                <button type="submit" class="w-full gold-gradient hover:opacity-90 text-white font-bold py-4 rounded-xl shadow-lg transition-transform active:scale-[0.98]">
+                    Masuk ke Sistem
+                </button>
+            </form>
+            <p id="login-error" class="text-red-400 text-sm mt-4 hidden italic">Password salah. Silakan coba lagi.</p>
         </div>
+    </div>
 
-        <!-- Content: Input Tab -->
-        <div id="content-input" class="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <section class="card p-6 rounded-2xl shadow-xl">
-                <h2 class="text-xl font-semibold mb-6 flex items-center gap-2">
-                    <span class="w-8 h-8 gold-gradient rounded-lg flex items-center justify-center text-white text-sm">01</span>
-                    Input Transaksi Baru
-                </h2>
-
-                <form id="commission-form" class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium mb-1 text-slate-300">Nama Driver</label>
-                        <input type="text" id="driver-name" required placeholder="Masukkan nama driver..." 
-                            class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 focus:outline-none focus:border-[#c5a059] transition-all text-white">
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium mb-1 text-slate-300 text-yellow-500">Tamu Massage</label>
-                            <input type="number" id="guest-massage" value="0" min="0" 
-                                class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 focus:outline-none focus:border-[#c5a059] text-white">
-                            <p class="text-[10px] mt-1 text-slate-500 text-center">Rp 100.000 / pax</p>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium mb-1 text-slate-300">Tamu Fasilitas</label>
-                            <input type="number" id="guest-facility" value="0" min="0" 
-                                class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 focus:outline-none focus:border-slate-500 text-white">
-                            <p class="text-[10px] mt-1 text-slate-500 text-center">Rp 0 / pax</p>
-                        </div>
-                    </div>
-
-                    <div class="pt-4">
-                        <div class="bg-slate-900/50 p-4 rounded-xl mb-4 border border-slate-800">
-                            <div class="flex justify-between items-center text-sm">
-                                <span>Estimasi Komisi:</span>
-                                <span id="preview-amount" class="text-xl font-bold text-[#c5a059]">Rp 0</span>
-                            </div>
-                        </div>
-                        <button type="submit" id="btn-submit" class="w-full gold-gradient hover:opacity-90 text-white font-bold py-4 rounded-xl shadow-lg transition-transform active:scale-[0.98]">
-                            Simpan Transaksi
-                        </button>
-                    </div>
-                </form>
-            </section>
-
-            <section class="space-y-6">
-                <div class="card p-6 rounded-2xl">
-                    <h2 class="text-xl font-semibold mb-6 flex items-center gap-2">
-                        <span class="w-8 h-8 gold-gradient rounded-lg flex items-center justify-center text-white text-sm">02</span>
-                        Ringkasan Hari Ini
-                    </h2>
-                    
-                    <div class="grid grid-cols-1 gap-4 mb-6">
-                        <div class="bg-slate-800/40 p-4 rounded-xl border border-slate-700 flex justify-between items-center">
-                            <div>
-                                <span class="text-xs text-slate-400 uppercase">Total Komisi</span>
-                                <div id="total-commission-today" class="text-3xl font-bold text-[#c5a059]">Rp 0</div>
-                            </div>
-                            <div class="text-right">
-                                <span class="text-xs text-slate-400 uppercase">Tamu Massage</span>
-                                <div id="total-massage-today" class="text-3xl font-bold">0</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <h3 class="text-sm font-semibold text-slate-400 uppercase mb-3">Aktivitas Terakhir</h3>
-                    <div id="recent-logs" class="space-y-3 max-h-[250px] overflow-y-auto pr-2">
-                        <!-- Logs will appear here -->
-                    </div>
+    <!-- Main App Content -->
+    <div id="main-app" class="hidden opacity-0 transition-opacity duration-500 p-4 md:p-8">
+        <div class="max-w-6xl mx-auto">
+            
+            <!-- Header -->
+            <header class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+                <div>
+                    <h1 class="text-3xl font-bold text-[#c5a059]">DELTA SPA</h1>
+                    <p class="text-slate-400">Driver Commission Management</p>
                 </div>
-            </section>
-        </div>
-
-        <!-- Content: Report Tab -->
-        <div id="content-report" class="hidden space-y-6">
-            <div class="card p-6 rounded-2xl overflow-hidden">
-                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-                    <h2 class="text-xl font-semibold">Seluruh Data Transaksi</h2>
-                    <button onclick="exportData()" class="bg-slate-700 hover:bg-slate-600 text-sm px-4 py-2 rounded-lg transition-all border border-slate-600 flex items-center gap-2">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
-                        Salin Data ke Excel
+                <div class="flex items-center gap-4">
+                    <div id="status-badge" class="px-4 py-2 rounded-full bg-red-900/30 text-red-400 border border-red-800 text-xs">
+                        Supabase Offline
+                    </div>
+                    <button onclick="logout()" class="text-slate-400 hover:text-white text-sm flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                        Logout
                     </button>
                 </div>
-                
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="text-slate-400 text-sm border-bottom border-slate-800">
-                                <th class="pb-4 font-medium">Tanggal & Waktu</th>
-                                <th class="pb-4 font-medium">Nama Driver</th>
-                                <th class="pb-4 font-medium text-center">Massage</th>
-                                <th class="pb-4 font-medium text-center">Fasilitas</th>
-                                <th class="pb-4 font-medium text-right">Komisi</th>
-                            </tr>
-                        </thead>
-                        <tbody id="full-table-body" class="text-sm">
-                            <!-- Table rows will appear here -->
-                        </tbody>
-                    </table>
+            </header>
+
+            <!-- Navigation -->
+            <div class="flex bg-slate-800/50 p-1.5 rounded-2xl mb-8 w-fit shadow-inner">
+                <button onclick="switchTab('dashboard')" id="tab-dashboard" class="nav-btn active px-6 py-2.5 rounded-xl font-semibold transition-all flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                    Dashboard
+                </button>
+                <button onclick="switchTab('input')" id="tab-input" class="nav-btn px-6 py-2.5 rounded-xl font-semibold transition-all flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    Input Transaksi
+                </button>
+                <button onclick="switchTab('report')" id="tab-report" class="nav-btn px-6 py-2.5 rounded-xl font-semibold transition-all flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    Riwayat
+                </button>
+            </div>
+
+            <!-- Tab Content: Dashboard -->
+            <div id="content-dashboard" class="space-y-8 animate-in">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="card p-6 rounded-3xl relative overflow-hidden">
+                        <p class="text-slate-400 text-sm font-medium uppercase tracking-wider">Total Komisi (All Time)</p>
+                        <h2 id="dash-total-commission" class="text-4xl font-bold text-[#c5a059] mt-2">Rp 0</h2>
+                    </div>
+                    <div class="card p-6 rounded-3xl">
+                        <p class="text-slate-400 text-sm font-medium uppercase tracking-wider">Bulan Ini</p>
+                        <h2 id="dash-month-commission" class="text-4xl font-bold text-white mt-2">Rp 0</h2>
+                        <div class="flex items-center gap-2 mt-4">
+                            <span id="dash-month-massage" class="text-xs bg-yellow-900/30 text-yellow-500 px-2 py-1 rounded">0 Massage</span>
+                        </div>
+                    </div>
+                    <div class="card p-6 rounded-3xl border-l-4 border-l-[#c5a059]">
+                        <p class="text-slate-400 text-sm font-medium uppercase tracking-wider">Hari Ini</p>
+                        <h2 id="dash-today-commission" class="text-4xl font-bold text-white mt-2">Rp 0</h2>
+                        <p id="dash-today-massage" class="text-xs text-slate-500 mt-4">0 Tamu Massage hari ini</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="card p-6 rounded-3xl">
+                        <h3 class="text-lg font-bold mb-6 text-[#c5a059]">Top Driver (Bulan Ini)</h3>
+                        <div id="top-drivers-list" class="space-y-4">
+                            <p class="text-slate-500 italic text-sm text-center py-8">Memuat data...</p>
+                        </div>
+                    </div>
+                    <div class="card p-6 rounded-3xl">
+                        <h3 class="text-lg font-bold mb-6 text-[#c5a059]">Aktivitas Terakhir</h3>
+                        <div id="recent-activities" class="space-y-4">
+                            <p class="text-slate-500 italic text-sm text-center py-8">Memuat data...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab Content: Input -->
+            <div id="content-input" class="hidden animate-in">
+                <div class="max-w-2xl mx-auto card p-8 rounded-3xl shadow-2xl">
+                    <h2 class="text-2xl font-bold mb-8 flex items-center gap-3">
+                        <span class="w-10 h-10 gold-gradient rounded-xl flex items-center justify-center text-white text-lg">01</span>
+                        Input Transaksi Driver
+                    </h2>
+
+                    <form id="commission-form" class="space-y-6">
+                        <div class="space-y-2">
+                            <label class="block text-sm font-medium text-slate-300">Nama Driver</label>
+                            <input type="text" id="driver-name" required placeholder="Contoh: Budi Santoso" 
+                                class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-4 focus:outline-none focus:border-[#c5a059] transition-all text-white text-lg">
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="space-y-2">
+                                <label class="block text-sm font-medium text-yellow-500">Tamu Massage (Rp 100k)</label>
+                                <input type="number" id="guest-massage" value="0" min="0" 
+                                    class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-4 focus:outline-none focus:border-[#c5a059] text-white text-2xl font-bold">
+                            </div>
+                            <div class="space-y-2">
+                                <label class="block text-sm font-medium text-slate-400">Tamu Fasilitas (Rp 0)</label>
+                                <input type="number" id="guest-facility" value="0" min="0" 
+                                    class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-4 focus:outline-none focus:border-slate-500 text-white text-2xl font-bold">
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-900/80 p-6 rounded-2xl border border-slate-800 flex justify-between items-center">
+                            <span class="text-slate-400 font-medium">Estimasi Komisi:</span>
+                            <span id="preview-amount" class="text-3xl font-bold text-[#c5a059]">Rp 0</span>
+                        </div>
+
+                        <button type="submit" id="btn-submit" class="w-full gold-gradient hover:opacity-90 text-white font-bold py-5 rounded-2xl shadow-xl transition-all active:scale-[0.98] text-lg uppercase tracking-wider">
+                            Simpan Transaksi
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Tab Content: Report -->
+            <div id="content-report" class="hidden animate-in">
+                <div class="card p-8 rounded-3xl overflow-hidden">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+                        <h2 class="text-2xl font-bold text-[#c5a059]">Riwayat Lengkap</h2>
+                        <button onclick="exportData()" class="bg-slate-800 hover:bg-slate-700 text-sm px-6 py-3 rounded-xl transition-all border border-slate-700 flex items-center justify-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                            Export CSV
+                        </button>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead>
+                                <tr class="text-slate-500 text-xs uppercase tracking-widest border-b border-slate-800">
+                                    <th class="pb-4 font-bold">Tanggal</th>
+                                    <th class="pb-4 font-bold">Driver</th>
+                                    <th class="pb-4 font-bold text-center">Massage</th>
+                                    <th class="pb-4 font-bold text-center">Fasilitas</th>
+                                    <th class="pb-4 font-bold text-right">Komisi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="full-table-body" class="text-sm divide-y divide-slate-800/50">
+                                <!-- Data rows -->
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- Notification -->
-    <div id="notification" class="fixed bottom-10 right-10 transform translate-y-20 opacity-0 transition-all duration-300 z-50">
-        <div id="notif-bg" class="bg-emerald-600 text-white px-6 py-4 rounded-2xl shadow-2xl">
-            <span id="notification-msg">Pesan sukses</span>
+    <div id="notification" class="fixed bottom-10 right-10 transform translate-y-20 opacity-0 transition-all duration-300 z-[200]">
+        <div id="notif-bg" class="bg-emerald-600 text-white px-8 py-4 rounded-2xl shadow-2xl flex items-center gap-4">
+            <span id="notification-msg" class="font-medium">Pesan sukses</span>
         </div>
     </div>
 
     <script>
-        // --- KONFIGURASI SUPABASE ---
+        // --- CREDENTIALS ---
+        const ADMIN_PASSWORD = "admin123";
         const SUPABASE_URL = "https://qdxchvogaxiibzqvuupf.supabase.co"; 
         const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkeGNodm9nYXhpaWJ6cXZ1dXBmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAxODE5NTIsImV4cCI6MjA4NTc1Nzk1Mn0.8U_zk81b6wFfdZdPRupk5KSk3g39nOPs8SpZVkWbqkc";
         
         let supabaseClient = null;
         let allTransactions = [];
 
-        if (SUPABASE_URL && SUPABASE_ANON_KEY) {
-            supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-            document.getElementById('status-badge').innerText = 'Supabase Connected';
-            document.getElementById('status-badge').classList.replace('bg-red-900/30', 'bg-emerald-900/30');
-            document.getElementById('status-badge').classList.replace('text-red-400', 'text-emerald-400');
-            document.getElementById('status-badge').classList.replace('border-red-800', 'border-emerald-800');
-            loadInitialData();
-        }
-
-        const form = document.getElementById('commission-form');
-        const massageInput = document.getElementById('guest-massage');
-        const btnSubmit = document.getElementById('btn-submit');
-
-        // Tab Switcher
-        function switchTab(tab) {
-            document.getElementById('content-input').classList.toggle('hidden', tab !== 'input');
-            document.getElementById('content-report').classList.toggle('hidden', tab !== 'report');
-            document.getElementById('tab-input').classList.toggle('active', tab === 'input');
-            document.getElementById('tab-report').classList.toggle('active', tab === 'report');
-            if(tab === 'report') loadInitialData();
-        }
-
-        // Preview calculation
-        massageInput.addEventListener('input', () => {
-            const total = (parseInt(massageInput.value) || 0) * 100000;
-            document.getElementById('preview-amount').innerText = `Rp ${total.toLocaleString('id-ID')}`;
+        // Auth Logic
+        document.getElementById('login-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const pass = document.getElementById('admin-password').value;
+            if (pass === ADMIN_PASSWORD) {
+                document.getElementById('login-page').classList.add('hidden');
+                document.getElementById('main-app').classList.remove('hidden');
+                setTimeout(() => document.getElementById('main-app').classList.add('opacity-100'), 50);
+                initSupabase();
+            } else {
+                const error = document.getElementById('login-error');
+                error.classList.remove('hidden');
+                setTimeout(() => error.classList.add('hidden'), 3000);
+            }
         });
 
-        function showNotification(msg, type = 'success') {
-            const notif = document.getElementById('notification');
-            const notifBg = document.getElementById('notif-bg');
-            document.getElementById('notification-msg').innerText = msg;
-            notifBg.className = type === 'success' ? 'bg-emerald-600 text-white px-6 py-4 rounded-2xl' : 'bg-red-600 text-white px-6 py-4 rounded-2xl';
-            notif.classList.remove('translate-y-20', 'opacity-0');
-            setTimeout(() => { notif.classList.add('translate-y-20', 'opacity-0'); }, 3000);
+        function logout() {
+            location.reload();
         }
 
-        async function loadInitialData() {
+        function initSupabase() {
+            if (SUPABASE_URL && SUPABASE_ANON_KEY) {
+                supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                const badge = document.getElementById('status-badge');
+                badge.innerText = 'Supabase Connected';
+                badge.className = 'px-4 py-2 rounded-full bg-emerald-900/30 text-emerald-400 border border-emerald-800 text-xs';
+                fetchData();
+            }
+        }
+
+        async function fetchData() {
             if (!supabaseClient) return;
             const { data, error } = await supabaseClient
                 .from('commissions')
@@ -216,95 +265,134 @@
             
             if (data) {
                 allTransactions = data;
-                renderLogs();
-                renderTable();
-                updateStats();
+                updateAllViews();
             }
         }
 
-        function renderLogs() {
-            const container = document.getElementById('recent-logs');
+        function updateAllViews() {
+            renderDashboard();
+            renderTable();
+            renderRecentActivities();
+        }
+
+        function switchTab(tab) {
+            ['dashboard', 'input', 'report'].forEach(t => {
+                document.getElementById(`content-${t}`).classList.add('hidden');
+                document.getElementById(`tab-${t}`).classList.remove('active');
+            });
+            document.getElementById(`content-${tab}`).classList.remove('hidden');
+            document.getElementById(`tab-${tab}`).classList.add('active');
+            if(tab !== 'input') fetchData();
+        }
+
+        function renderDashboard() {
+            const now = new Date();
+            const todayStr = now.toLocaleDateString();
+            const monthStr = now.getMonth() + '-' + now.getFullYear();
+
+            const totalAll = allTransactions.reduce((a, b) => a + b.commission_amount, 0);
+            const todayData = allTransactions.filter(i => new Date(i.created_at).toLocaleDateString() === todayStr);
+            const monthData = allTransactions.filter(i => {
+                const d = new Date(i.created_at);
+                return (d.getMonth() + '-' + d.getFullYear()) === monthStr;
+            });
+
+            document.getElementById('dash-total-commission').innerText = `Rp ${totalAll.toLocaleString('id-ID')}`;
+            document.getElementById('dash-today-commission').innerText = `Rp ${todayData.reduce((a,b)=>a+b.commission_amount,0).toLocaleString('id-ID')}`;
+            document.getElementById('dash-today-massage').innerText = `${todayData.reduce((a,b)=>a+b.massage_guests,0)} Tamu Massage hari ini`;
+            document.getElementById('dash-month-commission').innerText = `Rp ${monthData.reduce((a,b)=>a+b.commission_amount,0).toLocaleString('id-ID')}`;
+            document.getElementById('dash-month-massage').innerText = `${monthData.reduce((a,b)=>a+b.massage_guests,0)} Massage`;
+
+            const driverStats = {};
+            monthData.forEach(item => {
+                driverStats[item.driver_name] = (driverStats[item.driver_name] || 0) + item.commission_amount;
+            });
+            const sortedDrivers = Object.entries(driverStats).sort((a, b) => b[1] - a[1]).slice(0, 5);
+            document.getElementById('top-drivers-list').innerHTML = sortedDrivers.length ? sortedDrivers.map(([name, val], idx) => `
+                <div class="flex items-center justify-between p-3 bg-slate-800/30 rounded-2xl border border-slate-800/50">
+                    <span class="font-medium">${name}</span>
+                    <span class="text-[#c5a059] font-bold">Rp ${val.toLocaleString('id-ID')}</span>
+                </div>`).join('') : '<p class="text-center text-slate-500 py-4 italic">Belum ada data bulan ini</p>';
+        }
+
+        function renderRecentActivities() {
+            const container = document.getElementById('recent-activities');
             container.innerHTML = allTransactions.slice(0, 5).map(item => `
-                <div class="flex justify-between items-center p-4 bg-slate-900/40 border border-slate-800 rounded-xl transition-all">
+                <div class="flex justify-between items-center p-4 bg-slate-900/40 border border-slate-800 rounded-2xl">
                     <div>
                         <div class="font-semibold text-slate-100">${item.driver_name}</div>
                         <div class="text-[10px] text-slate-500 uppercase">${new Date(item.created_at).toLocaleString('id-ID')}</div>
                     </div>
-                    <div class="text-[#c5a059] font-bold">
-                        +${(item.commission_amount / 1000).toLocaleString('id-ID')}k
-                    </div>
-                </div>
-            `).join('') || '<p class="text-center text-slate-500 italic py-4">Belum ada transaksi</p>';
+                    <div class="text-white font-bold">Rp ${item.commission_amount.toLocaleString('id-ID')}</div>
+                </div>`).join('') || '<p class="text-center text-slate-500 py-4 italic">Belum ada aktivitas</p>';
         }
 
         function renderTable() {
             const tbody = document.getElementById('full-table-body');
             tbody.innerHTML = allTransactions.map(item => `
-                <tr class="border-b border-slate-800/50 hover:bg-slate-800/30">
-                    <td class="py-4 text-slate-400">${new Date(item.created_at).toLocaleString('id-ID')}</td>
-                    <td class="py-4 font-semibold">${item.driver_name}</td>
-                    <td class="py-4 text-center text-yellow-500">${item.massage_guests}</td>
+                <tr class="hover:bg-slate-800/30 transition-colors">
+                    <td class="py-4 text-slate-400 font-medium">${new Date(item.created_at).toLocaleDateString('id-ID')}</td>
+                    <td class="py-4 font-bold text-slate-200">${item.driver_name}</td>
+                    <td class="py-4 text-center text-yellow-500 font-bold">${item.massage_guests}</td>
                     <td class="py-4 text-center text-slate-500">${item.facility_guests}</td>
-                    <td class="py-4 text-right font-bold text-[#c5a059]">Rp ${item.commission_amount.toLocaleString('id-ID')}</td>
-                </tr>
-            `).join('');
+                    <td class="py-4 text-right font-black text-[#c5a059]">Rp ${item.commission_amount.toLocaleString('id-ID')}</td>
+                </tr>`).join('');
         }
 
-        function updateStats() {
-            const today = new Date().toLocaleDateString();
-            const todayData = allTransactions.filter(i => new Date(i.created_at).toLocaleDateString() === today);
-            
-            const totalC = todayData.reduce((acc, curr) => acc + curr.commission_amount, 0);
-            const totalM = todayData.reduce((acc, curr) => acc + curr.massage_guests, 0);
-            
-            document.getElementById('total-commission-today').innerText = `Rp ${totalC.toLocaleString('id-ID')}`;
-            document.getElementById('total-massage-today').innerText = totalM;
-        }
+        document.getElementById('guest-massage').addEventListener('input', (e) => {
+            const total = (parseInt(e.target.value) || 0) * 100000;
+            document.getElementById('preview-amount').innerText = `Rp ${total.toLocaleString('id-ID')}`;
+        });
 
-        form.addEventListener('submit', async (e) => {
+        document.getElementById('commission-form').addEventListener('submit', async (e) => {
             e.preventDefault();
-            btnSubmit.disabled = true;
-            btnSubmit.innerText = "Menyimpan...";
+            const btn = document.getElementById('btn-submit');
+            btn.disabled = true;
+            btn.innerText = "MENYIMPAN...";
             
             const driverName = document.getElementById('driver-name').value;
-            const massageCount = parseInt(massageInput.value) || 0;
+            const massageCount = parseInt(document.getElementById('guest-massage').value) || 0;
             const facilityCount = parseInt(document.getElementById('guest-facility').value) || 0;
             const totalCommission = massageCount * 100000;
 
-            if (supabaseClient) {
-                const { error } = await supabaseClient.from('commissions').insert([{
-                    driver_name: driverName,
-                    massage_guests: massageCount,
-                    facility_guests: facilityCount,
-                    commission_amount: totalCommission
-                }]);
-                
-                if (!error) {
-                    showNotification(`Komisi ${driverName} berhasil disimpan!`);
-                    form.reset();
-                    document.getElementById('preview-amount').innerText = "Rp 0";
-                    loadInitialData();
-                } else {
-                    showNotification("Gagal simpan!", "error");
-                }
+            const { error } = await supabaseClient.from('commissions').insert([{
+                driver_name: driverName,
+                massage_guests: massageCount,
+                facility_guests: facilityCount,
+                commission_amount: totalCommission
+            }]);
+            
+            if (!error) {
+                showNotification(`Data ${driverName} Berhasil Disimpan`);
+                e.target.reset();
+                document.getElementById('preview-amount').innerText = "Rp 0";
+                fetchData();
+                setTimeout(() => switchTab('dashboard'), 1000);
+            } else {
+                showNotification("Gagal simpan ke database!", "error");
             }
-            btnSubmit.disabled = false;
-            btnSubmit.innerText = "Simpan Transaksi";
+            btn.disabled = false;
+            btn.innerText = "SIMPAN TRANSAKSI";
         });
 
+        function showNotification(msg, type = 'success') {
+            const notif = document.getElementById('notification');
+            document.getElementById('notification-msg').innerText = msg;
+            document.getElementById('notif-bg').className = type === 'success' ? 'bg-emerald-600 text-white px-8 py-4 rounded-2xl flex items-center gap-4 shadow-2xl' : 'bg-red-600 text-white px-8 py-4 rounded-2xl flex items-center gap-4 shadow-2xl';
+            notif.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => { notif.classList.add('translate-y-20', 'opacity-0'); }, 3000);
+        }
+
         function exportData() {
-            let csvContent = "Tanggal,Driver,Massage,Fasilitas,Komisi\n";
-            allTransactions.forEach(item => {
-                csvContent += `${new Date(item.created_at).toLocaleString()},${item.driver_name},${item.massage_guests},${item.facility_guests},${item.commission_amount}\n`;
-            });
-            
-            const textArea = document.createElement("textarea");
-            textArea.value = csvContent;
-            document.body.appendChild(textArea);
-            textArea.select();
-            document.execCommand('copy');
-            document.body.removeChild(textArea);
-            showNotification("Data berhasil disalin ke clipboard!");
+            let csv = "Tanggal,Driver,Massage,Fasilitas,Komisi\n";
+            allTransactions.forEach(i => csv += `${new Date(i.created_at).toLocaleDateString()},${i.driver_name},${i.massage_guests},${i.facility_guests},${i.commission_amount}\n`);
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Laporan_DeltaSPA_${new Date().toLocaleDateString()}.csv`;
+            a.click();
+            showNotification("Laporan berhasil diunduh");
         }
     </script>
 </body>
