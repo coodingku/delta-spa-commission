@@ -33,6 +33,9 @@
             <a href="pendaftaran_driver.html" class="nav-link">
                 <i class="fa-solid fa-id-card w-5"></i> Registrasi Driver
             </a>
+            <a href="layanan_komisi.html" class="nav-link">
+                <i class="fa-solid fa-spa w-5"></i> Master Layanan
+            </a>
             <a href="transaksi_komisi.html" class="nav-link">
                 <i class="fa-solid fa-money-bill-transfer w-5"></i> Input Transaksi
             </a>
@@ -117,7 +120,6 @@
 
         async function initDashboard() {
             try {
-                // Fetch data transaksi & driver
                 const { data: comms } = await supabaseClient.from('commissions').select('*').order('created_at', { ascending: false });
                 const { count: driverCount } = await supabaseClient.from('drivers').select('*', { count: 'exact', head: true });
 
@@ -134,16 +136,13 @@
                         const date = new Date(i.created_at);
                         if(date.toDateString() === todayStr) todayCount++;
                         
-                        // Grouping untuk ranking
                         driverStats[i.driver_name] = (driverStats[i.driver_name] || 0) + i.commission_amount;
                     });
 
-                    // Update Statistik Utama
                     document.getElementById('dash-total').innerText = `Rp ${totalAmt.toLocaleString('id-ID')}`;
                     document.getElementById('dash-drivers').innerText = driverCount || 0;
                     document.getElementById('dash-today').innerText = todayCount;
 
-                    // Render Aktivitas Terakhir
                     document.getElementById('recent-list').innerHTML = comms.slice(0, 5).map(i => `
                         <div class="card p-5 rounded-[2rem] flex items-center justify-between hover:border-[#d4af37]/30 transition-all">
                             <div class="flex items-center gap-4">
@@ -157,11 +156,10 @@
                             </div>
                             <div class="text-right">
                                 <p class="text-xs gold-text font-black">Rp ${i.commission_amount.toLocaleString('id-ID')}</p>
-                                <p class="text-[9px] text-slate-500">${i.massage_guests} Massage • ${i.facility_guests} Fasilitas</p>
+                                <p class="text-[9px] text-slate-500">${i.massage_guests || 0} Massage • ${i.facility_guests || 0} Fasilitas</p>
                             </div>
                         </div>`).join('') || '<p class="text-center text-slate-600 p-10 italic">Belum ada transaksi.</p>';
 
-                    // Render Ranking Driver
                     const sorted = Object.entries(driverStats).sort((a,b) => b[1] - a[1]).slice(0, 5);
                     document.getElementById('top-list').innerHTML = sorted.map(([name, val], idx) => `
                         <div class="py-4 flex items-center justify-between first:pt-0 last:pb-0">
