@@ -43,15 +43,19 @@
                     <span>Tamu Massage</span>
                     <span id="p-guests">0</span>
                 </div>
-                <div class="flex justify-between font-bold">
-                    <span>TOTAL</span>
+                <div class="flex justify-between">
+                    <span>Harga Satuan</span>
+                    <span id="p-unit-price">Rp 0</span>
+                </div>
+                <div class="flex justify-between font-bold border-t border-dashed border-black mt-1 pt-1">
+                    <span>KOMISI DRIVER</span>
                     <span id="p-total">Rp 0</span>
                 </div>
             </div>
         </div>
         <div class="mt-4 text-center text-[8pt]">
             <p>Terima Kasih</p>
-            <p>Simpan sebagai bukti valid</p>
+            <p>Data terintegrasi sistem pusat</p>
         </div>
     </div>
 
@@ -74,7 +78,7 @@
             <div class="flex justify-between items-center mb-8">
                 <div>
                     <h2 class="text-3xl font-bold">Driver & Komisi</h2>
-                    <p class="text-slate-500 text-sm mt-1">Kelola data induk driver, registrasi, dan komisi.</p>
+                    <p class="text-slate-500 text-sm mt-1">Sistem Terintegrasi Harga Layanan Perusahaan.</p>
                 </div>
                 <div class="flex bg-slate-900/50 p-1 rounded-xl">
                     <button onclick="switchTab('transaksi')" id="tab-tr" class="tab-btn active px-4 py-2 text-xs font-bold transition-all">Input Komisi</button>
@@ -87,7 +91,10 @@
             <div id="section-transaksi" class="grid grid-cols-1 xl:grid-cols-12 gap-8">
                 <div class="xl:col-span-4">
                     <div class="card p-8 rounded-[2rem] shadow-2xl">
-                        <h3 class="text-lg font-bold mb-6 text-[#c5a059]">Input Komisi</h3>
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-lg font-bold text-[#c5a059]">Input Komisi</h3>
+                            <span class="bg-[#c5a059]/10 text-[#c5a059] text-[10px] px-2 py-1 rounded-md font-bold" id="label-harga-perusahaan">HRG: Rp 0</span>
+                        </div>
                         <form id="commission-form" class="space-y-4">
                             <div>
                                 <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">ID Driver (NIK/ID)</label>
@@ -105,9 +112,15 @@
                                 <input type="number" id="guest-count" placeholder="0" min="1" required 
                                     class="w-full p-4 rounded-2xl border border-slate-800 focus:border-[#c5a059] outline-none mt-1">
                             </div>
-                            <div class="bg-slate-950/50 p-4 rounded-2xl border border-slate-800">
-                                <p class="text-[10px] text-slate-500 uppercase font-bold">Total Komisi (IDR)</p>
-                                <p id="calc-total" class="text-2xl font-black text-[#c5a059]">Rp 0</p>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div class="bg-slate-950/50 p-4 rounded-2xl border border-slate-800">
+                                    <p class="text-[9px] text-slate-500 uppercase font-bold">Total Massage</p>
+                                    <p id="calc-massage" class="text-lg font-bold text-white">Rp 0</p>
+                                </div>
+                                <div class="bg-slate-950/50 p-4 rounded-2xl border border-slate-800">
+                                    <p class="text-[9px] text-slate-500 uppercase font-bold">Komisi Driver</p>
+                                    <p id="calc-total" class="text-lg font-black text-[#c5a059]">Rp 0</p>
+                                </div>
                             </div>
                             <button type="submit" id="btn-save-tr" disabled 
                                 class="w-full gold-gradient py-4 rounded-2xl font-bold opacity-50 cursor-not-allowed transition-all text-white shadow-lg flex items-center justify-center gap-2">
@@ -120,16 +133,18 @@
                 <div class="xl:col-span-8">
                     <div class="card rounded-[2rem] overflow-hidden shadow-2xl">
                         <div class="p-6 border-b border-slate-800/50 flex justify-between items-center bg-slate-900/20">
-                            <h3 class="font-bold text-sm">Riwayat Komisi Terkini</h3>
-                            <button onclick="fetchCommissions()" class="text-[#c5a059] text-[10px] font-bold hover:underline tracking-widest">REFRESH DATA</button>
+                            <h3 class="font-bold text-sm">Riwayat Komisi & Omzet Massage</h3>
+                            <button onclick="fetchCommissions()" class="text-[#c5a059] text-[10px] font-bold hover:underline tracking-widest uppercase">Refresh Data</button>
                         </div>
                         <div class="overflow-x-auto">
                             <table class="w-full text-sm">
                                 <thead class="bg-slate-900/30 text-slate-500 text-[10px] uppercase tracking-widest">
                                     <tr>
                                         <th class="px-6 py-4 text-left">Tanggal</th>
-                                        <th class="px-6 py-4 text-left">Nama</th>
+                                        <th class="px-6 py-4 text-left">Nama Driver</th>
+                                        <th class="px-6 py-4 text-center">Freq. Bawa</th>
                                         <th class="px-6 py-4 text-center">Tamu</th>
+                                        <th class="px-6 py-4 text-right">Total Massage</th>
                                         <th class="px-6 py-4 text-right">Komisi</th>
                                     </tr>
                                 </thead>
@@ -140,7 +155,7 @@
                 </div>
             </div>
 
-            <!-- TAB 2: DAFTAR DRIVER (IMPORT/EXPORT/EDIT/DELETE) -->
+            <!-- TAB 2: DAFTAR DRIVER -->
             <div id="section-daftar" class="hidden space-y-6">
                 <div class="flex flex-wrap items-center justify-between gap-4">
                     <div class="relative w-full md:w-96">
@@ -178,7 +193,6 @@
 
             <!-- TAB 3: REGISTRASI DRIVER BARU -->
             <div id="section-registrasi" class="hidden max-w-2xl mx-auto">
-                <!-- (Tetap sama seperti kode sebelumnya) -->
                 <div class="card p-8 rounded-[2.5rem] shadow-2xl">
                     <div class="text-center mb-8">
                         <div class="w-16 h-16 gold-gradient rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-lg">
@@ -248,14 +262,22 @@
     </div>
 
     <script>
+        // AUTH GUARD
         if(sessionStorage.getItem('isLoggedIn') !== 'true') window.location.replace('login.html');
         function logout() { sessionStorage.clear(); window.location.replace('login.html'); }
+
+        // KONFIGURASI HARGA PERUSAHAAN (Bisa ditarik dari DB nanti)
+        const HARGA_MASSAGE_PERUSAHAAN = 550000; // Contoh harga massage resmi per tamu
+        const KOMISI_PER_TAMU = 100000;         // Komisi driver tetap
+
+        document.getElementById('label-harga-perusahaan').innerText = `HRG: Rp ${HARGA_MASSAGE_PERUSAHAAN.toLocaleString('id-ID')}`;
 
         const SUPABASE_URL = "https://qdxchvogaxiibzqvuupf.supabase.co"; 
         const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkeGNodm9nYXhpaWJ6cXZ1dXBmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAxODE5NTIsImV4cCI6MjA4NTc1Nzk1Mn0.8U_zk81b6wFfdZdPRupk5KSk3g39nOPs8SpZVkWbqkc";
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let allDrivers = [];
+        let driverFrequencies = {}; // Store count of trips per driver
 
         function switchTab(tab) {
             document.querySelectorAll('[id^="section-"]').forEach(s => s.classList.add('hidden'));
@@ -265,10 +287,46 @@
             if (tab === 'daftar') fetchDrivers();
         }
 
-        // --- DRIVER LOGIC ---
+        // --- FETCH DATA ---
         async function fetchDrivers() {
             const { data } = await supabaseClient.from('drivers').select('*').order('created_at', { ascending: false });
             if (data) { allDrivers = data; renderDriverTable(data); }
+        }
+
+        async function fetchCommissions() {
+            // Get all commissions to calculate frequency
+            const { data: allData } = await supabaseClient.from('commissions').select('driver_id');
+            driverFrequencies = {};
+            if (allData) {
+                allData.forEach(c => {
+                    driverFrequencies[c.driver_id] = (driverFrequencies[c.driver_id] || 0) + 1;
+                });
+            }
+
+            // Get recent for table
+            const { data } = await supabaseClient.from('commissions').select('*').order('created_at', { ascending: false }).limit(20);
+            if (data) {
+                const tbody = document.getElementById('tr-body');
+                tbody.innerHTML = data.map(i => {
+                    const totalMassageVal = i.massage_guests * HARGA_MASSAGE_PERUSAHAAN;
+                    const freq = driverFrequencies[i.driver_id] || 0;
+                    
+                    return `
+                    <tr class="hover:bg-slate-800/30 transition-colors">
+                        <td class="px-6 py-4 text-slate-500 text-[10px] font-bold uppercase">${new Date(i.created_at).toLocaleDateString('id-ID')}</td>
+                        <td class="px-6 py-4">
+                            <p class="font-bold text-slate-200">${i.driver_name}</p>
+                            <p class="text-[9px] text-slate-500 font-mono tracking-tighter">${i.driver_id}</p>
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                            <span class="bg-blue-500/10 text-blue-400 px-2 py-1 rounded text-[10px] font-bold">${freq}x</span>
+                        </td>
+                        <td class="px-6 py-4 text-center font-bold text-white">${i.massage_guests}</td>
+                        <td class="px-6 py-4 text-right text-slate-400 font-semibold">Rp ${totalMassageVal.toLocaleString('id-ID')}</td>
+                        <td class="px-6 py-4 text-right font-black text-[#c5a059]">Rp ${i.commission_amount.toLocaleString('id-ID')}</td>
+                    </tr>`;
+                }).join('');
+            }
         }
 
         function renderDriverTable(data) {
@@ -281,59 +339,19 @@
                     <td class="px-6 py-4 text-center text-slate-500 text-[10px] uppercase font-bold">${new Date(d.created_at).toLocaleDateString('id-ID')}</td>
                     <td class="px-6 py-4 text-center">
                         <div class="flex justify-center gap-3">
-                            <button onclick='openEditModal(${JSON.stringify(d).replace(/'/g, "&apos;")})' class="p-2 text-blue-400 hover:bg-blue-400/10 rounded-lg transition-all" title="Edit">
+                            <button onclick='openEditModal(${JSON.stringify(d).replace(/'/g, "&apos;")})' class="p-2 text-blue-400 hover:bg-blue-400/10 rounded-lg transition-all">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                             </button>
-                            <button onclick="deleteDriver('${d.driver_id}')" class="p-2 text-red-400 hover:bg-red-400/10 rounded-lg transition-all" title="Hapus">
+                            <button onclick="deleteDriver('${d.driver_id}')" class="p-2 text-red-400 hover:bg-red-400/10 rounded-lg transition-all">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                             </button>
                         </div>
                     </td>
                 </tr>
             `).join('');
-            if (data.length === 0) tbody.innerHTML = `<tr><td colspan="5" class="p-10 text-center text-slate-600">Tidak ada data driver.</td></tr>`;
         }
 
-        // --- EDIT & DELETE LOGIC ---
-        function openEditModal(driver) {
-            document.getElementById('edit-original-id').value = driver.driver_id;
-            document.getElementById('edit-name').value = driver.name;
-            document.getElementById('edit-phone').value = driver.phone;
-            document.getElementById('edit-address').value = driver.address;
-            document.getElementById('modal-edit').classList.remove('hidden');
-        }
-
-        function closeEditModal() {
-            document.getElementById('modal-edit').classList.add('hidden');
-        }
-
-        document.getElementById('edit-driver-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const id = document.getElementById('edit-original-id').value;
-            const payload = {
-                name: document.getElementById('edit-name').value,
-                phone: document.getElementById('edit-phone').value,
-                address: document.getElementById('edit-address').value
-            };
-            const { error } = await supabaseClient.from('drivers').update(payload).eq('driver_id', id);
-            if (!error) {
-                showToast("Data driver diperbarui", "success");
-                closeEditModal();
-                fetchDrivers();
-            }
-        });
-
-        async function deleteDriver(id) {
-            if (confirm(`Hapus driver dengan ID ${id}? Semua histori komisi mungkin terpengaruh.`)) {
-                const { error } = await supabaseClient.from('drivers').delete().eq('driver_id', id);
-                if (!error) {
-                    showToast("Driver dihapus", "success");
-                    fetchDrivers();
-                }
-            }
-        }
-
-        // --- TRANSACTION & PRINT LOGIC ---
+        // --- LOGIC TRANSAKSI & PERHITUNGAN ---
         let currentDriver = null;
         document.getElementById('input-id-driver').addEventListener('input', async (e) => {
             const id = e.target.value.trim();
@@ -346,7 +364,7 @@
             const { data } = await supabaseClient.from('drivers').select('*').eq('driver_id', id).single();
             if (data) {
                 currentDriver = data;
-                status.innerText = "✓ Driver Terdaftar";
+                status.innerText = "✓ Driver Valid";
                 status.className = "text-[10px] mt-1 italic text-emerald-500 font-bold";
                 display.value = data.name;
                 btn.disabled = false;
@@ -361,17 +379,26 @@
             }
         });
 
+        document.getElementById('guest-count').addEventListener('input', (e) => {
+            const val = parseInt(e.target.value) || 0;
+            const omzetMassage = val * HARGA_MASSAGE_PERUSAHAAN;
+            const komisiDriver = val * KOMISI_PER_TAMU;
+            
+            document.getElementById('calc-massage').innerText = `Rp ${omzetMassage.toLocaleString('id-ID')}`;
+            document.getElementById('calc-total').innerText = `Rp ${komisiDriver.toLocaleString('id-ID')}`;
+        });
+
         document.getElementById('commission-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             if (!currentDriver) return;
             const guests = parseInt(document.getElementById('guest-count').value);
-            const total = guests * 100000;
+            const komisiTotal = guests * KOMISI_PER_TAMU;
 
             const { error } = await supabaseClient.from('commissions').insert([{
                 driver_id: currentDriver.driver_id,
                 driver_name: currentDriver.name,
                 massage_guests: guests,
-                commission_amount: total
+                commission_amount: komisiTotal
             }]);
 
             if (!error) {
@@ -380,94 +407,59 @@
                 document.getElementById('p-name').innerText = currentDriver.name;
                 document.getElementById('p-id').innerText = currentDriver.driver_id;
                 document.getElementById('p-guests').innerText = guests;
-                document.getElementById('p-total').innerText = `Rp ${total.toLocaleString('id-ID')}`;
+                document.getElementById('p-unit-price').innerText = `Rp ${KOMISI_PER_TAMU.toLocaleString('id-ID')}`;
+                document.getElementById('p-total').innerText = `Rp ${komisiTotal.toLocaleString('id-ID')}`;
 
                 showToast("Komisi Disimpan & Mencetak Bill...", "success");
                 
                 // Reset Form
                 e.target.reset();
                 document.getElementById('calc-total').innerText = "Rp 0";
+                document.getElementById('calc-massage').innerText = "Rp 0";
                 document.getElementById('display-name').value = "";
                 document.getElementById('id-status').innerText = "";
                 
                 // Trigger Print
                 window.print();
                 fetchCommissions();
+            } else {
+                showToast("Gagal menyimpan transaksi.", "error");
             }
         });
 
-        // --- SEARCH, IMPORT, EXPORT (Tetap sama) ---
-        function filterDriverTable() {
-            const query = document.getElementById('search-driver').value.toLowerCase();
-            const filtered = allDrivers.filter(d => d.name.toLowerCase().includes(query) || d.driver_id.toLowerCase().includes(query));
-            renderDriverTable(filtered);
+        // --- CRUD ACTIONS ---
+        function openEditModal(driver) {
+            document.getElementById('edit-original-id').value = driver.driver_id;
+            document.getElementById('edit-name').value = driver.name;
+            document.getElementById('edit-phone').value = driver.phone;
+            document.getElementById('edit-address').value = driver.address;
+            document.getElementById('modal-edit').classList.remove('hidden');
         }
+        function closeEditModal() { document.getElementById('modal-edit').classList.add('hidden'); }
 
-        function downloadTemplate() {
-            const csvContent = "driver_id,name,phone,address\n320101XXXXXXXXXX,Jajang Driver,0812345678,Alamat Driver";
-            const blob = new Blob([csvContent], { type: 'text/csv' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a'); a.href = url; a.download = 'template_driver.csv'; a.click();
-        }
-
-        function exportToCSV() {
-            if (allDrivers.length === 0) return showToast("Tidak ada data", "error");
-            const headers = "ID Driver,Nama,Telepon,Alamat\n";
-            const rows = allDrivers.map(d => `${d.driver_id},${d.name},${d.phone},"${d.address}"`).join("\n");
-            const blob = new Blob([headers + rows], { type: 'text/csv' });
-            const a = document.createElement('a'); a.href = window.URL.createObjectURL(blob); a.download = 'data_driver.csv'; a.click();
-        }
-
-        async function handleImport(input) {
-            const file = input.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = async (e) => {
-                const rows = e.target.result.split("\n").slice(1);
-                const dataToInsert = rows.map(r => {
-                    const c = r.split(",");
-                    return c[0] ? { driver_id: c[0].trim(), name: c[1]?.trim(), phone: c[2]?.trim(), address: c[3]?.trim() } : null;
-                }).filter(x => x);
-                if (dataToInsert.length) {
-                    const { error } = await supabaseClient.from('drivers').insert(dataToInsert);
-                    if (!error) { showToast(`${dataToInsert.length} data diimpor`, "success"); fetchDrivers(); }
-                    else showToast("Gagal impor / data duplikat", "error");
-                }
-            };
-            reader.readAsText(file);
-        }
-
-        async function fetchCommissions() {
-            const { data } = await supabaseClient.from('commissions').select('*').order('created_at', { ascending: false }).limit(10);
-            if (data) {
-                document.getElementById('tr-body').innerHTML = data.map(i => `
-                    <tr class="hover:bg-slate-800/30">
-                        <td class="px-6 py-4 text-slate-500 text-xs">${new Date(i.created_at).toLocaleDateString('id-ID')}</td>
-                        <td class="px-6 py-4 font-bold text-slate-200">${i.driver_name}</td>
-                        <td class="px-6 py-4 text-center font-bold text-white">${i.massage_guests}</td>
-                        <td class="px-6 py-4 text-right font-black text-[#c5a059]">Rp ${i.commission_amount.toLocaleString('id-ID')}</td>
-                    </tr>`).join('');
-            }
-        }
-
-        document.getElementById('guest-count').addEventListener('input', (e) => {
-            const val = parseInt(e.target.value) || 0;
-            document.getElementById('calc-total').innerText = `Rp ${(val * 100000).toLocaleString('id-ID')}`;
-        });
-
-        document.getElementById('driver-reg-form').addEventListener('submit', async (e) => {
+        document.getElementById('edit-driver-form').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const id = document.getElementById('reg-id').value.trim();
-            const name = document.getElementById('reg-name').value.trim();
-            const { error } = await supabaseClient.from('drivers').insert([{ 
-                driver_id: id, name, 
-                phone: document.getElementById('reg-phone').value, 
-                address: document.getElementById('reg-address').value 
-            }]);
-            if (!error) { showToast("Registrasi Berhasil!", "success"); e.target.reset(); switchTab('daftar'); }
-            else showToast("ID Driver sudah ada.", "error");
+            const id = document.getElementById('edit-original-id').value;
+            const payload = {
+                name: document.getElementById('edit-name').value,
+                phone: document.getElementById('edit-phone').value,
+                address: document.getElementById('edit-address').value
+            };
+            const { error } = await supabaseClient.from('drivers').update(payload).eq('driver_id', id);
+            if (!error) { showToast("Data driver diperbarui", "success"); closeEditModal(); fetchDrivers(); }
         });
 
+        async function deleteDriver(id) {
+            if (confirm(`Hapus driver ID ${id}? Riwayat transaksi tidak akan dihapus tetapi relasi ID akan hilang.`)) {
+                const { error } = await supabaseClient.from('drivers').delete().eq('driver_id', id);
+                if (!error) { showToast("Driver dihapus", "success"); fetchDrivers(); }
+            }
+        }
+
+        // --- INITIAL LOAD ---
+        fetchCommissions();
+
+        // (Helper Search & Toast tetap ada)
         function showToast(msg, type) {
             const t = document.getElementById('toast');
             const bg = document.getElementById('toast-bg');
@@ -476,8 +468,11 @@
             t.classList.remove('translate-y-20', 'opacity-0');
             setTimeout(() => t.classList.add('translate-y-20', 'opacity-0'), 3000);
         }
-
-        fetchCommissions();
+        function filterDriverTable() {
+            const query = document.getElementById('search-driver').value.toLowerCase();
+            const filtered = allDrivers.filter(d => d.name.toLowerCase().includes(query) || d.driver_id.toLowerCase().includes(query));
+            renderDriverTable(filtered);
+        }
     </script>
 </body>
 </html>
