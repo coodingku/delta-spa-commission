@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delta Spa - Riwayat & Performa</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        body { font-family: 'Urbanist', sans-serif; background-color: #020617; color: #f8fafc; }
+        .card { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(212, 175, 55, 0.1); }
+    </style>
+</head>
+<body class="p-8">
+    <div class="max-w-7xl mx-auto">
+        <header class="mb-10 flex justify-between items-center">
+            <div>
+                <h1 class="text-3xl font-bold uppercase italic text-[#d4af37]">Delta Spa <span class="text-white">Performance</span></h1>
+                <p class="text-slate-500 text-sm">Laporan komisi dan statistik kunjungan driver.</p>
+            </div>
+            <div class="flex gap-3">
+                <a href="pendaftaran_driver.html" class="px-4 py-2 bg-slate-800 rounded-xl text-xs font-bold hover:bg-slate-700 transition-all">PANEL DRIVER</a>
+                <button onclick="location.reload()" class="px-4 py-2 gold-gradient rounded-xl text-xs font-bold text-white shadow-lg">REFRESH</button>
+            </div>
+        </header>
+
+        <!-- Stats Performa -->
+        <div class="mb-10">
+            <h3 class="text-xs font-bold text-[#d4af37] uppercase tracking-[0.2em] mb-4">Top Driver (Berdasarkan Kunjungan)</h3>
+            <div class="card rounded-[2rem] overflow-hidden">
+                <table class="w-full text-sm">
+                    <thead class="bg-slate-900 text-slate-500 text-[10px] uppercase tracking-widest">
+                        <tr>
+                            <th class="px-6 py-4 text-left">Nama Driver</th>
+                            <th class="px-6 py-4 text-center">Frekuensi</th>
+                            <th class="px-6 py-4 text-center">Total Tamu</th>
+                            <th class="px-6 py-4 text-right">Akumulasi Komisi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="top-drivers" class="divide-y divide-slate-800/30"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Log Transaksi -->
+        <h3 class="text-xs font-bold text-slate-500 uppercase tracking-[0.2em] mb-4">Detail Log Transaksi Komisi</h3>
+        <div class="card rounded-[2rem] overflow-hidden">
+            <table class="w-full text-sm">
+                <thead class="bg-slate-900 text-slate-500 text-[10px] uppercase tracking-widest">
+                    <tr>
+                        <th class="px-6 py-5 text-left">Waktu / Driver</th>
+                        <th class="px-6 py-5 text-left">Paket</th>
+                        <th class="px-6 py-5 text-right">Nilai Massage</th>
+                        <th class="px-6 py-5 text-right">Komisi Satuan</th>
+                        <th class="px-6 py-5 text-right text-[#d4af37]">Total Komisi</th>
+                    </tr>
+                </thead>
+                <tbody id="tr-list" class="divide-y divide-slate-800/30"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = "https://qdxchvogaxiibzqvuupf.supabase.co"; 
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkeGNodm9nYXhpaWJ6cXZ1dXBmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAxODE5NTIsImV4cCI6MjA4NTc1Nzk1Mn0.8U_zk81b6wFfdZdPRupk5KSk3g39nOPs8SpZVkWbqkc";
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        async function loadData() {
+            const { data } = await supabase.from('commissions').select('*').order('created_at', { ascending: false });
+            if(!data) return;
+
+            // Render Log
+            document.getElementById('tr-list').innerHTML = data.map(i => `
+                <tr class="hover:bg-slate-800/10">
+                    <td class="px-6 py-4">
+                        <p class="text-[10px] text-slate-500 mb-1">${new Date(i.created_at).toLocaleString('id-ID')}</p>
+                        <p class="font-bold text-white uppercase">${i.driver_name}</p>
+                    </td>
+                    <td class="px-6 py-4">
+                        <p class="font-semibold text-slate-300 text-xs">${i.service_name}</p>
+                        <p class="text-[10px] text-[#d4af37] font-bold">${i.massage_guests} TAMU</p>
+                    </td>
+                    <td class="px-6 py-4 text-right">
+                        <p class="text-slate-500 text-[10px]">@ Rp ${i.service_unit_price.toLocaleString()}</p>
+                        <p class="font-bold text-slate-400">Rp ${i.total_massage_value.toLocaleString()}</p>
+                    </td>
+                    <td class="px-6 py-4 text-right">
+                        <p class="text-xs text-emerald-500">Rp ${i.commission_unit.toLocaleString()}</p>
+                    </td>
+                    <td class="px-6 py-4 text-right bg-[#d4af37]/5">
+                        <p class="text-base font-black text-[#d4af37]">Rp ${i.commission_amount.toLocaleString()}</p>
+                    </td>
+                </tr>`).join('');
+
+            // Calc Stats
+            const stats = {};
+            data.forEach(d => {
+                if(!stats[d.driver_id]) stats[d.driver_id] = { name: d.driver_name, count: 0, guests: 0, money: 0 };
+                stats[d.driver_id].count++;
+                stats[d.driver_id].guests += d.massage_guests;
+                stats[d.driver_id].money += d.commission_amount;
+            });
+
+            document.getElementById('top-drivers').innerHTML = Object.values(stats).sort((a,b) => b.count - a.count).map(s => `
+                <tr>
+                    <td class="px-6 py-4 font-bold text-white uppercase">${s.name}</td>
+                    <td class="px-6 py-4 text-center text-[#d4af37] font-bold">${s.count} Kali</td>
+                    <td class="px-6 py-4 text-center"><span class="px-3 py-1 bg-slate-800 rounded-full text-[10px] font-bold">${s.guests} TAMU</span></td>
+                    <td class="px-6 py-4 text-right font-black text-emerald-400">Rp ${s.money.toLocaleString()}</td>
+                </tr>`).join('');
+        }
+        window.onload = loadData;
+    </script>
+</body>
+</html>
