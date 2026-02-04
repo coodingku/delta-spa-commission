@@ -32,7 +32,7 @@
             </a>
         </nav>
         <div class="p-4 border-t border-slate-800/50">
-            <button onclick="logout()" class="nav-link w-full text-red-400">Logout</button>
+            <button onclick="logout()" class="nav-link w-full text-red-400 hover:bg-red-900/10">Logout</button>
         </div>
     </aside>
 
@@ -40,47 +40,65 @@
     <main class="flex-1 p-8">
         <div class="flex justify-between items-center mb-8">
             <h2 class="text-2xl font-bold">Dashboard Overview</h2>
-            <div id="status-badge" class="px-3 py-1 rounded-full bg-emerald-900/30 text-emerald-400 border border-emerald-800 text-[10px] font-bold uppercase">Online</div>
+            <div id="status-badge" class="px-3 py-1 rounded-full bg-emerald-900/30 text-emerald-400 border border-emerald-800 text-[10px] font-bold uppercase tracking-wider">Sistem Aktif</div>
         </div>
 
+        <!-- Stats Cards -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div class="card p-6 rounded-3xl">
-                <p class="text-slate-400 text-xs font-bold uppercase tracking-widest">Total Komisi</p>
+            <div class="card p-6 rounded-3xl border-l-4 border-l-[#c5a059]">
+                <p class="text-slate-400 text-xs font-bold uppercase tracking-widest">Total Komisi (All Time)</p>
                 <h2 id="dash-total" class="text-3xl font-bold text-[#c5a059] mt-2">Rp 0</h2>
             </div>
-            <div class="card p-6 rounded-3xl">
+            <div class="card p-6 rounded-3xl border-l-4 border-l-blue-500">
                 <p class="text-slate-400 text-xs font-bold uppercase tracking-widest">Bulan Ini</p>
                 <h2 id="dash-month" class="text-3xl font-bold text-white mt-2">Rp 0</h2>
             </div>
-            <div class="card p-6 rounded-3xl">
+            <div class="card p-6 rounded-3xl border-l-4 border-l-emerald-500">
                 <p class="text-slate-400 text-xs font-bold uppercase tracking-widest">Hari Ini</p>
                 <h2 id="dash-today" class="text-3xl font-bold text-white mt-2">Rp 0</h2>
             </div>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Top Drivers -->
             <div class="card p-6 rounded-3xl">
-                <h3 class="font-bold mb-4 text-slate-300">Top Driver</h3>
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="font-bold text-slate-300">Top 5 Driver Terlaris</h3>
+                    <svg class="w-5 h-5 text-[#c5a059]" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+                </div>
                 <div id="top-list" class="space-y-3">
-                    <p class="text-slate-600 italic text-sm py-4">Memuat data...</p>
+                    <div class="animate-pulse flex space-y-4 flex-col">
+                        <div class="h-10 bg-slate-800 rounded-xl w-full"></div>
+                        <div class="h-10 bg-slate-800 rounded-xl w-full"></div>
+                    </div>
                 </div>
             </div>
+
+            <!-- Recent Activity -->
             <div class="card p-6 rounded-3xl">
-                <h3 class="font-bold mb-4 text-slate-300">Aktivitas Terakhir</h3>
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="font-bold text-slate-300">Aktivitas Terakhir</h3>
+                    <span class="text-[10px] bg-slate-800 px-2 py-1 rounded text-slate-400">Live Updates</span>
+                </div>
                 <div id="recent-list" class="space-y-3">
-                    <p class="text-slate-600 italic text-sm py-4">Memuat data...</p>
+                    <div class="animate-pulse flex space-y-4 flex-col">
+                        <div class="h-12 bg-slate-800 rounded-xl w-full"></div>
+                        <div class="h-12 bg-slate-800 rounded-xl w-full"></div>
+                    </div>
                 </div>
             </div>
         </div>
     </main>
 
     <script>
-        // Cek Login
-        if(sessionStorage.getItem('isLoggedIn') !== 'true') window.location.href = 'login.html';
+        // Keamanan: Cek Login sebelum memuat apapun
+        if(sessionStorage.getItem('isLoggedIn') !== 'true') {
+            window.location.replace('login.html');
+        }
         
         function logout() { 
             sessionStorage.clear(); 
-            window.location.href = 'login.html'; 
+            window.location.replace('login.html'); 
         }
 
         const SUPABASE_URL = "https://qdxchvogaxiibzqvuupf.supabase.co"; 
@@ -88,53 +106,85 @@
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         async function loadDashboard() {
-            const { data, error } = await supabaseClient
-                .from('commissions')
-                .select('*')
-                .order('created_at', { ascending: false });
+            try {
+                const { data, error } = await supabaseClient
+                    .from('commissions')
+                    .select('*')
+                    .order('created_at', { ascending: false });
 
-            if (data) {
-                const now = new Date();
-                const todayStr = now.toLocaleDateString();
-                const monthYear = now.getMonth() + '-' + now.getFullYear();
+                if (error) throw error;
 
-                // Hitung Statistik
-                const total = data.reduce((a, b) => a + b.commission_amount, 0);
-                const todayVal = data.filter(i => new Date(i.created_at).toLocaleDateString() === todayStr)
-                                    .reduce((a, b) => a + b.commission_amount, 0);
-                const monthVal = data.filter(i => {
-                    const d = new Date(i.created_at);
-                    return (d.getMonth() + '-' + d.getFullYear()) === monthYear;
-                }).reduce((a, b) => a + b.commission_amount, 0);
+                if (data) {
+                    const now = new Date();
+                    const todayStr = now.toDateString();
+                    const currentMonth = now.getMonth();
+                    const currentYear = now.getFullYear();
 
-                document.getElementById('dash-total').innerText = `Rp ${total.toLocaleString('id-ID')}`;
-                document.getElementById('dash-today').innerText = `Rp ${todayVal.toLocaleString('id-ID')}`;
-                document.getElementById('dash-month').innerText = `Rp ${monthVal.toLocaleString('id-ID')}`;
+                    // 1. Statistik
+                    let totalVal = 0;
+                    let todayVal = 0;
+                    let monthVal = 0;
 
-                // Recent Activities
-                document.getElementById('recent-list').innerHTML = data.slice(0, 5).map(i => `
-                    <div class="flex justify-between p-3 bg-slate-800/30 rounded-xl items-center">
-                        <div>
-                            <div class="text-sm font-bold text-slate-200">${i.driver_name}</div>
-                            <div class="text-[10px] text-slate-500">${new Date(i.created_at).toLocaleDateString()}</div>
-                        </div>
-                        <span class="text-emerald-400 font-bold text-sm">+Rp ${i.commission_amount.toLocaleString('id-ID')}</span>
-                    </div>`).join('') || '<p class="text-center py-4 text-slate-600 italic text-sm">Belum ada data</p>';
+                    data.forEach(item => {
+                        const itemDate = new Date(item.created_at);
+                        totalVal += item.commission_amount;
+                        
+                        if (itemDate.toDateString() === todayStr) {
+                            todayVal += item.commission_amount;
+                        }
+                        
+                        if (itemDate.getMonth() === currentMonth && itemDate.getFullYear() === currentYear) {
+                            monthVal += item.commission_amount;
+                        }
+                    });
 
-                // Top Driver Logic
-                const driverStats = {};
-                data.forEach(item => {
-                    driverStats[item.driver_name] = (driverStats[item.driver_name] || 0) + item.commission_amount;
-                });
-                const sorted = Object.entries(driverStats).sort((a,b) => b[1]-a[1]).slice(0, 5);
-                document.getElementById('top-list').innerHTML = sorted.map(([n, v]) => `
-                    <div class="flex items-center justify-between p-3 bg-slate-800/20 rounded-xl">
-                        <span class="text-sm font-medium text-slate-300">${n}</span>
-                        <span class="text-sm font-bold text-[#c5a059]">Rp ${v.toLocaleString('id-ID')}</span>
-                    </div>`).join('') || '<p class="text-center py-4 text-slate-600 italic text-sm">Belum ada data</p>';
+                    document.getElementById('dash-total').innerText = `Rp ${totalVal.toLocaleString('id-ID')}`;
+                    document.getElementById('dash-today').innerText = `Rp ${todayVal.toLocaleString('id-ID')}`;
+                    document.getElementById('dash-month').innerText = `Rp ${monthVal.toLocaleString('id-ID')}`;
+
+                    // 2. Aktivitas Terakhir
+                    const recentHtml = data.slice(0, 5).map(i => `
+                        <div class="flex justify-between p-4 bg-slate-800/40 rounded-2xl items-center border border-slate-700/30">
+                            <div>
+                                <div class="text-sm font-bold text-slate-100">${i.driver_name}</div>
+                                <div class="text-[10px] text-slate-500 uppercase tracking-tighter">${new Date(i.created_at).toLocaleString('id-ID')}</div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-[#c5a059] font-bold text-sm">Rp ${i.commission_amount.toLocaleString('id-ID')}</div>
+                                <div class="text-[9px] text-slate-500">${i.massage_guests} Tamu</div>
+                            </div>
+                        </div>`).join('');
+                    
+                    document.getElementById('recent-list').innerHTML = recentHtml || '<p class="text-center py-8 text-slate-600 italic text-sm">Belum ada transaksi</p>';
+
+                    // 3. Top Driver
+                    const stats = {};
+                    data.forEach(i => stats[i.driver_name] = (stats[i.driver_name] || 0) + i.commission_amount);
+                    
+                    const sortedDrivers = Object.entries(stats)
+                        .sort((a, b) => b[1] - a[1])
+                        .slice(0, 5);
+
+                    const topHtml = sortedDrivers.map(([name, val], index) => `
+                        <div class="flex items-center justify-between p-3 bg-slate-800/20 rounded-xl hover:bg-slate-800/40 transition-colors">
+                            <div class="flex items-center gap-3">
+                                <span class="w-6 h-6 flex items-center justify-center rounded-full bg-slate-700 text-[10px] font-bold text-[#c5a059]">${index + 1}</span>
+                                <span class="text-sm font-medium text-slate-200">${name}</span>
+                            </div>
+                            <span class="text-sm font-bold text-slate-400">Rp ${val.toLocaleString('id-ID')}</span>
+                        </div>`).join('');
+
+                    document.getElementById('top-list').innerHTML = topHtml || '<p class="text-center py-8 text-slate-600 italic text-sm">Data tidak tersedia</p>';
+                }
+            } catch (err) {
+                console.error("Error loading dashboard:", err);
+                document.getElementById('status-badge').innerText = "ERROR DATABASE";
+                document.getElementById('status-badge').className = "px-3 py-1 rounded-full bg-red-900/30 text-red-400 border border-red-800 text-[10px] font-bold uppercase tracking-wider";
             }
         }
-        loadDashboard();
+
+        // Jalankan saat load
+        window.onload = loadDashboard;
     </script>
 </body>
 </html>
