@@ -7,41 +7,103 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Urbanist', sans-serif; background-color: #0f172a; color: #f8fafc; }
+        body { 
+            font-family: 'Urbanist', sans-serif; 
+            background-color: #020617; 
+            background-image: radial-gradient(circle at top right, rgba(197, 160, 89, 0.1), transparent),
+                              radial-gradient(circle at bottom left, rgba(30, 41, 59, 0.5), transparent);
+            color: #f8fafc; 
+        }
         .gold-gradient { background: linear-gradient(135deg, #c5a059 0%, #926d27 100%); }
-        .card { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(197, 160, 89, 0.1); }
+        .card { 
+            background: rgba(15, 23, 42, 0.8); 
+            backdrop-filter: blur(12px); 
+            border: 1px solid rgba(197, 160, 89, 0.2); 
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+        input:focus {
+            box-shadow: 0 0 15px rgba(197, 160, 89, 0.3);
+        }
     </style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-4">
-    <div class="card w-full max-w-md p-8 rounded-3xl shadow-2xl text-center">
-        <h1 class="text-4xl font-bold text-[#c5a059] mb-2">DELTA SPA</h1>
-        <p class="text-slate-400 mb-8 uppercase tracking-widest text-sm">Management System</p>
+<body class="min-h-screen flex items-center justify-center p-6">
+    <div class="card w-full max-w-md p-10 rounded-[2.5rem] text-center relative overflow-hidden">
+        <!-- Dekorasi Cahaya -->
+        <div class="absolute -top-24 -right-24 w-48 h-48 bg-[#c5a059] opacity-10 blur-[80px]"></div>
         
-        <form id="login-form" class="space-y-4">
-            <div class="text-left">
-                <label class="block text-sm font-medium mb-2 text-slate-300">Admin Password</label>
-                <input type="password" id="admin-password" required placeholder="••••••••" 
-                    class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 focus:outline-none focus:border-[#c5a059] transition-all text-white text-center tracking-widest">
+        <div class="relative z-10">
+            <div class="mb-8">
+                <div class="w-20 h-20 gold-gradient rounded-3xl mx-auto mb-6 flex items-center justify-center shadow-2xl rotate-3">
+                    <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                    </svg>
+                </div>
+                <h1 class="text-4xl font-extrabold tracking-tighter text-white">DELTA <span class="text-[#c5a059]">SPA</span></h1>
+                <p class="text-slate-500 mt-2 uppercase tracking-[0.3em] text-[10px] font-bold">Management System v2.0</p>
             </div>
-            <button type="submit" class="w-full gold-gradient hover:opacity-90 text-white font-bold py-4 rounded-xl shadow-lg transition-transform active:scale-[0.98]">
-                Masuk
-            </button>
-        </form>
-        <p id="login-error" class="text-red-400 text-sm mt-4 hidden italic">Password salah!</p>
+            
+            <form id="login-form" class="space-y-6">
+                <div class="text-left">
+                    <label class="block text-xs font-bold mb-2 text-slate-400 uppercase tracking-widest ml-1">Admin Access Key</label>
+                    <div class="relative">
+                        <input type="password" id="admin-password" required placeholder="Masukkan Password" 
+                            class="w-full bg-slate-900/50 border border-slate-800 rounded-2xl px-6 py-4 focus:outline-none focus:border-[#c5a059] transition-all text-white text-center tracking-[0.5em] font-bold placeholder:tracking-normal placeholder:font-normal placeholder:text-slate-600">
+                    </div>
+                </div>
+
+                <button type="submit" id="btn-login" class="w-full gold-gradient hover:brightness-110 text-white font-bold py-4 rounded-2xl shadow-xl transition-all active:scale-[0.97] flex items-center justify-center gap-2">
+                    <span>MASUK KE SISTEM</span>
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
+                </button>
+            </form>
+
+            <div id="error-box" class="mt-6 h-6 opacity-0 transition-opacity duration-300">
+                <p class="text-red-400 text-sm font-medium flex items-center justify-center gap-2">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
+                    Password salah, silakan coba lagi.
+                </p>
+            </div>
+        </div>
+        
+        <p class="mt-8 text-slate-600 text-[10px] uppercase tracking-widest">Authorized Personnel Only</p>
     </div>
 
     <script>
+        // Password Admin (Ganti sesuai keinginan)
         const ADMIN_PASSWORD = "admin123";
+
+        // Cek jika sudah login, langsung ke dashboard
+        if (sessionStorage.getItem('isLoggedIn') === 'true') {
+            window.location.replace('index.html');
+        }
+
         document.getElementById('login-form').addEventListener('submit', (e) => {
             e.preventDefault();
-            if (document.getElementById('admin-password').value === ADMIN_PASSWORD) {
-                // Simpan status login sederhana di session storage
-                sessionStorage.setItem('isLoggedIn', 'true');
-                window.location.href = 'dashboard.html';
+            const passwordInput = document.getElementById('admin-password');
+            const btn = document.getElementById('btn-login');
+            const errorBox = document.getElementById('error-box');
+
+            if (passwordInput.value === ADMIN_PASSWORD) {
+                // Beri efek loading sebentar
+                btn.innerHTML = `<svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>`;
+                
+                setTimeout(() => {
+                    sessionStorage.setItem('isLoggedIn', 'true');
+                    window.location.replace('index.html');
+                }, 800);
             } else {
-                const err = document.getElementById('login-error');
-                err.classList.remove('hidden');
-                setTimeout(() => err.classList.add('hidden'), 3000);
+                // Tampilkan error
+                errorBox.classList.remove('opacity-0');
+                passwordInput.classList.add('border-red-500');
+                
+                // Shake effect sederhana
+                document.querySelector('.card').classList.add('animate-bounce');
+                setTimeout(() => document.querySelector('.card').classList.remove('animate-bounce'), 500);
+
+                setTimeout(() => {
+                    errorBox.classList.add('opacity-0');
+                    passwordInput.classList.remove('border-red-500');
+                }, 3000);
             }
         });
     </script>
