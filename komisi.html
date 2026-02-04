@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manajemen Driver & Komisi - Delta SPA</title>
+    <title>Manajemen Komisi Driver - Delta SPA</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -14,7 +14,7 @@
         .sidebar { background: #0f172a; border-right: 1px solid rgba(197, 160, 89, 0.1); }
         .nav-link { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 16px; color: #64748b; transition: all 0.3s; margin-bottom: 8px; }
         .nav-link.active { background: #c5a059; color: white; box-shadow: 0 10px 15px -3px rgba(197, 160, 89, 0.3); }
-        input, textarea { background: rgba(15, 23, 42, 0.8) !important; color: white !important; }
+        input, select { background: rgba(15, 23, 42, 0.8) !important; color: white !important; }
         .tab-btn { color: #64748b; border-bottom: 2px solid transparent; }
         .tab-btn.active { border-bottom: 2px solid #c5a059; color: #c5a059; }
 
@@ -27,7 +27,7 @@
     </style>
 </head>
 <body class="min-h-screen flex">
-    <!-- Area Tersembunyi untuk Print Bill -->
+    <!-- Bukti Print -->
     <div id="print-area" class="hidden text-black font-mono text-[10pt]">
         <div class="text-center border-b border-black pb-2 mb-2">
             <h2 class="font-bold uppercase">Delta SPA</h2>
@@ -36,21 +36,20 @@
         <div class="space-y-1">
             <p>Tgl: <span id="p-date"></span></p>
             <p>Driver: <span id="p-name"></span></p>
-            <p>ID: <span id="p-id"></span></p>
+            <p>Layanan: <span id="p-service"></span></p>
             <div class="border-y border-black py-1 my-1">
                 <div class="flex justify-between">
-                    <span>Tamu Massage</span>
-                    <span id="p-guests">0</span>
+                    <span>Tamu x <span id="p-guests">0</span></span>
+                    <span id="p-rate">@ Rp 0</span>
                 </div>
                 <div class="flex justify-between font-bold border-t border-dashed border-black mt-1 pt-1">
-                    <span>KOMISI DRIVER</span>
+                    <span>TOTAL KOMISI</span>
                     <span id="p-total">Rp 0</span>
                 </div>
             </div>
         </div>
         <div class="mt-4 text-center text-[8pt]">
-            <p>Terima Kasih</p>
-            <p>Data terintegrasi sistem pusat</p>
+            <p>Terima Kasih atas Kerjasamanya</p>
         </div>
     </div>
 
@@ -58,46 +57,39 @@
     <aside class="w-72 shrink-0 flex flex-col sidebar hidden md:flex p-6 no-print">
         <div class="mb-10 px-2">
             <h1 class="text-2xl font-extrabold tracking-tighter text-white uppercase">Delta <span class="text-[#c5a059]">SPA</span></h1>
-            <p class="text-[9px] text-slate-500 uppercase tracking-[0.2em] font-bold">Admin Panel</p>
+            <p class="text-[9px] text-slate-500 uppercase tracking-[0.2em] font-bold">Internal System</p>
         </div>
         <nav class="flex-1">
-            <a href="index.html" class="nav-link"><span class="font-semibold">Dashboard</span></a>
-            <a href="komisi.html" class="nav-link active"><span class="font-semibold">Manajemen Driver</span></a>
+            <a href="dashboard.html" class="nav-link"><span class="font-semibold">Dashboard</span></a>
+            <a href="komisi.html" class="nav-link active"><span class="font-semibold">Komisi Driver</span></a>
         </nav>
         <button onclick="logout()" class="nav-link w-full text-red-400 mt-auto border-t border-slate-800/50 pt-6">Logout</button>
     </aside>
 
-    <!-- Main Content -->
+    <!-- Main -->
     <main class="flex-1 p-8 overflow-y-auto no-print">
         <div class="max-w-7xl mx-auto">
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
                 <div>
-                    <h2 class="text-3xl font-bold">Driver & Komisi</h2>
-                    <p class="text-slate-500 text-sm mt-1">Sistem Terintegrasi Harga Layanan & Komisi.</p>
+                    <h2 class="text-3xl font-bold uppercase tracking-tight">Manajemen Komisi</h2>
+                    <p class="text-slate-500 text-sm mt-1">Input transaksi berdasarkan paket layanan yang tersedia.</p>
                 </div>
                 <div class="flex bg-slate-900/50 p-1 rounded-xl flex-wrap">
-                    <button onclick="switchTab('transaksi')" id="tab-tr" class="tab-btn active px-4 py-2 text-xs font-bold transition-all">Input Komisi</button>
-                    <button onclick="switchTab('daftar')" id="tab-list" class="tab-btn px-4 py-2 text-xs font-bold transition-all">Daftar Driver</button>
-                    <button onclick="switchTab('registrasi')" id="tab-reg" class="tab-btn px-4 py-2 text-xs font-bold transition-all">Registrasi Driver</button>
-                    <button onclick="switchTab('settings')" id="tab-settings" class="tab-btn px-4 py-2 text-xs font-bold transition-all">Atur Harga</button>
+                    <button onclick="switchTab('transaksi')" id="tab-tr" class="tab-btn active px-4 py-2 text-xs font-bold transition-all">Input Transaksi</button>
+                    <button onclick="switchTab('services')" id="tab-services" class="tab-btn px-4 py-2 text-xs font-bold transition-all">Master Paket</button>
+                    <button onclick="switchTab('drivers')" id="tab-drivers" class="tab-btn px-4 py-2 text-xs font-bold transition-all">Data Driver</button>
                 </div>
             </div>
 
-            <!-- TAB 1: INPUT TRANSAKSI -->
+            <!-- SECTION: TRANSAKSI -->
             <div id="section-transaksi" class="grid grid-cols-1 xl:grid-cols-12 gap-8">
                 <div class="xl:col-span-4">
                     <div class="card p-8 rounded-[2rem] shadow-2xl">
-                        <div class="flex justify-between items-center mb-6">
-                            <h3 class="text-lg font-bold text-[#c5a059]">Input Komisi</h3>
-                            <div class="text-right">
-                                <p class="text-[9px] text-slate-500 font-bold uppercase">Harga Aktif</p>
-                                <span class="text-[#c5a059] text-xs font-bold" id="label-harga-perusahaan">Rp 0</span>
-                            </div>
-                        </div>
+                        <h3 class="text-lg font-bold text-[#c5a059] mb-6">Baru</h3>
                         <form id="commission-form" class="space-y-4">
                             <div>
-                                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">ID Driver (NIK/ID)</label>
-                                <input type="text" id="input-id-driver" placeholder="Cari ID/NIK..." required 
+                                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">ID Driver</label>
+                                <input type="text" id="input-id-driver" placeholder="Cari NIK/ID..." required 
                                     class="w-full p-4 rounded-2xl border border-slate-800 focus:border-[#c5a059] outline-none mt-1 transition-all">
                                 <p id="id-status" class="text-[10px] mt-1 italic"></p>
                             </div>
@@ -107,13 +99,19 @@
                                     class="w-full p-4 rounded-2xl border border-slate-800 bg-slate-950/50 opacity-70 outline-none mt-1">
                             </div>
                             <div>
+                                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Pilih Layanan</label>
+                                <select id="select-service" required class="w-full p-4 rounded-2xl border border-slate-800 focus:border-[#c5a059] outline-none mt-1 appearance-none bg-slate-900">
+                                    <option value="">-- Loading Layanan --</option>
+                                </select>
+                            </div>
+                            <div>
                                 <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Jumlah Tamu</label>
                                 <input type="number" id="guest-count" placeholder="0" min="1" required 
                                     class="w-full p-4 rounded-2xl border border-slate-800 focus:border-[#c5a059] outline-none mt-1">
                             </div>
-                            <div class="grid grid-cols-2 gap-3">
+                            <div class="grid grid-cols-2 gap-3 pt-2">
                                 <div class="bg-slate-950/50 p-4 rounded-2xl border border-slate-800">
-                                    <p class="text-[9px] text-slate-500 uppercase font-bold">Total Massage</p>
+                                    <p class="text-[9px] text-slate-500 uppercase font-bold">Omzet Massage</p>
                                     <p id="calc-massage" class="text-base font-bold text-white">Rp 0</p>
                                 </div>
                                 <div class="bg-slate-950/50 p-4 rounded-2xl border border-slate-800">
@@ -130,18 +128,17 @@
                 </div>
                 <div class="xl:col-span-8">
                     <div class="card rounded-[2rem] overflow-hidden shadow-2xl">
-                        <div class="p-6 border-b border-slate-800/50 flex justify-between items-center bg-slate-900/20">
-                            <h3 class="font-bold text-sm">Riwayat Komisi & Transaksi</h3>
+                        <div class="p-6 border-b border-slate-800/50 bg-slate-900/20">
+                            <h3 class="font-bold text-sm">Riwayat Terakhir</h3>
                         </div>
                         <div class="overflow-x-auto">
                             <table class="w-full text-sm">
                                 <thead class="bg-slate-900/30 text-slate-500 text-[10px] uppercase tracking-widest">
                                     <tr>
-                                        <th class="px-6 py-4 text-left">Tanggal</th>
+                                        <th class="px-6 py-4 text-left">Waktu</th>
                                         <th class="px-6 py-4 text-left">Driver</th>
-                                        <th class="px-6 py-4 text-center">Freq</th>
-                                        <th class="px-6 py-4 text-center">Tamu</th>
-                                        <th class="px-6 py-4 text-right">Total Massage</th>
+                                        <th class="px-6 py-4 text-left">Paket</th>
+                                        <th class="px-6 py-4 text-right">Omzet</th>
                                         <th class="px-6 py-4 text-right">Komisi</th>
                                     </tr>
                                 </thead>
@@ -152,139 +149,130 @@
                 </div>
             </div>
 
-            <!-- TAB: DAFTAR DRIVER -->
-            <div id="section-daftar" class="hidden space-y-6">
-                <div class="card rounded-[2rem] overflow-hidden shadow-2xl">
-                    <table class="w-full text-sm">
-                        <thead class="bg-slate-900/30 text-slate-500 text-[10px] uppercase tracking-widest">
-                            <tr>
-                                <th class="px-6 py-4 text-left">ID Driver</th>
-                                <th class="px-6 py-4 text-left">Nama Lengkap</th>
-                                <th class="px-6 py-4 text-center">Telepon</th>
-                                <th class="px-6 py-4 text-center">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody id="driver-body" class="divide-y divide-slate-800/50"></tbody>
-                    </table>
+            <!-- SECTION: MASTER PAKET -->
+            <div id="section-services" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-8">
+                <div class="lg:col-span-4">
+                    <div class="card p-8 rounded-[2rem]">
+                        <h3 class="text-lg font-bold text-[#c5a059] mb-6">Tambah Paket Layanan</h3>
+                        <form id="service-form" class="space-y-4">
+                            <input type="text" id="svc-name" placeholder="Nama Paket" required class="w-full p-4 rounded-xl border border-slate-800 outline-none">
+                            <input type="number" id="svc-price" placeholder="Harga Jual (Rp)" required class="w-full p-4 rounded-xl border border-slate-800 outline-none">
+                            <input type="number" id="svc-comm" placeholder="Komisi Driver (Rp)" required class="w-full p-4 rounded-xl border border-slate-800 outline-none">
+                            <button type="submit" class="w-full gold-gradient py-4 rounded-xl font-bold text-white uppercase tracking-widest shadow-lg">Simpan Paket</button>
+                        </form>
+                    </div>
+                </div>
+                <div class="lg:col-span-8">
+                    <div class="card rounded-[2rem] overflow-hidden">
+                        <table class="w-full text-sm">
+                            <thead class="bg-slate-900/30 text-slate-500 text-[10px] uppercase tracking-widest">
+                                <tr>
+                                    <th class="px-6 py-4 text-left">Nama Layanan</th>
+                                    <th class="px-6 py-4 text-right">Harga Jual</th>
+                                    <th class="px-6 py-4 text-right">Komisi</th>
+                                    <th class="px-6 py-4 text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="services-list-body" class="divide-y divide-slate-800/50"></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
-            <!-- TAB: REGISTRASI -->
-            <div id="section-registrasi" class="hidden max-w-lg mx-auto">
-                <div class="card p-8 rounded-[2.5rem] shadow-2xl">
-                    <h3 class="text-xl font-bold mb-6 text-center uppercase tracking-tight">Daftar Driver Baru</h3>
-                    <form id="driver-reg-form" class="space-y-4">
-                        <input type="text" id="reg-id" placeholder="ID Driver / NIK" required class="w-full p-4 rounded-xl border border-slate-800 outline-none">
-                        <input type="text" id="reg-name" placeholder="Nama Lengkap" required class="w-full p-4 rounded-xl border border-slate-800 outline-none">
-                        <input type="tel" id="reg-phone" placeholder="Nomor HP" required class="w-full p-4 rounded-xl border border-slate-800 outline-none">
-                        <button type="submit" class="w-full gold-gradient py-4 rounded-xl font-bold text-white uppercase tracking-widest">Simpan Driver</button>
-                    </form>
+            <!-- SECTION: DATA DRIVER -->
+            <div id="section-drivers" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-8">
+                <div class="lg:col-span-4">
+                    <div class="card p-8 rounded-[2rem]">
+                        <h3 class="text-lg font-bold text-[#c5a059] mb-6">Registrasi Driver</h3>
+                        <form id="driver-reg-form" class="space-y-4">
+                            <input type="text" id="reg-id" placeholder="ID / NIK Driver" required class="w-full p-4 rounded-xl border border-slate-800 outline-none">
+                            <input type="text" id="reg-name" placeholder="Nama Lengkap" required class="w-full p-4 rounded-xl border border-slate-800 outline-none">
+                            <input type="tel" id="reg-phone" placeholder="No. Telepon" required class="w-full p-4 rounded-xl border border-slate-800 outline-none">
+                            <button type="submit" class="w-full gold-gradient py-4 rounded-xl font-bold text-white uppercase tracking-widest shadow-lg">Daftar Driver</button>
+                        </form>
+                    </div>
                 </div>
-            </div>
-
-            <!-- TAB: SETTINGS (HARGA MASSAGE) -->
-            <div id="section-settings" class="hidden max-w-lg mx-auto">
-                <div class="card p-8 rounded-[2.5rem] shadow-2xl">
-                    <h3 class="text-xl font-bold mb-2 text-[#c5a059]">Pengaturan Harga</h3>
-                    <p class="text-slate-500 text-xs mb-8">Ubah harga massage dan komisi yang berlaku secara global.</p>
-                    <form id="settings-form" class="space-y-6">
-                        <div>
-                            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Harga Massage per Tamu (Perusahaan)</label>
-                            <input type="number" id="set-price-massage" required class="w-full p-4 rounded-2xl border border-slate-800 focus:border-[#c5a059] outline-none mt-1">
-                        </div>
-                        <div>
-                            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Komisi Driver per Tamu</label>
-                            <input type="number" id="set-price-commission" required class="w-full p-4 rounded-2xl border border-slate-800 focus:border-[#c5a059] outline-none mt-1">
-                        </div>
-                        <button type="submit" class="w-full gold-gradient py-4 rounded-2xl font-bold text-white shadow-xl hover:brightness-110 transition-all uppercase">
-                            UPDATE HARGA GLOBAL
-                        </button>
-                    </form>
+                <div class="lg:col-span-8">
+                    <div class="card rounded-[2rem] overflow-hidden">
+                        <table class="w-full text-sm">
+                            <thead class="bg-slate-900/30 text-slate-500 text-[10px] uppercase tracking-widest">
+                                <tr>
+                                    <th class="px-6 py-4 text-left">ID</th>
+                                    <th class="px-6 py-4 text-left">Nama</th>
+                                    <th class="px-6 py-4 text-center">Telepon</th>
+                                    <th class="px-6 py-4 text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="driver-body" class="divide-y divide-slate-800/50"></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
     </main>
 
-    <!-- TOAST -->
+    <!-- Toast Notification -->
     <div id="toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] pointer-events-none transform translate-y-20 opacity-0 transition-all duration-500">
         <div id="toast-bg" class="bg-emerald-500 text-white px-8 py-4 rounded-2xl shadow-2xl">
-            <span id="toast-msg" class="font-bold text-sm"></span>
+            <span id="toast-msg" class="font-bold text-sm uppercase"></span>
         </div>
     </div>
 
     <script>
-        if(sessionStorage.getItem('isLoggedIn') !== 'true') window.location.replace('login.html');
-        function logout() { sessionStorage.clear(); window.location.replace('login.html'); }
+        // Auth Check
+        if(sessionStorage.getItem('isLoggedIn') !== 'true') window.location.href = 'login.html';
+        function logout() { sessionStorage.clear(); window.location.href = 'login.html'; }
 
+        // Supabase Init
         const SUPABASE_URL = "https://qdxchvogaxiibzqvuupf.supabase.co"; 
         const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkeGNodm9nYXhpaWJ6cXZ1dXBmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAxODE5NTIsImV4cCI6MjA4NTc1Nzk1Mn0.8U_zk81b6wFfdZdPRupk5KSk3g39nOPs8SpZVkWbqkc";
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // STATE GLOBAL
-        let CONFIG = { massage_price: 550000, commission_per_guest: 100000 };
-        let allDrivers = [];
-        let frequencies = {};
+        let services = [];
+        let selectedDriver = null;
 
-        // --- CORE FUNCTIONS ---
-        async function loadSettings() {
-            const { data, error } = await supabaseClient.from('settings').select('*').eq('id', 'global_prices').single();
+        // --- LOAD DATA ---
+        async function loadServices() {
+            const { data } = await supabaseClient.from('services').select('*').order('name');
             if (data) {
-                CONFIG = data;
-                document.getElementById('label-harga-perusahaan').innerText = `Rp ${CONFIG.massage_price.toLocaleString('id-ID')}`;
-                document.getElementById('set-price-massage').value = CONFIG.massage_price;
-                document.getElementById('set-price-commission').value = CONFIG.commission_per_guest;
-            } else {
-                // Jika tabel belum ada, kita gunakan default dan tawarkan buat row pertama
-                console.log("Settings tidak ditemukan, menggunakan default.");
-            }
-        }
-
-        async function saveSettings(e) {
-            e.preventDefault();
-            const newPrice = parseInt(document.getElementById('set-price-massage').value);
-            const newComm = parseInt(document.getElementById('set-price-commission').value);
-            
-            const { error } = await supabaseClient.from('settings').upsert({
-                id: 'global_prices',
-                massage_price: newPrice,
-                commission_per_guest: newComm
-            });
-
-            if(!error) {
-                showToast("Harga berhasil diperbarui secara global", "success");
-                loadSettings();
-            } else {
-                showToast("Gagal update. Pastikan tabel 'settings' sudah ada.", "error");
-            }
-        }
-
-        async function fetchCommissions() {
-            const { data: allData } = await supabaseClient.from('commissions').select('driver_id');
-            frequencies = {};
-            if(allData) allData.forEach(c => frequencies[c.driver_id] = (frequencies[c.driver_id] || 0) + 1);
-
-            const { data } = await supabaseClient.from('commissions').select('*').order('created_at', { ascending: false }).limit(20);
-            if (data) {
-                const tbody = document.getElementById('tr-body');
-                tbody.innerHTML = data.map(i => `
-                    <tr class="hover:bg-slate-800/30 transition-colors">
-                        <td class="px-6 py-4 text-slate-500 text-[10px] font-bold uppercase">${new Date(i.created_at).toLocaleDateString('id-ID')}</td>
-                        <td class="px-6 py-4">
-                            <p class="font-bold text-slate-200">${i.driver_name}</p>
-                            <p class="text-[9px] text-slate-500">${i.driver_id}</p>
-                        </td>
+                services = data;
+                const select = document.getElementById('select-service');
+                select.innerHTML = '<option value="">-- Pilih Paket --</option>' + 
+                    data.map(s => `<option value="${s.id}">${s.name} - Rp ${s.price.toLocaleString()}</option>`).join('');
+                
+                document.getElementById('services-list-body').innerHTML = data.map(s => `
+                    <tr>
+                        <td class="px-6 py-4 font-bold text-slate-200">${s.name}</td>
+                        <td class="px-6 py-4 text-right">Rp ${s.price.toLocaleString()}</td>
+                        <td class="px-6 py-4 text-right text-[#c5a059] font-bold">Rp ${s.commission.toLocaleString()}</td>
                         <td class="px-6 py-4 text-center">
-                            <span class="bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded text-[10px] font-bold">${frequencies[i.driver_id] || 0}x</span>
+                            <button onclick="deleteService('${s.id}')" class="text-red-400 hover:text-red-300">Hapus</button>
                         </td>
-                        <td class="px-6 py-4 text-center font-bold text-white">${i.massage_guests}</td>
-                        <td class="px-6 py-4 text-right text-slate-400">Rp ${i.total_massage_value?.toLocaleString('id-ID') || '0'}</td>
-                        <td class="px-6 py-4 text-right font-black text-[#c5a059]">Rp ${i.commission_amount.toLocaleString('id-ID')}</td>
                     </tr>`).join('');
             }
         }
 
-        // --- TRANSAKSI LOGIC ---
-        let selectedDriver = null;
+        async function fetchCommissions() {
+            const { data } = await supabaseClient.from('commissions').select('*').order('created_at', { ascending: false }).limit(20);
+            if (data) {
+                document.getElementById('tr-body').innerHTML = data.map(i => `
+                    <tr class="hover:bg-slate-800/30">
+                        <td class="px-6 py-4 text-slate-500 text-[10px]">${new Date(i.created_at).toLocaleString('id-ID')}</td>
+                        <td class="px-6 py-4">
+                            <p class="font-bold text-slate-200">${i.driver_name}</p>
+                            <p class="text-[9px] text-slate-500 uppercase">${i.driver_id}</p>
+                        </td>
+                        <td class="px-6 py-4">
+                            <p class="font-bold text-white">${i.service_name || 'Massage'}</p>
+                            <p class="text-[10px] text-slate-400">${i.massage_guests} Tamu</p>
+                        </td>
+                        <td class="px-6 py-4 text-right text-slate-400">Rp ${(i.total_massage_value || 0).toLocaleString()}</td>
+                        <td class="px-6 py-4 text-right font-black text-[#c5a059]">Rp ${i.commission_amount.toLocaleString()}</td>
+                    </tr>`).join('');
+            }
+        }
+
+        // --- TRANSACTION LOGIC ---
         document.getElementById('input-id-driver').addEventListener('input', async (e) => {
             const id = e.target.value.trim();
             const { data } = await supabaseClient.from('drivers').select('*').eq('driver_id', id).single();
@@ -293,61 +281,95 @@
                 selectedDriver = data;
                 document.getElementById('display-name').value = data.name;
                 document.getElementById('id-status').innerText = "✓ Valid";
-                document.getElementById('id-status').className = "text-[10px] mt-1 italic text-emerald-500 font-bold";
+                document.getElementById('id-status').className = "text-[10px] mt-1 text-emerald-500 font-bold";
                 btn.disabled = false; btn.classList.remove('opacity-50');
             } else {
                 selectedDriver = null;
                 document.getElementById('display-name').value = "";
                 document.getElementById('id-status').innerText = id.length > 2 ? "⚠ Tidak Terdaftar" : "";
-                document.getElementById('id-status').className = "text-[10px] mt-1 italic text-red-500 font-bold";
+                document.getElementById('id-status').className = "text-[10px] mt-1 text-red-500 font-bold";
                 btn.disabled = true; btn.classList.add('opacity-50');
             }
         });
 
-        document.getElementById('guest-count').addEventListener('input', (e) => {
-            const count = parseInt(e.target.value) || 0;
-            document.getElementById('calc-massage').innerText = `Rp ${(count * CONFIG.massage_price).toLocaleString('id-ID')}`;
-            document.getElementById('calc-total').innerText = `Rp ${(count * CONFIG.commission_per_guest).toLocaleString('id-ID')}`;
-        });
+        function updateTotals() {
+            const svcId = document.getElementById('select-service').value;
+            const guests = parseInt(document.getElementById('guest-count').value) || 0;
+            const service = services.find(s => s.id == svcId);
+            if (service && guests > 0) {
+                document.getElementById('calc-massage').innerText = `Rp ${(service.price * guests).toLocaleString()}`;
+                document.getElementById('calc-total').innerText = `Rp ${(service.commission * guests).toLocaleString()}`;
+            } else {
+                document.getElementById('calc-massage').innerText = "Rp 0";
+                document.getElementById('calc-total').innerText = "Rp 0";
+            }
+        }
+
+        document.getElementById('select-service').addEventListener('change', updateTotals);
+        document.getElementById('guest-count').addEventListener('input', updateTotals);
 
         document.getElementById('commission-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             if(!selectedDriver) return;
+            const svcId = document.getElementById('select-service').value;
+            const service = services.find(s => s.id == svcId);
             const guests = parseInt(document.getElementById('guest-count').value);
-            const comm = guests * CONFIG.commission_per_guest;
-            const totalVal = guests * CONFIG.massage_price;
+            const totalComm = service.commission * guests;
+            const totalVal = service.price * guests;
 
             const { error } = await supabaseClient.from('commissions').insert([{
                 driver_id: selectedDriver.driver_id,
                 driver_name: selectedDriver.name,
+                service_id: svcId,
+                service_name: service.name,
                 massage_guests: guests,
-                commission_amount: comm,
+                commission_amount: totalComm,
                 total_massage_value: totalVal
             }]);
 
             if(!error) {
-                // Print Prep
                 document.getElementById('p-date').innerText = new Date().toLocaleString();
                 document.getElementById('p-name').innerText = selectedDriver.name;
-                document.getElementById('p-id').innerText = selectedDriver.driver_id;
+                document.getElementById('p-service').innerText = service.name;
                 document.getElementById('p-guests').innerText = guests;
-                document.getElementById('p-total').innerText = `Rp ${comm.toLocaleString('id-ID')}`;
+                document.getElementById('p-rate').innerText = `@ Rp ${service.commission.toLocaleString()}`;
+                document.getElementById('p-total').innerText = `Rp ${totalComm.toLocaleString()}`;
                 window.print();
                 
-                showToast("Transaksi berhasil disimpan", "success");
+                showToast("Berhasil Disimpan", "success");
                 e.target.reset();
+                updateTotals();
                 fetchCommissions();
             }
         });
 
-        // --- TAB & UI ---
-        function switchTab(tab) {
-            document.querySelectorAll('[id^="section-"]').forEach(s => s.classList.add('hidden'));
-            document.getElementById(`section-${tab}`).classList.remove('hidden');
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(`tab-${tab === 'transaksi' ? 'tr' : tab === 'daftar' ? 'list' : tab === 'registrasi' ? 'reg' : 'settings'}`).classList.add('active');
-            if(tab === 'daftar') fetchDrivers();
+        // --- MASTER DATA LOGIC ---
+        document.getElementById('service-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const { error } = await supabaseClient.from('services').insert([{
+                name: document.getElementById('svc-name').value,
+                price: parseInt(document.getElementById('svc-price').value),
+                commission: parseInt(document.getElementById('svc-comm').value)
+            }]);
+            if(!error) { showToast("Paket Ditambahkan", "success"); e.target.reset(); loadServices(); }
+        });
+
+        async function deleteService(id) {
+            if(confirm("Hapus paket ini?")) {
+                await supabaseClient.from('services').delete().eq('id', id);
+                loadServices();
+            }
         }
+
+        document.getElementById('driver-reg-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const { error } = await supabaseClient.from('drivers').insert([{
+                driver_id: document.getElementById('reg-id').value,
+                name: document.getElementById('reg-name').value,
+                phone: document.getElementById('reg-phone').value
+            }]);
+            if(!error) { showToast("Driver Terdaftar", "success"); e.target.reset(); fetchDrivers(); }
+        });
 
         async function fetchDrivers() {
             const { data } = await supabaseClient.from('drivers').select('*').order('name');
@@ -358,11 +380,27 @@
                         <td class="px-6 py-4 font-bold text-slate-200">${d.name}</td>
                         <td class="px-6 py-4 text-center">${d.phone}</td>
                         <td class="px-6 py-4 text-center">
-                            <button onclick="deleteDriver('${d.driver_id}')" class="text-red-400 hover:text-red-300 transition-colors">Hapus</button>
+                            <button onclick="deleteDriver('${d.driver_id}')" class="text-red-400">Hapus</button>
                         </td>
-                    </tr>
-                `).join('');
+                    </tr>`).join('');
             }
+        }
+
+        async function deleteDriver(id) {
+            if(confirm("Hapus driver ini?")) {
+                await supabaseClient.from('drivers').delete().eq('driver_id', id);
+                fetchDrivers();
+            }
+        }
+
+        // --- UI UTILS ---
+        function switchTab(tab) {
+            document.querySelectorAll('[id^="section-"]').forEach(s => s.classList.add('hidden'));
+            document.getElementById(`section-${tab}`).classList.remove('hidden');
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(`tab-${tab === 'transaksi' ? 'tr' : tab}`).classList.add('active');
+            if(tab === 'drivers') fetchDrivers();
+            if(tab === 'services') loadServices();
         }
 
         function showToast(msg, type) {
@@ -373,10 +411,8 @@
             setTimeout(() => t.classList.add('translate-y-20', 'opacity-0'), 3000);
         }
 
-        document.getElementById('settings-form').addEventListener('submit', saveSettings);
-        
-        // Init
-        loadSettings();
+        // Boot
+        loadServices();
         fetchCommissions();
     </script>
 </body>
