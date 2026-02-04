@@ -30,7 +30,7 @@
             <p class="text-[10px] text-slate-500 font-bold uppercase tracking-[0.3em] mt-1 text-center">Admin Panel</p>
         </div>
         <nav class="flex-1 px-4">
-            <a href="index.html" class="nav-link">
+            <a href="dashboard.html" class="nav-link">
                 <i class="fa-solid fa-chart-pie w-5"></i> Dashboard
             </a>
             <a href="pendaftaran_driver.html" class="nav-link active">
@@ -44,7 +44,7 @@
             </a>
         </nav>
         <div class="p-6 border-t border-slate-800/50">
-            <button onclick="window.location.href='login.html'" class="nav-link w-full text-red-400 hover:bg-red-900/10">
+            <button onclick="logout()" class="nav-link w-full text-red-400 hover:bg-red-900/10">
                 <i class="fa-solid fa-right-from-bracket w-5"></i> Logout
             </button>
         </div>
@@ -143,9 +143,14 @@
     </main>
 
     <script>
+        if(sessionStorage.getItem('isLoggedIn') !== 'true') window.location.href = 'login.html';
+        function logout() { sessionStorage.clear(); window.location.href = 'login.html'; }
+
         const SUPABASE_URL = "https://qdxchvogaxiibzqvuupf.supabase.co"; 
         const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkeGNodm9nYXhpaWJ6cXZ1dXBmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAxODE5NTIsImV4cCI6MjA4NTc1Nzk1Mn0.8U_zk81b6wFfdZdPRupk5KSk3g39nOPs8SpZVkWbqkc";
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        // PENTING: Ganti nama variabel untuk menghindari tabrakan dengan global 'supabase'
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let currentDrivers = [];
 
@@ -158,11 +163,11 @@
                 output.classList.remove('hidden');
                 document.getElementById('photo-placeholder').classList.add('hidden');
             };
-            reader.readAsDataURL(event.target.files[0]);
+            if(event.target.files[0]) reader.readAsDataURL(event.target.files[0]);
         }
 
         async function fetchDrivers() {
-            const { data, error } = await supabase.from('drivers').select('*').order('name');
+            const { data, error } = await supabaseClient.from('drivers').select('*').order('name');
             if (error) return console.error(error);
             currentDrivers = data || [];
             renderTable(currentDrivers);
@@ -176,7 +181,7 @@
                 <tr class="hover:bg-slate-800/10 transition-colors">
                     <td class="px-6 py-4">
                         <div class="w-10 h-10 rounded-xl bg-slate-800 overflow-hidden">
-                            <img src="${d.photo_url || 'https://ui-avatars.com/api/?name='+d.name+'&background=0f172a&color=c5a059'}" class="w-full h-full object-cover">
+                            <img src="${d.ktp_url || 'https://ui-avatars.com/api/?name='+d.name+'&background=0f172a&color=c5a059'}" class="w-full h-full object-cover">
                         </div>
                     </td>
                     <td class="px-6 py-4">
@@ -212,10 +217,10 @@
             // Jika ada file baru diupload
             if (file) {
                 const fileName = `drivers/${Date.now()}_${file.name}`;
-                const { data: uploadData, error: uploadError } = await supabase.storage.from('assets').upload(fileName, file);
+                const { data: uploadData, error: uploadError } = await supabaseClient.storage.from('assets').upload(fileName, file);
                 
                 if (!uploadError) {
-                    const { data: publicUrl } = supabase.storage.from('assets').getPublicUrl(fileName);
+                    const { data: publicUrl } = supabaseClient.storage.from('assets').getPublicUrl(fileName);
                     photoUrl = publicUrl.publicUrl;
                 }
             }
@@ -225,20 +230,20 @@
                 name: document.getElementById('reg-name').value,
                 phone: document.getElementById('reg-phone').value,
                 address: document.getElementById('reg-address').value,
-                photo_url: photoUrl.startsWith('data:') ? null : photoUrl
+                ktp_url: photoUrl.startsWith('data:') ? null : photoUrl
             };
             
             if(editId) {
-                await supabase.from('drivers').update(payload).eq('driver_id', editId);
+                await supabaseClient.from('drivers').update(payload).eq('driver_id', editId);
             } else {
-                await supabase.from('drivers').insert([payload]);
+                await supabaseClient.from('drivers').insert([payload]);
             }
             
             resetForm(); fetchDrivers();
         });
 
         async function edit(id) {
-            const { data } = await supabase.from('drivers').select('*').eq('driver_id', id).single();
+            const { data } = await supabaseClient.from('drivers').select('*').eq('driver_id', id).single();
             if(data) {
                 document.getElementById('edit-mode-id').value = data.driver_id;
                 document.getElementById('reg-id').value = data.driver_id;
@@ -246,9 +251,9 @@
                 document.getElementById('reg-phone').value = data.phone;
                 document.getElementById('reg-address').value = data.address || "";
                 
-                if (data.photo_url) {
+                if (data.ktp_url) {
                     const img = document.getElementById('photo-preview');
-                    img.src = data.photo_url;
+                    img.src = data.ktp_url;
                     img.classList.remove('hidden');
                     document.getElementById('photo-placeholder').classList.add('hidden');
                 }
@@ -262,7 +267,7 @@
 
         async function del(id) {
             if(confirm("Yakin ingin menghapus mitra ini dari database?")) {
-                await supabase.from('drivers').delete().eq('driver_id', id);
+                await supabaseClient.from('drivers').delete().eq('driver_id', id);
                 fetchDrivers();
             }
         }
@@ -312,19 +317,19 @@
                 const rows = XLSX.utils.sheet_to_json(firstSheet);
                 
                 const formatted = rows.map(r => ({
-                    driver_id: r.NIK_ID?.toString() || r.driver_id?.toString(),
-                    name: r.Nama || r.name,
-                    phone: r.WhatsApp?.toString() || r.phone?.toString(),
-                    address: r.Alamat || r.address
+                    driver_id: (r.NIK_ID || r.driver_id || "").toString(),
+                    name: r.Nama || r.name || "",
+                    phone: (r.WhatsApp || r.phone || "").toString(),
+                    address: r.Alamat || r.address || ""
                 })).filter(r => r.driver_id && r.name);
 
                 if (formatted.length > 0) {
-                    const { error } = await supabase.from('drivers').upsert(formatted);
+                    const { error } = await supabaseClient.from('drivers').upsert(formatted);
                     if (error) alert("Gagal import: " + error.message);
                     else { alert(`Berhasil mengimpor ${formatted.length} driver!`); fetchDrivers(); }
                 }
             };
-            reader.readAsArrayBuffer(file);
+            if(file) reader.readAsArrayBuffer(file);
         }
 
         window.onload = fetchDrivers;
