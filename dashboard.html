@@ -22,8 +22,14 @@
             <h1 class="text-2xl font-bold text-[#c5a059]">DELTA SPA</h1>
         </div>
         <nav class="flex-1 p-4 mt-4">
-            <a href="dashboard.html" class="nav-link active">Dashboard</a>
-            <a href="komisi.html" class="nav-link">Komisi Driver</a>
+            <a href="index.html" class="nav-link active">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                Dashboard
+            </a>
+            <a href="komisi.html" class="nav-link">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                Komisi Driver
+            </a>
         </nav>
         <div class="p-4 border-t border-slate-800/50">
             <button onclick="logout()" class="nav-link w-full text-red-400">Logout</button>
@@ -34,55 +40,98 @@
     <main class="flex-1 p-8">
         <div class="flex justify-between items-center mb-8">
             <h2 class="text-2xl font-bold">Dashboard Overview</h2>
-            <div id="status-badge" class="px-3 py-1 rounded-full bg-emerald-900/30 text-emerald-400 border border-emerald-800 text-[10px] font-bold">ONLINE</div>
+            <div id="status-badge" class="px-3 py-1 rounded-full bg-emerald-900/30 text-emerald-400 border border-emerald-800 text-[10px] font-bold uppercase">Online</div>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <div class="card p-6 rounded-3xl">
-                <p class="text-slate-400 text-xs font-bold uppercase">Total Komisi</p>
+                <p class="text-slate-400 text-xs font-bold uppercase tracking-widest">Total Komisi</p>
                 <h2 id="dash-total" class="text-3xl font-bold text-[#c5a059] mt-2">Rp 0</h2>
             </div>
             <div class="card p-6 rounded-3xl">
-                <p class="text-slate-400 text-xs font-bold uppercase">Bulan Ini</p>
+                <p class="text-slate-400 text-xs font-bold uppercase tracking-widest">Bulan Ini</p>
                 <h2 id="dash-month" class="text-3xl font-bold text-white mt-2">Rp 0</h2>
             </div>
             <div class="card p-6 rounded-3xl">
-                <p class="text-slate-400 text-xs font-bold uppercase">Hari Ini</p>
+                <p class="text-slate-400 text-xs font-bold uppercase tracking-widest">Hari Ini</p>
                 <h2 id="dash-today" class="text-3xl font-bold text-white mt-2">Rp 0</h2>
             </div>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div class="card p-6 rounded-3xl">
-                <h3 class="font-bold mb-4">Top Driver</h3>
-                <div id="top-list" class="space-y-3"></div>
+                <h3 class="font-bold mb-4 text-slate-300">Top Driver</h3>
+                <div id="top-list" class="space-y-3">
+                    <p class="text-slate-600 italic text-sm py-4">Memuat data...</p>
+                </div>
             </div>
             <div class="card p-6 rounded-3xl">
-                <h3 class="font-bold mb-4">Aktivitas Terakhir</h3>
-                <div id="recent-list" class="space-y-3"></div>
+                <h3 class="font-bold mb-4 text-slate-300">Aktivitas Terakhir</h3>
+                <div id="recent-list" class="space-y-3">
+                    <p class="text-slate-600 italic text-sm py-4">Memuat data...</p>
+                </div>
             </div>
         </div>
     </main>
 
     <script>
+        // Cek Login
         if(sessionStorage.getItem('isLoggedIn') !== 'true') window.location.href = 'login.html';
-        function logout() { sessionStorage.clear(); window.location.href = 'login.html'; }
+        
+        function logout() { 
+            sessionStorage.clear(); 
+            window.location.href = 'login.html'; 
+        }
 
         const SUPABASE_URL = "https://qdxchvogaxiibzqvuupf.supabase.co"; 
         const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkeGNodm9nYXhpaWJ6cXZ1dXBmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAxODE5NTIsImV4cCI6MjA4NTc1Nzk1Mn0.8U_zk81b6wFfdZdPRupk5KSk3g39nOPs8SpZVkWbqkc";
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         async function loadDashboard() {
-            const { data } = await supabaseClient.from('commissions').select('*').order('created_at', { ascending: false });
+            const { data, error } = await supabaseClient
+                .from('commissions')
+                .select('*')
+                .order('created_at', { ascending: false });
+
             if (data) {
+                const now = new Date();
+                const todayStr = now.toLocaleDateString();
+                const monthYear = now.getMonth() + '-' + now.getFullYear();
+
+                // Hitung Statistik
                 const total = data.reduce((a, b) => a + b.commission_amount, 0);
+                const todayVal = data.filter(i => new Date(i.created_at).toLocaleDateString() === todayStr)
+                                    .reduce((a, b) => a + b.commission_amount, 0);
+                const monthVal = data.filter(i => {
+                    const d = new Date(i.created_at);
+                    return (d.getMonth() + '-' + d.getFullYear()) === monthYear;
+                }).reduce((a, b) => a + b.commission_amount, 0);
+
                 document.getElementById('dash-total').innerText = `Rp ${total.toLocaleString('id-ID')}`;
-                // Render Top List & Recent (Logika sama seperti sebelumnya)
+                document.getElementById('dash-today').innerText = `Rp ${todayVal.toLocaleString('id-ID')}`;
+                document.getElementById('dash-month').innerText = `Rp ${monthVal.toLocaleString('id-ID')}`;
+
+                // Recent Activities
                 document.getElementById('recent-list').innerHTML = data.slice(0, 5).map(i => `
-                    <div class="flex justify-between p-3 bg-slate-800/30 rounded-xl">
-                        <span>${i.driver_name}</span>
-                        <span class="text-emerald-400">Rp ${i.commission_amount.toLocaleString('id-ID')}</span>
-                    </div>`).join('');
+                    <div class="flex justify-between p-3 bg-slate-800/30 rounded-xl items-center">
+                        <div>
+                            <div class="text-sm font-bold text-slate-200">${i.driver_name}</div>
+                            <div class="text-[10px] text-slate-500">${new Date(i.created_at).toLocaleDateString()}</div>
+                        </div>
+                        <span class="text-emerald-400 font-bold text-sm">+Rp ${i.commission_amount.toLocaleString('id-ID')}</span>
+                    </div>`).join('') || '<p class="text-center py-4 text-slate-600 italic text-sm">Belum ada data</p>';
+
+                // Top Driver Logic
+                const driverStats = {};
+                data.forEach(item => {
+                    driverStats[item.driver_name] = (driverStats[item.driver_name] || 0) + item.commission_amount;
+                });
+                const sorted = Object.entries(driverStats).sort((a,b) => b[1]-a[1]).slice(0, 5);
+                document.getElementById('top-list').innerHTML = sorted.map(([n, v]) => `
+                    <div class="flex items-center justify-between p-3 bg-slate-800/20 rounded-xl">
+                        <span class="text-sm font-medium text-slate-300">${n}</span>
+                        <span class="text-sm font-bold text-[#c5a059]">Rp ${v.toLocaleString('id-ID')}</span>
+                    </div>`).join('') || '<p class="text-center py-4 text-slate-600 italic text-sm">Belum ada data</p>';
             }
         }
         loadDashboard();
