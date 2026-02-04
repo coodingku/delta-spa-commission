@@ -28,66 +28,67 @@
             <h1 class="text-2xl font-black italic gold-text tracking-tighter">DELTA <span class="text-white">SPA</span></h1>
         </div>
         <nav class="flex-1 px-4">
-            <a href="dashboard.html" class="nav-link">
-                <i class="fa-solid fa-chart-pie w-5"></i> Dashboard
-            </a>
-            <a href="pendaftaran_driver.html" class="nav-link">
-                <i class="fa-solid fa-id-card w-5"></i> Registrasi Driver
-            </a>
-            <a href="transaksi_komisi.html" class="nav-link active">
-                <i class="fa-solid fa-money-bill-transfer w-5"></i> Input Transaksi
-            </a>
-            <a href="riwayat_transaksi.html" class="nav-link">
-                <i class="fa-solid fa-clock-rotate-left w-5"></i> Riwayat & Komisi
-            </a>
+            <a href="dashboard.html" class="nav-link"><i class="fa-solid fa-chart-pie w-5"></i> Dashboard</a>
+            <a href="pendaftaran_driver.html" class="nav-link"><i class="fa-solid fa-id-card w-5"></i> Registrasi Driver</a>
+            <a href="transaksi_komisi.html" class="nav-link active"><i class="fa-solid fa-money-bill-transfer w-5"></i> Input Transaksi</a>
+            <a href="riwayat_transaksi.html" class="nav-link"><i class="fa-solid fa-clock-rotate-left w-5"></i> Riwayat & Komisi</a>
         </nav>
     </aside>
 
-    <!-- Main Content -->
     <main class="flex-1 p-10 overflow-y-auto">
         <div class="max-w-2xl mx-auto">
             <header class="mb-10 text-center">
                 <h2 class="text-3xl font-bold">Input <span class="gold-text italic">Komisi Massage</span></h2>
-                <p class="text-slate-500 text-sm mt-1">Catat tamu yang dibawa oleh driver hari ini.</p>
+                <p class="text-slate-500 text-sm mt-1">Cukup masukkan NIK atau Nama untuk mencari Driver.</p>
             </header>
 
             <form id="form-transaksi" class="card p-8 rounded-[2.5rem] space-y-6">
-                <!-- Pencarian Driver -->
+                <!-- Pencarian Driver Berdasarkan ID/Nama -->
                 <div>
-                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 ml-1">Pilih Driver</label>
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 ml-1">Cari Driver (NIK / Nama)</label>
                     <div class="relative">
-                        <input type="text" id="search-driver" placeholder="Cari Nama Driver..." class="input-field pl-12" autocomplete="off">
-                        <i class="fa-solid fa-magnifying-glass absolute left-5 top-4 text-slate-500 text-sm"></i>
+                        <input type="text" id="search-driver" placeholder="Ketik NIK atau Nama Driver..." class="input-field pl-12" autocomplete="off">
+                        <i class="fa-solid fa-id-badge absolute left-5 top-4 text-slate-500 text-sm"></i>
                         <div id="driver-results" class="absolute z-20 w-full mt-2 bg-slate-900 border border-slate-800 rounded-xl hidden max-h-48 overflow-y-auto shadow-2xl"></div>
                     </div>
-                    <input type="hidden" id="selected-driver-id">
-                    <input type="hidden" id="selected-driver-name">
                 </div>
 
+                <!-- Info Driver yang Terpilih (Read Only) -->
+                <div id="selected-driver-info" class="hidden p-4 rounded-xl bg-gold-text/10 border border-gold-text/20 flex items-center gap-4">
+                    <div class="w-10 h-10 rounded-full bg-gold-text flex items-center justify-center text-white">
+                        <i class="fa-solid fa-check"></i>
+                    </div>
+                    <div>
+                        <p class="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Driver Terpilih</p>
+                        <h4 id="display-name" class="font-bold text-white text-lg">-</h4>
+                        <p id="display-id" class="text-xs text-gold-text">-</p>
+                    </div>
+                    <button type="button" onclick="resetDriver()" class="ml-auto text-xs text-red-400 hover:underline">Ganti</button>
+                </div>
+
+                <input type="hidden" id="selected-driver-id">
+                <input type="hidden" id="selected-driver-name">
+
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- Pilih Service -->
                     <div>
                         <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 ml-1">Pilih Layanan</label>
                         <select id="service-select" class="input-field" required>
                             <option value="">-- Pilih Paket --</option>
                         </select>
                     </div>
-
-                    <!-- Jumlah Tamu -->
                     <div>
                         <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 ml-1">Jumlah Tamu</label>
                         <input type="number" id="guest-count" min="1" value="1" class="input-field" required>
                     </div>
                 </div>
 
-                <!-- Preview Komisi -->
                 <div class="bg-slate-900/50 p-6 rounded-2xl border border-slate-800 flex justify-between items-center">
                     <div>
-                        <p class="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Estimasi Komisi</p>
+                        <p class="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Total Komisi</p>
                         <h3 id="commission-display" class="text-2xl font-black gold-text">Rp 0</h3>
                     </div>
                     <div class="text-right">
-                        <p class="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Rate Per Tamu</p>
+                        <p class="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Rate Paket</p>
                         <p id="rate-display" class="text-white font-bold">Rp 0</p>
                     </div>
                 </div>
@@ -108,9 +109,7 @@
         let currentRate = 0;
         let selectedServiceName = "";
 
-        // Load Data Awal
         window.onload = async () => {
-            // Load Services
             const { data: services } = await supabaseClient.from('services').select('*').order('name');
             const select = document.getElementById('service-select');
             services?.forEach(s => {
@@ -122,7 +121,57 @@
             });
         };
 
-        // Update Kalkulasi
+        const searchInput = document.getElementById('search-driver');
+        const resultsDiv = document.getElementById('driver-results');
+
+        searchInput.addEventListener('input', async (e) => {
+            const val = e.target.value.trim();
+            if (val.length < 2) { resultsDiv.classList.add('hidden'); return; }
+
+            // Cari berdasarkan driver_id (NIK) ATAU name (Nama)
+            const { data, error } = await supabaseClient.from('drivers')
+                .select('driver_id, name')
+                .or(`driver_id.ilike.%${val}%,name.ilike.%${val}%`)
+                .limit(5);
+
+            if (data && data.length > 0) {
+                resultsDiv.innerHTML = data.map(d => `
+                    <div class="p-4 hover:bg-slate-800 cursor-pointer border-b border-slate-800 last:border-0" 
+                         onclick="selectDriver('${d.driver_id}', '${d.name}')">
+                        <p class="font-bold text-sm text-white">${d.name}</p>
+                        <p class="text-[10px] text-slate-500 uppercase tracking-tighter">ID/NIK: ${d.driver_id}</p>
+                    </div>
+                `).join('');
+                resultsDiv.classList.remove('hidden');
+            } else {
+                resultsDiv.innerHTML = `<div class="p-4 text-slate-500 text-xs italic">Driver tidak ditemukan.</div>`;
+                resultsDiv.classList.remove('hidden');
+            }
+        });
+
+        function selectDriver(id, name) {
+            document.getElementById('selected-driver-id').value = id;
+            document.getElementById('selected-driver-name').value = name;
+            
+            // Tampilan Info Terpilih
+            document.getElementById('display-name').innerText = name;
+            document.getElementById('display-id').innerText = "NIK: " + id;
+            document.getElementById('selected-driver-info').classList.remove('hidden');
+            
+            // Sembunyikan Input Pencarian
+            searchInput.parentElement.classList.add('hidden');
+            resultsDiv.classList.add('hidden');
+        }
+
+        function resetDriver() {
+            document.getElementById('selected-driver-id').value = "";
+            document.getElementById('selected-driver-name').value = "";
+            document.getElementById('selected-driver-info').classList.add('hidden');
+            searchInput.parentElement.classList.remove('hidden');
+            searchInput.value = "";
+            searchInput.focus();
+        }
+
         function updateCalc() {
             const select = document.getElementById('service-select');
             const selectedOpt = select.options[select.selectedIndex];
@@ -143,41 +192,6 @@
         document.getElementById('service-select').onchange = updateCalc;
         document.getElementById('guest-count').oninput = updateCalc;
 
-        // Fitur Cari Driver
-        const searchInput = document.getElementById('search-driver');
-        const resultsDiv = document.getElementById('driver-results');
-
-        searchInput.addEventListener('input', async (e) => {
-            const val = e.target.value;
-            if (val.length < 2) { resultsDiv.classList.add('hidden'); return; }
-
-            const { data } = await supabaseClient.from('drivers')
-                .select('driver_id, name')
-                .ilike('name', `%${val}%`)
-                .limit(5);
-
-            if (data && data.length > 0) {
-                resultsDiv.innerHTML = data.map(d => `
-                    <div class="p-4 hover:bg-slate-800 cursor-pointer border-b border-slate-800 last:border-0" 
-                         onclick="selectDriver('${d.driver_id}', '${d.name}')">
-                        <p class="font-bold text-sm text-white">${d.name}</p>
-                        <p class="text-[10px] text-slate-500 uppercase tracking-tighter">ID: ${d.driver_id}</p>
-                    </div>
-                `).join('');
-                resultsDiv.classList.remove('hidden');
-            } else {
-                resultsDiv.classList.add('hidden');
-            }
-        });
-
-        function selectDriver(id, name) {
-            document.getElementById('selected-driver-id').value = id;
-            document.getElementById('selected-driver-name').value = name;
-            searchInput.value = name;
-            resultsDiv.classList.add('hidden');
-        }
-
-        // Simpan Transaksi
         document.getElementById('form-transaksi').onsubmit = async (e) => {
             e.preventDefault();
             const btn = document.getElementById('btn-submit');
@@ -187,12 +201,12 @@
             const count = parseInt(document.getElementById('guest-count').value);
 
             if (!driverId) {
-                alert("Silakan pilih driver terlebih dahulu dari daftar pencarian.");
+                alert("Pilih driver terlebih dahulu.");
                 return;
             }
 
             btn.disabled = true;
-            btn.innerHTML = `<i class="fa-solid fa-circle-notch animate-spin"></i> Memproses...`;
+            btn.innerHTML = `<i class="fa-solid fa-circle-notch animate-spin"></i> Menyimpan...`;
 
             const totalCommission = currentRate * count;
 
@@ -202,17 +216,16 @@
                 service_id: serviceId,
                 service_name: selectedServiceName,
                 massage_guests: count,
-                facility_guests: 0,
                 commission_amount: totalCommission
             }]);
 
             if (!error) {
-                alert(`Berhasil! Komisi Rp ${totalCommission.toLocaleString()} tercatat untuk ${driverName}`);
+                alert(`Berhasil disimpan!`);
                 window.location.reload();
             } else {
-                alert("Gagal menyimpan: " + error.message);
+                alert("Error: " + error.message);
                 btn.disabled = false;
-                btn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> SIMPAN TRANSAKSI`;
+                btn.innerHTML = `SIMPAN TRANSAKSI`;
             }
         };
     </script>
