@@ -20,6 +20,8 @@
         .gold-text { color: #c5a059; }
         input, textarea { background: #0f172a !important; border: 1px solid #1e293b !important; color: white !important; }
         input:focus { border-color: #c5a059 !important; outline: none; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
     </style>
 </head>
 <body class="min-h-screen flex">
@@ -27,21 +29,13 @@
     <aside class="w-72 shrink-0 flex flex-col sidebar hidden md:flex">
         <div class="p-8">
             <h1 class="text-2xl font-black italic gold-text tracking-tighter">DELTA <span class="text-white">SPA</span></h1>
-            <p class="text-[10px] text-slate-500 font-bold uppercase tracking-[0.3em] mt-1 text-center">Admin Panel</p>
+            <p class="text-[10px] text-slate-500 font-bold uppercase tracking-[0.3em] mt-1 text-center font-mono">Finex Pos System</p>
         </div>
         <nav class="flex-1 px-4">
-            <a href="dashboard.html" class="nav-link">
-                <i class="fa-solid fa-chart-pie w-5"></i> Dashboard
-            </a>
-            <a href="pendaftaran_driver.html" class="nav-link active">
-                <i class="fa-solid fa-id-card w-5"></i> Registrasi Driver
-            </a>
-            <a href="riwayat_transaksi.html" class="nav-link">
-                <i class="fa-solid fa-clock-rotate-left w-5"></i> Riwayat & Komisi
-            </a>
-            <a href="pengaturan_komisi.html" class="nav-link">
-                <i class="fa-solid fa-gears w-5"></i> Master Harga
-            </a>
+            <a href="#" class="nav-link"><i class="fa-solid fa-chart-pie w-5"></i> Dashboard</a>
+            <a href="#" class="nav-link active"><i class="fa-solid fa-id-card w-5"></i> Registrasi Driver</a>
+            <a href="#" class="nav-link"><i class="fa-solid fa-clock-rotate-left w-5"></i> Riwayat & Komisi</a>
+            <a href="#" class="nav-link"><i class="fa-solid fa-gears w-5"></i> Master Harga</a>
         </nav>
         <div class="p-6 border-t border-slate-800/50">
             <button onclick="logout()" class="nav-link w-full text-red-400 hover:bg-red-900/10">
@@ -51,21 +45,21 @@
     </aside>
 
     <!-- Main Content -->
-    <main class="flex-1 p-8 overflow-y-auto">
-        <header class="flex justify-between items-center mb-8">
+    <main class="flex-1 p-8 overflow-y-auto custom-scrollbar">
+        <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
             <div>
                 <h2 class="text-3xl font-bold uppercase tracking-tight">Data <span class="gold-text">Mitra Driver</span></h2>
                 <p class="text-slate-500 text-sm mt-1">Manajemen database driver dan berkas profil.</p>
             </div>
-            <div class="flex gap-3">
-                <button onclick="downloadTemplate()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-xl text-[10px] font-bold tracking-widest uppercase flex items-center gap-2">
+            <div class="flex flex-wrap gap-3">
+                <button onclick="downloadTemplate()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-xl text-[10px] font-bold tracking-widest uppercase flex items-center gap-2 transition-all">
                     <i class="fa-solid fa-file-download"></i> Template
                 </button>
-                <label class="px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-xl text-[10px] font-bold tracking-widest uppercase cursor-pointer flex items-center gap-2">
+                <label class="px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-xl text-[10px] font-bold tracking-widest uppercase cursor-pointer flex items-center gap-2 transition-all">
                     <i class="fa-solid fa-file-import"></i> Import Excel
                     <input type="file" id="import-excel" class="hidden" accept=".xlsx, .xls" onchange="importData(event)">
                 </label>
-                <button onclick="exportToExcel()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 rounded-xl text-[10px] font-bold tracking-widest uppercase text-white flex items-center gap-2">
+                <button onclick="exportToExcel()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 rounded-xl text-[10px] font-bold tracking-widest uppercase text-white flex items-center gap-2 transition-all">
                     <i class="fa-solid fa-file-excel"></i> Export Data
                 </button>
             </div>
@@ -74,12 +68,11 @@
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
             <!-- Form Input -->
             <div class="lg:col-span-4">
-                <div class="card p-8 rounded-[2.5rem]">
+                <div class="card p-8 rounded-[2.5rem] sticky top-0">
                     <h3 id="form-title" class="text-xs font-bold gold-text uppercase tracking-[0.2em] mb-6">Informasi Driver</h3>
                     <form id="driver-form" class="space-y-4">
                         <input type="hidden" id="edit-mode-id">
                         
-                        <!-- Foto Profil -->
                         <div class="flex flex-col items-center mb-6">
                             <div class="w-24 h-24 rounded-2xl bg-slate-900 border-2 border-dashed border-slate-700 flex items-center justify-center overflow-hidden relative group">
                                 <img id="photo-preview" src="" class="absolute inset-0 w-full h-full object-cover hidden">
@@ -109,7 +102,7 @@
                             <textarea id="reg-address" class="w-full p-4 rounded-2xl mt-1 h-20 text-sm font-medium"></textarea>
                         </div>
                         <button type="submit" id="btn-submit" class="w-full gold-gradient py-4 rounded-2xl font-bold text-white uppercase tracking-widest shadow-lg hover:brightness-110 active:scale-95 transition-all">Simpan Data</button>
-                        <button type="button" id="btn-cancel" onclick="resetForm()" class="hidden w-full bg-slate-800 py-3 rounded-2xl font-bold text-white uppercase text-xs">Batal</button>
+                        <button type="button" id="btn-cancel" onclick="resetForm()" class="hidden w-full bg-slate-800 py-3 rounded-2xl font-bold text-white uppercase text-xs">Batal Edit</button>
                     </form>
                 </div>
             </div>
@@ -117,14 +110,14 @@
             <!-- List Driver -->
             <div class="lg:col-span-8">
                 <div class="card rounded-[2.5rem] overflow-hidden">
-                    <div class="p-6 border-b border-slate-800/50 flex justify-between items-center">
-                        <div class="relative w-64">
+                    <div class="p-6 border-b border-slate-800/50 flex flex-col sm:flex-row justify-between items-center gap-4">
+                        <div class="relative w-full sm:w-64">
                             <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
-                            <input type="text" id="search-bar" onkeyup="filterTable()" placeholder="Cari nama atau NIK..." class="w-full pl-10 pr-4 py-2 rounded-xl text-xs bg-slate-900 border border-slate-800">
+                            <input type="text" id="search-bar" onkeyup="filterTable()" placeholder="Cari nama atau NIK..." class="w-full pl-10 pr-4 py-2 rounded-xl text-xs bg-slate-900 border border-slate-800 focus:ring-0">
                         </div>
-                        <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Total: <span id="total-count" class="gold-text">0</span> Mitra</p>
+                        <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest shrink-0">Total: <span id="total-count" class="gold-text">0</span> Mitra Terdaftar</p>
                     </div>
-                    <div class="overflow-x-auto">
+                    <div class="overflow-x-auto custom-scrollbar">
                         <table class="w-full text-sm">
                             <thead class="bg-slate-900/50 text-slate-500 text-[10px] uppercase tracking-widest">
                                 <tr>
@@ -134,7 +127,9 @@
                                     <th class="px-6 py-4 text-center">Aksi</th>
                                 </tr>
                             </thead>
-                            <tbody id="driver-list" class="divide-y divide-slate-800/30"></tbody>
+                            <tbody id="driver-list" class="divide-y divide-slate-800/30">
+                                <!-- Data rows go here -->
+                            </tbody>
                         </table>
                     </div>
                 </div>
@@ -143,17 +138,15 @@
     </main>
 
     <script>
-        if(sessionStorage.getItem('isLoggedIn') !== 'true') window.location.href = 'login.html';
-        function logout() { sessionStorage.clear(); window.location.href = 'login.html'; }
-
+        // Supabase Configuration
         const SUPABASE_URL = "https://qdxchvogaxiibzqvuupf.supabase.co"; 
         const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkeGNodm9nYXhpaWJ6cXZ1dXBmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAxODE5NTIsImV4cCI6MjA4NTc1Nzk1Mn0.8U_zk81b6wFfdZdPRupk5KSk3g39nOPs8SpZVkWbqkc";
-        
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
         let currentDrivers = [];
         let existingPhotoUrl = "";
 
-        // Preview Foto
+        // UI Helpers
         function previewPhoto(event) {
             const reader = new FileReader();
             reader.onload = function(){
@@ -180,15 +173,15 @@
             document.getElementById('total-count').innerText = data.length;
             
             tbody.innerHTML = data.map(d => `
-                <tr class="hover:bg-slate-800/10 transition-colors">
+                <tr class="hover:bg-slate-800/10 transition-colors group">
                     <td class="px-6 py-4">
-                        <div class="w-10 h-10 rounded-xl bg-slate-800 overflow-hidden">
-                            <img src="${d.ktp_url || 'https://ui-avatars.com/api/?name='+d.name+'&background=0f172a&color=c5a059'}" class="w-full h-full object-cover">
+                        <div class="w-10 h-10 rounded-xl bg-slate-800 overflow-hidden ring-1 ring-slate-700 group-hover:ring-[#c5a059]">
+                            <img src="${d.ktp_url || 'https://ui-avatars.com/api/?name='+encodeURIComponent(d.name)+'&background=0f172a&color=c5a059'}" class="w-full h-full object-cover">
                         </div>
                     </td>
                     <td class="px-6 py-4">
                         <p class="font-bold text-white uppercase text-xs tracking-wide">${d.name}</p>
-                        <p class="text-[9px] text-slate-500 font-bold tracking-widest mt-0.5">${d.driver_id}</p>
+                        <p class="text-[9px] text-slate-500 font-bold tracking-widest mt-0.5 font-mono">${d.driver_id}</p>
                     </td>
                     <td class="px-6 py-4">
                         <p class="text-xs text-emerald-400 font-bold">${d.phone}</p>
@@ -196,8 +189,8 @@
                     </td>
                     <td class="px-6 py-4">
                         <div class="flex gap-4 justify-center">
-                            <button onclick="edit('${d.driver_id}')" class="text-blue-400 hover:scale-125 transition-all" title="Edit"><i class="fa-solid fa-pen-to-square"></i></button>
-                            <button onclick="del('${d.driver_id}')" class="text-red-400 hover:scale-125 transition-all" title="Hapus"><i class="fa-solid fa-trash-can"></i></button>
+                            <button onclick="edit('${d.driver_id}')" class="text-blue-400 hover:text-blue-300 transition-all" title="Edit"><i class="fa-solid fa-pen-to-square"></i></button>
+                            <button onclick="del('${d.driver_id}')" class="text-red-400 hover:text-red-300 transition-all" title="Hapus"><i class="fa-solid fa-trash-can"></i></button>
                         </div>
                     </td>
                 </tr>`).join('') || '<tr><td colspan="4" class="p-20 text-center text-slate-600 italic">Belum ada data driver terdaftar</td></tr>';
@@ -205,11 +198,14 @@
 
         function filterTable() {
             const val = document.getElementById('search-bar').value.toLowerCase();
-            const filtered = currentDrivers.filter(d => d.name.toLowerCase().includes(val) || d.driver_id.toLowerCase().includes(val));
+            const filtered = currentDrivers.filter(d => 
+                d.name.toLowerCase().includes(val) || 
+                d.driver_id.toLowerCase().includes(val)
+            );
             renderTable(filtered);
         }
 
-        // Simpan Data & Upload Foto
+        // Form Submission
         document.getElementById('driver-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('btn-submit');
@@ -221,14 +217,11 @@
             let photoUrl = existingPhotoUrl;
 
             try {
-                // Jika ada file baru diupload
                 if (file) {
                     const fileExt = file.name.split('.').pop();
                     const fileName = `drivers/${Date.now()}.${fileExt}`;
                     const { data: uploadData, error: uploadError } = await supabaseClient.storage.from('assets').upload(fileName, file);
-                    
                     if (uploadError) throw uploadError;
-
                     const { data: publicUrlData } = supabaseClient.storage.from('assets').getPublicUrl(fileName);
                     photoUrl = publicUrlData.publicUrl;
                 }
@@ -263,6 +256,7 @@
             }
         });
 
+        // Edit & Delete
         async function edit(id) {
             const { data, error } = await supabaseClient.from('drivers').select('*').eq('driver_id', id).single();
             if(error) return alert("Gagal mengambil data");
@@ -310,6 +304,52 @@
             document.getElementById('photo-preview').src = "";
         }
 
+        // FUNGSI UTAMA: IMPORT DENGAN DEDUPLIKASI
+        function importData(event) {
+            const file = event.target.files[0];
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+                
+                // MENGGUNAKAN MAP UNTUK MENCEGAH DUPLIKASI ID DALAM ARRAY IMPORT
+                const driverMap = new Map();
+
+                rows.forEach(r => {
+                    const id = (r.NIK_ID || r.driver_id || "").toString().trim();
+                    const name = r.Nama || r.name || "";
+                    if (id && name) {
+                        driverMap.set(id, {
+                            driver_id: id,
+                            name: name,
+                            phone: (r.WhatsApp || r.phone || "").toString(),
+                            address: r.Alamat || r.address || ""
+                        });
+                    }
+                });
+
+                const formatted = Array.from(driverMap.values());
+
+                if (formatted.length > 0) {
+                    // Gunakan upsert agar jika ID sudah ada di DB akan diupdate, jika belum akan ditambah
+                    const { error } = await supabaseClient.from('drivers').upsert(formatted, { onConflict: 'driver_id' });
+                    
+                    if (error) {
+                        console.error("Import Error:", error);
+                        alert("Gagal import: " + error.message);
+                    } else { 
+                        alert(`Berhasil mengimpor ${formatted.length} driver unik!`); 
+                        fetchDrivers(); 
+                    }
+                } else {
+                    alert("Tidak ada data valid yang ditemukan di file Excel.");
+                }
+                event.target.value = ''; // Reset input file
+            };
+            if(file) reader.readAsArrayBuffer(file);
+        }
+
         function exportToExcel() {
             const ws = XLSX.utils.json_to_sheet(currentDrivers.map(d => ({
                 NIK_ID: d.driver_id,
@@ -323,35 +363,11 @@
         }
 
         function downloadTemplate() {
-            const template = [{ NIK_ID: "", Nama: "", WhatsApp: "", Alamat: "" }];
+            const template = [{ NIK_ID: "12345", Nama: "Budi Santoso", WhatsApp: "08123456789", Alamat: "Jl. Sudirman No 1" }];
             const ws = XLSX.utils.json_to_sheet(template);
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "Template");
             XLSX.writeFile(wb, "Template_Import_Driver.xlsx");
-        }
-
-        function importData(event) {
-            const file = event.target.files[0];
-            const reader = new FileReader();
-            reader.onload = async (e) => {
-                const data = new Uint8Array(e.target.result);
-                const workbook = XLSX.read(data, { type: 'array' });
-                const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
-                
-                const formatted = rows.map(r => ({
-                    driver_id: (r.NIK_ID || r.driver_id || "").toString(),
-                    name: r.Nama || r.name || "",
-                    phone: (r.WhatsApp || r.phone || "").toString(),
-                    address: r.Alamat || r.address || ""
-                })).filter(r => r.driver_id && r.name);
-
-                if (formatted.length > 0) {
-                    const { error } = await supabaseClient.from('drivers').upsert(formatted);
-                    if (error) alert("Gagal import: " + error.message);
-                    else { alert(`Berhasil mengimpor ${formatted.length} driver!`); fetchDrivers(); }
-                }
-            };
-            if(file) reader.readAsArrayBuffer(file);
         }
 
         window.onload = fetchDrivers;
