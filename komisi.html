@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Komisi - Delta SPA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Urbanist', sans-serif; background-color: #0f172a; color: #f8fafc; }
+        .gold-gradient { background: linear-gradient(135deg, #c5a059 0%, #926d27 100%); }
+        .card { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(197, 160, 89, 0.1); }
+        .sidebar { background: #1e293b; border-right: 1px solid rgba(197, 160, 89, 0.1); }
+        .nav-link { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 12px; color: #94a3b8; transition: 0.2s; margin-bottom: 4px; }
+        .nav-link:hover, .nav-link.active { background: #c5a059; color: white; }
+    </style>
+</head>
+<body class="min-h-screen flex">
+    <!-- Sidebar -->
+    <aside class="w-64 shrink-0 flex flex-col sidebar hidden md:flex">
+        <div class="p-6 border-b border-slate-800/50">
+            <h1 class="text-2xl font-bold text-[#c5a059]">DELTA SPA</h1>
+        </div>
+        <nav class="flex-1 p-4 mt-4">
+            <a href="dashboard.html" class="nav-link">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                Dashboard
+            </a>
+            <a href="komisi.html" class="nav-link active">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                Komisi Driver
+            </a>
+        </nav>
+        <div class="p-4 border-t border-slate-800/50">
+            <button onclick="logout()" class="nav-link w-full text-red-400 hover:bg-red-950/20">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                Logout
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 p-8 overflow-y-auto">
+        <div class="max-w-6xl mx-auto">
+            <div class="flex justify-between items-center mb-8">
+                <h2 class="text-2xl font-bold">Manajemen Komisi</h2>
+                <div class="text-sm text-slate-400" id="current-date"></div>
+            </div>
+            
+            <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
+                <!-- Form Input -->
+                <div class="xl:col-span-1">
+                    <div class="card p-6 rounded-3xl sticky top-8">
+                        <h3 class="text-lg font-bold mb-6 text-[#c5a059]">Input Data Baru</h3>
+                        <form id="commission-form" class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-400 mb-2 uppercase">Nama Driver</label>
+                                <input type="text" id="driver-name" placeholder="Contoh: Budi Santoso" required 
+                                    class="w-full bg-slate-800 p-4 rounded-xl outline-none border border-slate-700 focus:border-[#c5a059] transition-all">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-400 mb-2 uppercase">Jumlah Tamu Massage</label>
+                                <input type="number" id="guest-massage" placeholder="0" min="0" required 
+                                    class="w-full bg-slate-800 p-4 rounded-xl outline-none border border-slate-700 focus:border-[#c5a059] transition-all">
+                                <p class="text-[10px] text-slate-500 mt-1">* Komisi: Rp 100.000 / Tamu</p>
+                            </div>
+                            <div class="bg-slate-900/50 p-4 rounded-xl border border-slate-800 flex justify-between items-center">
+                                <span class="text-sm text-slate-400">Total Estimasi:</span>
+                                <span id="preview-total" class="font-bold text-[#c5a059]">Rp 0</span>
+                            </div>
+                            <button type="submit" id="btn-submit" class="w-full gold-gradient py-4 rounded-xl font-bold text-white shadow-lg active:scale-95 transition-all">
+                                SIMPAN DATA
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Tabel Riwayat -->
+                <div class="xl:col-span-2">
+                    <div class="card p-6 rounded-3xl">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-lg font-bold">Riwayat Transaksi</h3>
+                            <button onclick="exportCSV()" class="text-xs bg-slate-800 hover:bg-slate-700 px-3 py-2 rounded-lg border border-slate-700 transition-all">
+                                Export CSV
+                            </button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left">
+                                <thead>
+                                    <tr class="text-slate-500 text-[10px] uppercase tracking-widest border-b border-slate-800">
+                                        <th class="pb-4">Tanggal</th>
+                                        <th class="pb-4">Nama Driver</th>
+                                        <th class="pb-4 text-center">Tamu</th>
+                                        <th class="pb-4 text-right">Total Komisi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="table-body" class="divide-y divide-slate-800/50 text-sm">
+                                    <!-- Data dimuat di sini -->
+                                </tbody>
+                            </table>
+                            <div id="loading-state" class="text-center py-10 text-slate-600 italic">Memuat data...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Notifikasi -->
+    <div id="notification" class="fixed bottom-10 right-10 transform translate-y-20 opacity-0 transition-all duration-300 z-50">
+        <div class="bg-emerald-600 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3">
+            <span id="notif-msg" class="font-medium">Data berhasil disimpan!</span>
+        </div>
+    </div>
+
+    <script>
+        // Proteksi Halaman
+        if(sessionStorage.getItem('isLoggedIn') !== 'true') window.location.href = 'login.html';
+        function logout() { sessionStorage.clear(); window.location.href = 'login.html'; }
+
+        // Konfigurasi Supabase
+        const SUPABASE_URL = "https://qdxchvogaxiibzqvuupf.supabase.co"; 
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkeGNodm9nYXhpaWJ6cXZ1dXBmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAxODE5NTIsImV4cCI6MjA4NTc1Nzk1Mn0.8U_zk81b6wFfdZdPRupk5KSk3g39nOPs8SpZVkWbqkc";
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let transactions = [];
+
+        // Preview Realtime
+        document.getElementById('guest-massage').addEventListener('input', (e) => {
+            const val = parseInt(e.target.value) || 0;
+            document.getElementById('preview-total').innerText = `Rp ${(val * 100000).toLocaleString('id-ID')}`;
+        });
+
+        // Tampilkan Tanggal
+        document.getElementById('current-date').innerText = new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+        async function fetchTable() {
+            const loader = document.getElementById('loading-state');
+            loader.classList.remove('hidden');
+            
+            const { data, error } = await supabaseClient
+                .from('commissions')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            loader.classList.add('hidden');
+            
+            if (data) {
+                transactions = data;
+                document.getElementById('table-body').innerHTML = data.map(i => `
+                    <tr class="hover:bg-slate-800/20 transition-all">
+                        <td class="py-4 text-slate-400">${new Date(i.created_at).toLocaleDateString('id-ID')}</td>
+                        <td class="py-4 font-bold text-slate-200">${i.driver_name}</td>
+                        <td class="py-4 text-center font-bold text-yellow-500">${i.massage_guests}</td>
+                        <td class="py-4 text-right font-bold text-[#c5a059]">Rp ${i.commission_amount.toLocaleString('id-ID')}</td>
+                    </tr>`).join('');
+            }
+        }
+
+        document.getElementById('commission-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btn-submit');
+            btn.disabled = true;
+            btn.innerText = "MENYIMPAN...";
+
+            const name = document.getElementById('driver-name').value;
+            const msg = parseInt(document.getElementById('guest-massage').value) || 0;
+            const amount = msg * 100000;
+
+            const { error } = await supabaseClient.from('commissions').insert([{ 
+                driver_name: name, 
+                massage_guests: msg, 
+                commission_amount: amount 
+            }]);
+
+            if (!error) {
+                showNotification(`Data ${name} berhasil disimpan`);
+                e.target.reset();
+                document.getElementById('preview-total').innerText = "Rp 0";
+                fetchTable();
+            } else {
+                alert("Gagal menyimpan data ke database.");
+            }
+
+            btn.disabled = false;
+            btn.innerText = "SIMPAN DATA";
+        });
+
+        function showNotification(msg) {
+            const n = document.getElementById('notification');
+            document.getElementById('notif-msg').innerText = msg;
+            n.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => n.classList.add('translate-y-20', 'opacity-0'), 3000);
+        }
+
+        function exportCSV() {
+            if (transactions.length === 0) return;
+            let csv = "Tanggal,Driver,Tamu,Total Komisi\n";
+            transactions.forEach(i => {
+                csv += `${new Date(i.created_at).toLocaleDateString()},${i.driver_name},${i.massage_guests},${i.commission_amount}\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Laporan_Komisi_${new Date().getTime()}.csv`;
+            a.click();
+        }
+
+        // Inisialisasi
+        fetchTable();
+    </script>
+</body>
+</html>
