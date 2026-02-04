@@ -149,10 +149,9 @@
         const SUPABASE_URL = "https://qdxchvogaxiibzqvuupf.supabase.co"; 
         const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkeGNodm9nYXhpaWJ6cXZ1dXBmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAxODE5NTIsImV4cCI6MjA4NTc1Nzk1Mn0.8U_zk81b6wFfdZdPRupk5KSk3g39nOPs8SpZVkWbqkc";
         
-        // PENTING: Ganti nama variabel untuk menghindari tabrakan dengan global 'supabase'
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
         let currentDrivers = [];
+        let existingPhotoUrl = "";
 
         // Preview Foto
         function previewPhoto(event) {
@@ -168,7 +167,10 @@
 
         async function fetchDrivers() {
             const { data, error } = await supabaseClient.from('drivers').select('*').order('name');
-            if (error) return console.error(error);
+            if (error) {
+                console.error("Fetch Error:", error);
+                return;
+            }
             currentDrivers = data || [];
             renderTable(currentDrivers);
         }
@@ -210,40 +212,61 @@
         // Simpan Data & Upload Foto
         document.getElementById('driver-form').addEventListener('submit', async (e) => {
             e.preventDefault();
+            const btn = document.getElementById('btn-submit');
+            btn.disabled = true;
+            btn.innerText = "Processing...";
+
             const editId = document.getElementById('edit-mode-id').value;
             const file = document.getElementById('photo-input').files[0];
-            let photoUrl = document.getElementById('photo-preview').src;
+            let photoUrl = existingPhotoUrl;
 
-            // Jika ada file baru diupload
-            if (file) {
-                const fileName = `drivers/${Date.now()}_${file.name}`;
-                const { data: uploadData, error: uploadError } = await supabaseClient.storage.from('assets').upload(fileName, file);
-                
-                if (!uploadError) {
-                    const { data: publicUrl } = supabaseClient.storage.from('assets').getPublicUrl(fileName);
-                    photoUrl = publicUrl.publicUrl;
+            try {
+                // Jika ada file baru diupload
+                if (file) {
+                    const fileExt = file.name.split('.').pop();
+                    const fileName = `drivers/${Date.now()}.${fileExt}`;
+                    const { data: uploadData, error: uploadError } = await supabaseClient.storage.from('assets').upload(fileName, file);
+                    
+                    if (uploadError) throw uploadError;
+
+                    const { data: publicUrlData } = supabaseClient.storage.from('assets').getPublicUrl(fileName);
+                    photoUrl = publicUrlData.publicUrl;
                 }
-            }
 
-            const payload = {
-                driver_id: document.getElementById('reg-id').value,
-                name: document.getElementById('reg-name').value,
-                phone: document.getElementById('reg-phone').value,
-                address: document.getElementById('reg-address').value,
-                ktp_url: photoUrl.startsWith('data:') ? null : photoUrl
-            };
-            
-            if(editId) {
-                await supabaseClient.from('drivers').update(payload).eq('driver_id', editId);
-            } else {
-                await supabaseClient.from('drivers').insert([payload]);
+                const payload = {
+                    driver_id: document.getElementById('reg-id').value,
+                    name: document.getElementById('reg-name').value,
+                    phone: document.getElementById('reg-phone').value,
+                    address: document.getElementById('reg-address').value,
+                    ktp_url: photoUrl
+                };
+                
+                let result;
+                if(editId) {
+                    result = await supabaseClient.from('drivers').update(payload).eq('driver_id', editId);
+                } else {
+                    result = await supabaseClient.from('drivers').insert([payload]);
+                }
+
+                if (result.error) throw result.error;
+
+                resetForm(); 
+                await fetchDrivers();
+                alert("Data berhasil disimpan!");
+
+            } catch (err) {
+                console.error("Operation Failed:", err);
+                alert("Error: " + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = editId ? "Update Mitra" : "Simpan Data";
             }
-            
-            resetForm(); fetchDrivers();
         });
 
         async function edit(id) {
-            const { data } = await supabaseClient.from('drivers').select('*').eq('driver_id', id).single();
+            const { data, error } = await supabaseClient.from('drivers').select('*').eq('driver_id', id).single();
+            if(error) return alert("Gagal mengambil data");
+
             if(data) {
                 document.getElementById('edit-mode-id').value = data.driver_id;
                 document.getElementById('reg-id').value = data.driver_id;
@@ -251,6 +274,7 @@
                 document.getElementById('reg-phone').value = data.phone;
                 document.getElementById('reg-address').value = data.address || "";
                 
+                existingPhotoUrl = data.ktp_url || "";
                 if (data.ktp_url) {
                     const img = document.getElementById('photo-preview');
                     img.src = data.ktp_url;
@@ -266,8 +290,9 @@
         }
 
         async function del(id) {
-            if(confirm("Yakin ingin menghapus mitra ini dari database?")) {
-                await supabaseClient.from('drivers').delete().eq('driver_id', id);
+            if(confirm("Yakin ingin menghapus mitra ini?")) {
+                const { error } = await supabaseClient.from('drivers').delete().eq('driver_id', id);
+                if(error) alert("Gagal hapus: " + error.message);
                 fetchDrivers();
             }
         }
@@ -275,29 +300,28 @@
         function resetForm() {
             document.getElementById('driver-form').reset();
             document.getElementById('edit-mode-id').value = "";
+            existingPhotoUrl = "";
             document.getElementById('form-title').innerText = "Informasi Driver";
             document.getElementById('btn-submit').innerText = "Simpan Data";
             document.getElementById('btn-cancel').classList.add('hidden');
             document.getElementById('reg-id').readOnly = false;
             document.getElementById('photo-preview').classList.add('hidden');
             document.getElementById('photo-placeholder').classList.remove('hidden');
+            document.getElementById('photo-preview').src = "";
         }
 
-        // EXPORT EXCEL
         function exportToExcel() {
             const ws = XLSX.utils.json_to_sheet(currentDrivers.map(d => ({
                 NIK_ID: d.driver_id,
                 Nama: d.name,
                 WhatsApp: d.phone,
-                Alamat: d.address,
-                Tanggal_Join: d.created_at
+                Alamat: d.address
             })));
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "Drivers");
             XLSX.writeFile(wb, "Database_Driver_DeltaSpa.xlsx");
         }
 
-        // DOWNLOAD TEMPLATE
         function downloadTemplate() {
             const template = [{ NIK_ID: "", Nama: "", WhatsApp: "", Alamat: "" }];
             const ws = XLSX.utils.json_to_sheet(template);
@@ -306,15 +330,13 @@
             XLSX.writeFile(wb, "Template_Import_Driver.xlsx");
         }
 
-        // IMPORT DATA
         function importData(event) {
             const file = event.target.files[0];
             const reader = new FileReader();
             reader.onload = async (e) => {
                 const data = new Uint8Array(e.target.result);
                 const workbook = XLSX.read(data, { type: 'array' });
-                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                const rows = XLSX.utils.sheet_to_json(firstSheet);
+                const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
                 
                 const formatted = rows.map(r => ({
                     driver_id: (r.NIK_ID || r.driver_id || "").toString(),
