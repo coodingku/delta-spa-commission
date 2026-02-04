@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delta Spa - Registrasi Driver</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        body { font-family: 'Urbanist', sans-serif; background-color: #020617; color: #f8fafc; }
+        .gold-gradient { background: linear-gradient(135deg, #d4af37 0%, #a67c00 100%); }
+        .card { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(212, 175, 55, 0.1); }
+    </style>
+</head>
+<body class="p-8">
+    <div class="max-w-6xl mx-auto">
+        <header class="mb-10 flex justify-between items-center">
+            <div>
+                <h1 class="text-3xl font-bold uppercase italic text-[#d4af37]">Delta Spa <span class="text-white italic">Driver Registry</span></h1>
+                <p class="text-slate-500 text-sm">Kelola pangkalan data mitra pengantar.</p>
+            </div>
+            <div class="flex gap-3">
+                <a href="riwayat_transaksi.html" class="px-4 py-2 bg-slate-800 rounded-xl text-xs font-bold hover:bg-slate-700 transition-all">RIWAYAT</a>
+                <a href="pengaturan_komisi.html" class="px-4 py-2 bg-slate-800 rounded-xl text-xs font-bold hover:bg-slate-700 transition-all">HARGA PAKET</a>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <!-- Form Input -->
+            <div class="lg:col-span-4">
+                <div class="card p-8 rounded-[2rem]">
+                    <h3 id="form-title" class="text-sm font-bold text-[#d4af37] uppercase tracking-widest mb-6">Pendaftaran Baru</h3>
+                    <form id="driver-form" class="space-y-4">
+                        <input type="hidden" id="edit-mode-id">
+                        <div>
+                            <label class="text-[10px] font-bold text-slate-500 uppercase ml-1">ID / NIK Driver</label>
+                            <input type="text" id="reg-id" required class="w-full p-4 rounded-xl border border-slate-800 bg-slate-900 outline-none mt-1">
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-bold text-slate-500 uppercase ml-1">Nama Lengkap</label>
+                            <input type="text" id="reg-name" required class="w-full p-4 rounded-xl border border-slate-800 bg-slate-900 outline-none mt-1">
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-bold text-slate-500 uppercase ml-1">WhatsApp</label>
+                            <input type="tel" id="reg-phone" required class="w-full p-4 rounded-xl border border-slate-800 bg-slate-900 outline-none mt-1">
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-bold text-slate-500 uppercase ml-1">Alamat</label>
+                            <textarea id="reg-address" class="w-full p-4 rounded-xl border border-slate-800 bg-slate-900 outline-none mt-1 h-24 text-sm"></textarea>
+                        </div>
+                        <button type="submit" id="btn-submit" class="w-full gold-gradient py-4 rounded-xl font-bold text-white uppercase tracking-widest shadow-lg">Simpan Mitra</button>
+                        <button type="button" id="btn-cancel" onclick="resetForm()" class="hidden w-full bg-slate-800 py-3 rounded-xl font-bold text-white uppercase text-xs">Batal Edit</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- List Driver -->
+            <div class="lg:col-span-8">
+                <div class="card rounded-[2rem] overflow-hidden">
+                    <table class="w-full text-sm">
+                        <thead class="bg-slate-900/50 text-slate-500 text-[10px] uppercase tracking-widest">
+                            <tr>
+                                <th class="px-6 py-4 text-left">Mitra</th>
+                                <th class="px-6 py-4 text-left">Kontak</th>
+                                <th class="px-6 py-4 text-center">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="driver-list" class="divide-y divide-slate-800/30"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = "https://qdxchvogaxiibzqvuupf.supabase.co"; 
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkeGNodm9nYXhpaWJ6cXZ1dXBmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAxODE5NTIsImV4cCI6MjA4NTc1Nzk1Mn0.8U_zk81b6wFfdZdPRupk5KSk3g39nOPs8SpZVkWbqkc";
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        async function fetchDrivers() {
+            const { data } = await supabase.from('drivers').select('*').order('name');
+            document.getElementById('driver-list').innerHTML = data?.map(d => `
+                <tr class="hover:bg-slate-800/20">
+                    <td class="px-6 py-5">
+                        <p class="font-bold text-slate-100 uppercase">${d.name}</p>
+                        <p class="text-[10px] text-slate-500">ID: ${d.driver_id}</p>
+                    </td>
+                    <td class="px-6 py-5">
+                        <p class="text-xs text-emerald-500 font-bold">${d.phone}</p>
+                        <p class="text-[10px] text-slate-400 truncate max-w-xs">${d.address || '-'}</p>
+                    </td>
+                    <td class="px-6 py-5">
+                        <div class="flex gap-4 justify-center">
+                            <button onclick="edit('${d.driver_id}')" class="text-blue-400 hover:scale-125 transition-all"><i class="fa-solid fa-pen"></i></button>
+                            <button onclick="del('${d.driver_id}')" class="text-red-400 hover:scale-125 transition-all"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                    </td>
+                </tr>`).join('') || '<tr><td colspan="3" class="p-10 text-center text-slate-600">Belum ada data driver</td></tr>';
+        }
+
+        document.getElementById('driver-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const editId = document.getElementById('edit-mode-id').value;
+            const payload = {
+                driver_id: document.getElementById('reg-id').value,
+                name: document.getElementById('reg-name').value,
+                phone: document.getElementById('reg-phone').value,
+                address: document.getElementById('reg-address').value
+            };
+            
+            if(editId) await supabase.from('drivers').update(payload).eq('driver_id', editId);
+            else await supabase.from('drivers').insert([payload]);
+            
+            resetForm(); fetchDrivers();
+        });
+
+        async function edit(id) {
+            const { data } = await supabase.from('drivers').select('*').eq('driver_id', id).single();
+            if(data) {
+                document.getElementById('edit-mode-id').value = data.driver_id;
+                document.getElementById('reg-id').value = data.driver_id;
+                document.getElementById('reg-name').value = data.name;
+                document.getElementById('reg-phone').value = data.phone;
+                document.getElementById('reg-address').value = data.address || "";
+                document.getElementById('form-title').innerText = "Edit Mitra";
+                document.getElementById('btn-submit').innerText = "Update";
+                document.getElementById('btn-cancel').classList.remove('hidden');
+                document.getElementById('reg-id').readOnly = true;
+            }
+        }
+
+        function resetForm() {
+            document.getElementById('driver-form').reset();
+            document.getElementById('edit-mode-id').value = "";
+            document.getElementById('form-title').innerText = "Pendaftaran Baru";
+            document.getElementById('btn-submit').innerText = "Simpan Mitra";
+            document.getElementById('btn-cancel').classList.add('hidden');
+            document.getElementById('reg-id').readOnly = false;
+        }
+
+        async function del(id) { if(confirm("Hapus data driver?")) { await supabase.from('drivers').delete().eq('driver_id', id); fetchDrivers(); } }
+        window.onload = fetchDrivers;
+    </script>
+</body>
+</html>
