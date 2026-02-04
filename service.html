@@ -3,163 +3,199 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Delta Spa - Master Layanan</title>
+    <title>Finex Pos - Manajemen Service</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;500;600;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         body { font-family: 'Urbanist', sans-serif; background-color: #020617; color: #f8fafc; }
         .card { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(212, 175, 55, 0.1); }
-        .sidebar { background: #0f172a; border-right: 1px solid rgba(212, 175, 55, 0.1); }
-        .nav-link { display: flex; align-items: center; gap: 12px; padding: 14px 20px; border-radius: 16px; color: #94a3b8; transition: 0.3s; margin-bottom: 8px; font-weight: 500; }
-        .nav-link:hover { background: rgba(212, 175, 55, 0.05); color: #d4af37; }
-        .nav-link.active { background: linear-gradient(135deg, #d4af37 0%, #a67c00 100%); color: white; }
-        .gold-gradient { background: linear-gradient(135deg, #d4af37 0%, #a67c00 100%); }
-        input, select { background: rgba(30, 41, 59, 0.5) !important; border: 1px solid rgba(212, 175, 55, 0.2) !important; color: white !important; transition: 0.3s; }
-        input:focus { border-color: #d4af37 !important; outline: none; box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.2); }
+        .gold-text { color: #d4af37; }
+        .gold-button { background: linear-gradient(135deg, #d4af37 0%, #a67c00 100%); color: white; }
+        .input-dark { background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(212, 175, 55, 0.2); color: white; outline: none; }
+        .input-dark:focus { border-color: #d4af37; }
     </style>
 </head>
-<body class="min-h-screen flex">
-    <!-- Sidebar -->
-    <aside class="w-72 shrink-0 flex flex-col sidebar hidden md:flex">
-        <div class="p-8">
-            <h1 class="text-2xl font-black italic text-[#d4af37] tracking-tighter">DELTA <span class="text-white">SPA</span></h1>
-        </div>
-        <nav class="flex-1 px-4">
-            <a href="komisi.html" class="nav-link"><i class="fa-solid fa-money-bill-transfer w-5"></i> Dashboard Utama</a>
-            <a href="layanan_komisi.html" class="nav-link active"><i class="fa-solid fa-spa w-5"></i> Master Layanan</a>
-        </nav>
-    </aside>
+<body class="min-h-screen p-6 md:p-10">
 
-    <main class="flex-1 p-10 overflow-y-auto">
-        <div class="max-w-6xl mx-auto">
-            <header class="mb-10 flex justify-between items-end">
-                <div>
-                    <h1 class="text-3xl font-bold uppercase italic text-[#d4af37]">Master <span class="text-white">Layanan & Komisi</span></h1>
-                    <p class="text-slate-500 text-sm">Atur paket massage dan nilai komisi driver di sini.</p>
-                </div>
-            </header>
-
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
-                <!-- Form Tambah Layanan -->
-                <div class="lg:col-span-1">
-                    <div class="card p-8 rounded-[2.5rem] sticky top-10">
-                        <h3 class="text-lg font-bold text-white mb-6 flex items-center gap-2">
-                            <i class="fa-solid fa-plus-circle text-[#d4af37]"></i> Tambah Paket
-                        </h3>
-                        <form id="service-form" class="space-y-5">
-                            <div>
-                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Nama Layanan</label>
-                                <input type="text" id="service_name" placeholder="Contoh: Aromatherapy 90 Menit" class="w-full px-4 py-3 rounded-xl text-sm" required>
-                            </div>
-                            <div>
-                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Harga Layanan (Rp)</label>
-                                <input type="number" id="price" placeholder="0" class="w-full px-4 py-3 rounded-xl text-sm" required>
-                            </div>
-                            <div>
-                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Komisi Driver (Rp / Orang)</label>
-                                <input type="number" id="commission" placeholder="0" class="w-full px-4 py-3 rounded-xl text-sm" required>
-                            </div>
-                            <button type="submit" class="w-full py-4 gold-gradient rounded-xl text-xs font-bold text-white shadow-lg hover:brightness-110 transition-all mt-4">
-                                SIMPAN LAYANAN
-                            </button>
-                        </form>
-                    </div>
-                </div>
-
-                <!-- Tabel Daftar Layanan -->
-                <div class="lg:col-span-2">
-                    <div class="card rounded-[2.5rem] overflow-hidden">
-                        <div class="p-6 bg-slate-900/50 border-b border-slate-800/50 flex justify-between items-center">
-                            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest">Daftar Paket Aktif</h3>
-                            <span id="service-count" class="text-[10px] bg-slate-800 px-3 py-1 rounded-full text-[#d4af37] font-bold">0 PAKET</span>
-                        </div>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-sm">
-                                <thead class="bg-slate-900/80 text-slate-500 text-[10px] uppercase tracking-widest">
-                                    <tr>
-                                        <th class="px-6 py-4 text-left">Nama Layanan</th>
-                                        <th class="px-6 py-4 text-right">Harga</th>
-                                        <th class="px-6 py-4 text-right">Komisi</th>
-                                        <th class="px-6 py-4 text-center">Aksi</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="service-list" class="divide-y divide-slate-800/30">
-                                    <tr><td colspan="4" class="p-10 text-center text-slate-500 italic">Memuat data...</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
+    <div class="max-w-5xl mx-auto">
+        <header class="mb-10 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div>
+                <h1 class="text-3xl font-black uppercase italic gold-text">Master <span class="text-white">Services</span></h1>
+                <p class="text-slate-500 text-sm font-medium">Finex Pos - Kelola Layanan Delta Spa</p>
             </div>
+            <button onclick="openModal()" class="px-6 py-3 gold-button rounded-xl font-bold text-sm flex items-center gap-2 hover:scale-105 transition-transform">
+                <i class="fa-solid fa-plus"></i> Tambah Service
+            </button>
+        </header>
+
+        <!-- Search Bar -->
+        <div class="card p-4 rounded-2xl mb-8 flex items-center gap-4">
+            <i class="fa-solid fa-magnifying-glass text-slate-500 ml-2"></i>
+            <input type="text" id="search-service" oninput="fetchServices()" placeholder="Cari nama layanan..." class="bg-transparent border-none outline-none w-full text-white font-medium">
         </div>
-    </main>
+
+        <!-- Table Container -->
+        <div class="card rounded-3xl overflow-hidden border border-white/5 shadow-2xl">
+            <table class="w-full text-left">
+                <thead>
+                    <tr class="bg-slate-900/90 text-[10px] uppercase tracking-widest text-slate-500 font-black border-b border-white/5">
+                        <th class="px-6 py-5">Nama Layanan</th>
+                        <th class="px-6 py-5">Kategori</th>
+                        <th class="px-6 py-5">Harga</th>
+                        <th class="px-6 py-5 text-center">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="service-list" class="divide-y divide-slate-800/50">
+                    <!-- Data will be injected here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal Form -->
+    <div id="service-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+        <div class="card w-full max-w-md rounded-3xl p-8 shadow-2xl relative">
+            <button onclick="closeModal()" class="absolute top-6 right-6 text-slate-500 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
+            <h2 class="text-2xl font-black italic gold-text mb-6 uppercase">Form Service</h2>
+            
+            <form id="form-service" onsubmit="saveService(event)" class="space-y-4">
+                <input type="hidden" id="service-id">
+                <div class="flex flex-col gap-1">
+                    <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Nama Layanan</label>
+                    <input type="text" id="service-name" required class="input-dark px-4 py-3 rounded-xl font-bold">
+                </div>
+                <div class="flex flex-col gap-1">
+                    <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Kategori</label>
+                    <select id="service-category" class="input-dark px-4 py-3 rounded-xl font-bold">
+                        <option value="Massage">Massage</option>
+                        <option value="Spa">Spa</option>
+                        <option value="F&B">F&B</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="flex flex-col gap-1">
+                    <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Harga (Rp)</label>
+                    <input type="number" id="service-price" required class="input-dark px-4 py-3 rounded-xl font-bold">
+                </div>
+                <button type="submit" class="w-full py-4 gold-button rounded-xl font-black uppercase tracking-widest mt-4 shadow-lg shadow-[#d4af37]/20">
+                    Simpan Perubahan
+                </button>
+            </form>
+        </div>
+    </div>
 
     <script>
-        const SUPABASE_URL = "https://qdxchvogaxiibzqvuupf.supabase.co"; 
-        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkeGNodm9nYXhpaWJ6cXZ1dXBmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAxODE5NTIsImV4cCI6MjA4NTc1Nzk1Mn0.8U_zk81b6wFfdZdPRupk5KSk3g39nOPs8SpZVkWbqkc";
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const SUPA_URL = "https://qdxchvogaxiibzqvuupf.supabase.co";
+        const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkeGNodm9nYXhpaWJ6cXZ1dXBmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAxODE5NTIsImV4cCI6MjA4NTc1Nzk1Mn0.8U_zk81b6wFfdZdPRupk5KSk3g39nOPs8SpZVkWbqkc";
+        const sb = supabase.createClient(SUPA_URL, SUPA_KEY);
 
-        // Load Data Layanan
         async function fetchServices() {
-            const { data, error } = await supabaseClient.from('services').select('*').order('name', { ascending: true });
-            if (error) return console.error(error);
-
+            const query = document.getElementById('search-service').value.toLowerCase();
             const list = document.getElementById('service-list');
-            document.getElementById('service-count').innerText = `${data.length} PAKET`;
+            list.innerHTML = '<tr><td colspan="4" class="p-10 text-center animate-pulse italic text-slate-600">Memuat data...</td></tr>';
 
-            if (data.length === 0) {
-                list.innerHTML = `<tr><td colspan="4" class="p-10 text-center text-slate-500">Belum ada layanan terdaftar.</td></tr>`;
-                return;
+            try {
+                let { data, error } = await sb.from('services').select('*').order('name', { ascending: true });
+                if (error) throw error;
+
+                if(query) {
+                    data = data.filter(s => s.name.toLowerCase().includes(query));
+                }
+
+                if(data.length === 0) {
+                    list.innerHTML = '<tr><td colspan="4" class="p-10 text-center italic text-slate-700 uppercase font-bold tracking-widest text-xs">Tidak ada data ditemukan</td></tr>';
+                    return;
+                }
+
+                list.innerHTML = data.map(s => `
+                    <tr class="hover:bg-white/5 transition-all">
+                        <td class="px-6 py-4">
+                            <div class="font-black text-white italic uppercase tracking-tighter">${s.name}</div>
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="px-2 py-1 bg-slate-800 text-slate-400 text-[10px] rounded font-bold uppercase tracking-wider">${s.category || 'N/A'}</span>
+                        </td>
+                        <td class="px-6 py-4 font-bold text-slate-300">
+                            Rp ${parseInt(s.price).toLocaleString('id-ID')}
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                            <div class="flex justify-center gap-2">
+                                <button onclick="editService('${s.id}', '${s.name}', '${s.category}', '${s.price}')" class="w-8 h-8 rounded-lg bg-blue-500/20 text-blue-400 hover:bg-blue-500 hover:text-white transition-all flex items-center justify-center">
+                                    <i class="fa-solid fa-pen-to-square"></i>
+                                </button>
+                                <button onclick="deleteService('${s.id}', '${s.name}')" class="w-8 h-8 rounded-lg bg-rose-500/20 text-rose-400 hover:bg-rose-500 hover:text-white transition-all flex items-center justify-center">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (e) {
+                list.innerHTML = `<tr><td colspan="4" class="p-10 text-center text-red-500 font-bold uppercase text-xs">Error: ${e.message}</td></tr>`;
             }
-
-            list.innerHTML = data.map(s => `
-                <tr class="hover:bg-slate-800/20 transition-colors">
-                    <td class="px-6 py-4 font-bold text-white uppercase tracking-tight">${s.name}</td>
-                    <td class="px-6 py-4 text-right text-slate-400 font-medium">Rp ${s.price.toLocaleString('id-ID')}</td>
-                    <td class="px-6 py-4 text-right font-black text-emerald-400">Rp ${(s.commission || 0).toLocaleString('id-ID')}</td>
-                    <td class="px-6 py-4 text-center">
-                        <button onclick="deleteService(${s.id})" class="text-rose-500 hover:text-rose-400 transition-colors p-2">
-                            <i class="fa-solid fa-trash-can"></i>
-                        </button>
-                    </td>
-                </tr>
-            `).join('');
         }
 
-        // Simpan Layanan Baru
-        document.getElementById('service-form').onsubmit = async (e) => {
+        async function saveService(e) {
             e.preventDefault();
-            const btn = e.target.querySelector('button');
-            btn.disabled = true;
-            btn.innerText = "MENYIMPAN...";
+            const id = document.getElementById('service-id').value;
+            const name = document.getElementById('service-name').value;
+            const category = document.getElementById('service-category').value;
+            const price = document.getElementById('service-price').value;
 
-            const name = document.getElementById('service_name').value;
-            const price = document.getElementById('price').value;
-            const commission = document.getElementById('commission').value;
-
-            // Perbaikan: Gunakan kolom 'commission' bukan 'commission_rate'
-            const { error } = await supabaseClient.from('services').insert([
-                { name, price: parseInt(price), commission: parseInt(commission) }
-            ]);
-
-            if (error) {
-                alert("Gagal menyimpan: " + error.message);
-            } else {
-                e.target.reset();
+            try {
+                if(id) {
+                    await sb.from('services').update({ name, category, price }).eq('id', id);
+                } else {
+                    await sb.from('services').insert([{ name, category, price }]);
+                }
+                closeModal();
                 fetchServices();
+            } catch (err) {
+                alert("Gagal menyimpan: " + err.message);
             }
-            btn.disabled = false;
-            btn.innerText = "SIMPAN LAYANAN";
-        };
+        }
 
-        // Hapus Layanan
-        async function deleteService(id) {
-            if (!confirm("Hapus paket layanan ini?")) return;
-            const { error } = await supabaseClient.from('services').delete().eq('id', id);
-            if (error) alert("Gagal menghapus: " + error.message);
-            else fetchServices();
+        // FUNGSI PENGHAPUSAN YANG AMAN
+        async function deleteService(id, name) {
+            // Kita tidak menggunakan window.confirm karena berjalan di iframe
+            // Namun untuk keperluan internal admin, kita gunakan prompt konfirmasi manual
+            const confirmName = prompt(`Ketik "HAPUS" untuk mengonfirmasi penghapusan layanan: ${name}`);
+            
+            if (confirmName === "HAPUS") {
+                try {
+                    const { error } = await sb
+                        .from('services') // Pastikan nama tabel benar
+                        .delete()
+                        .eq('id', id);
+
+                    if (error) throw error;
+                    
+                    fetchServices();
+                } catch (err) {
+                    console.error("Delete Error:", err);
+                    alert("Gagal menghapus: " + err.message);
+                }
+            }
+        }
+
+        function openModal() {
+            document.getElementById('form-service').reset();
+            document.getElementById('service-id').value = '';
+            document.getElementById('service-modal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('service-modal').classList.add('hidden');
+        }
+
+        function editService(id, name, cat, price) {
+            document.getElementById('service-id').value = id;
+            document.getElementById('service-name').value = name;
+            document.getElementById('service-category').value = cat;
+            document.getElementById('service-price').value = price;
+            document.getElementById('service-modal').classList.remove('hidden');
         }
 
         window.onload = fetchServices;
