@@ -16,7 +16,7 @@
         .nav-link { display: flex; align-items: center; gap: 12px; padding: 14px 20px; border-radius: 16px; color: #64748b; transition: all 0.3s; margin-bottom: 4px; cursor: pointer; }
         .nav-link:hover { color: #c5a059; background: rgba(197, 160, 89, 0.05); }
         .nav-link.active { background: #c5a059; color: white; box-shadow: 0 10px 15px -3px rgba(197, 160, 89, 0.3); }
-        input, select { background: rgba(15, 23, 42, 0.8) !important; color: white !important; }
+        input, select, textarea { background: rgba(15, 23, 42, 0.8) !important; color: white !important; }
         
         @media print {
             body * { visibility: hidden; }
@@ -26,7 +26,7 @@
     </style>
 </head>
 <body class="min-h-screen flex">
-    <!-- Bukti Print (Hidden from UI) -->
+    <!-- Bukti Print -->
     <div id="print-area" class="hidden text-black font-mono text-[10pt]">
         <div class="text-center border-b border-black pb-2 mb-2">
             <h2 class="font-bold uppercase">Delta SPA</h2>
@@ -46,9 +46,6 @@
                     <span id="p-total">Rp 0</span>
                 </div>
             </div>
-        </div>
-        <div class="mt-4 text-center text-[8pt]">
-            <p>Terima Kasih</p>
         </div>
     </div>
 
@@ -95,13 +92,13 @@
 
     <!-- Main Content Area -->
     <main class="flex-1 p-8 overflow-y-auto no-print">
-        <div class="max-w-6xl mx-auto">
+        <div class="max-w-7xl mx-auto">
             
             <!-- SECTION: INPUT TRANSAKSI -->
             <div id="section-transaksi" class="animate-in fade-in duration-500">
                 <div class="mb-8">
                     <h2 class="text-3xl font-bold uppercase tracking-tight">Input Transaksi</h2>
-                    <p class="text-slate-500 text-sm mt-1">Catat komisi driver berdasarkan paket massage tamu.</p>
+                    <p class="text-slate-500 text-sm mt-1 text-emerald-400">Catat komisi driver berdasarkan paket massage tamu.</p>
                 </div>
                 <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
                     <div class="lg:col-span-5">
@@ -110,7 +107,7 @@
                                 <div>
                                     <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">ID Driver (NIK)</label>
                                     <input type="text" id="input-id-driver" placeholder="Masukkan ID..." required 
-                                        class="w-full p-4 rounded-2xl border border-slate-800 focus:border-[#c5a059] outline-none mt-1">
+                                        class="w-full p-4 rounded-2xl border border-slate-800 focus:border-[#c5a059] outline-none mt-1 transition-all">
                                     <p id="id-status" class="text-[10px] mt-1 font-bold h-4"></p>
                                 </div>
                                 <div>
@@ -163,10 +160,10 @@
                 <div class="mb-8 flex justify-between items-end">
                     <div>
                         <h2 class="text-3xl font-bold uppercase tracking-tight">Riwayat Komisi</h2>
-                        <p class="text-slate-500 text-sm mt-1">Data 50 transaksi komisi terakhir.</p>
+                        <p class="text-slate-500 text-sm mt-1">Detail log 50 transaksi komisi terakhir.</p>
                     </div>
-                    <button onclick="fetchCommissions()" class="bg-slate-800 p-3 rounded-xl hover:bg-slate-700 transition-all">
-                        <i class="fa-solid fa-arrows-rotate"></i>
+                    <button onclick="fetchCommissions()" class="bg-slate-800 p-3 rounded-xl hover:bg-slate-700 transition-all text-[#c5a059]">
+                        <i class="fa-solid fa-arrows-rotate"></i> Refresh
                     </button>
                 </div>
                 <div class="card rounded-[2rem] overflow-hidden shadow-2xl">
@@ -175,7 +172,7 @@
                             <thead class="bg-slate-900/50 text-slate-500 text-[10px] uppercase tracking-widest">
                                 <tr>
                                     <th class="px-8 py-5 text-left">Waktu / Tanggal</th>
-                                    <th class="px-8 py-5 text-left">Driver</th>
+                                    <th class="px-8 py-5 text-left">Total Driver (Mitra)</th>
                                     <th class="px-8 py-5 text-left">Layanan</th>
                                     <th class="px-8 py-5 text-right">Omzet</th>
                                     <th class="px-8 py-5 text-right">Komisi</th>
@@ -191,14 +188,14 @@
             <div id="section-services" class="hidden animate-in slide-in-from-bottom-4 duration-500">
                 <div class="mb-8">
                     <h2 class="text-3xl font-bold uppercase tracking-tight">Master Paket</h2>
-                    <p class="text-slate-500 text-sm mt-1">Kelola daftar layanan massage dan besaran komisinya.</p>
+                    <p class="text-slate-500 text-sm mt-1">Kelola daftar layanan massage.</p>
                 </div>
                 <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
                     <div class="lg:col-span-4">
                         <div class="card p-8 rounded-[2rem]">
                             <h3 class="text-sm font-bold text-[#c5a059] uppercase tracking-widest mb-6">Tambah Paket</h3>
                             <form id="service-form" class="space-y-4">
-                                <input type="text" id="svc-name" placeholder="Nama Paket (cth: Tradisional 90')" required class="w-full p-4 rounded-xl border border-slate-800 outline-none">
+                                <input type="text" id="svc-name" placeholder="Nama Paket" required class="w-full p-4 rounded-xl border border-slate-800 outline-none">
                                 <input type="number" id="svc-price" placeholder="Harga Jual (Rp)" required class="w-full p-4 rounded-xl border border-slate-800 outline-none">
                                 <input type="number" id="svc-comm" placeholder="Komisi Driver (Rp)" required class="w-full p-4 rounded-xl border border-slate-800 outline-none">
                                 <button type="submit" class="w-full gold-gradient py-4 rounded-xl font-bold text-white uppercase tracking-widest">Simpan Paket</button>
@@ -227,33 +224,54 @@
             <div id="section-drivers" class="hidden animate-in slide-in-from-bottom-4 duration-500">
                 <div class="mb-8">
                     <h2 class="text-3xl font-bold uppercase tracking-tight">Data Driver</h2>
-                    <p class="text-slate-500 text-sm mt-1">Registrasi dan pengelolaan database mitra driver.</p>
+                    <p class="text-slate-500 text-sm mt-1">Lengkapi alamat, upload KTP, dan edit data mitra driver.</p>
                 </div>
                 <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
                     <div class="lg:col-span-4">
                         <div class="card p-8 rounded-[2rem]">
-                            <h3 class="text-sm font-bold text-[#c5a059] uppercase tracking-widest mb-6">Registrasi Driver</h3>
+                            <h3 id="driver-form-title" class="text-sm font-bold text-[#c5a059] uppercase tracking-widest mb-6">Registrasi Driver</h3>
                             <form id="driver-reg-form" class="space-y-4">
-                                <input type="text" id="reg-id" placeholder="ID / NIK Driver" required class="w-full p-4 rounded-xl border border-slate-800 outline-none">
-                                <input type="text" id="reg-name" placeholder="Nama Lengkap" required class="w-full p-4 rounded-xl border border-slate-800 outline-none">
-                                <input type="tel" id="reg-phone" placeholder="No. Telepon / WA" required class="w-full p-4 rounded-xl border border-slate-800 outline-none">
-                                <button type="submit" class="w-full gold-gradient py-4 rounded-xl font-bold text-white uppercase tracking-widest">Daftarkan Driver</button>
+                                <input type="hidden" id="edit-mode-id">
+                                <div>
+                                    <label class="text-[9px] font-bold text-slate-500 uppercase ml-1">ID / NIK Driver</label>
+                                    <input type="text" id="reg-id" placeholder="Contoh: D-001" required class="w-full p-4 rounded-xl border border-slate-800 outline-none mt-1">
+                                </div>
+                                <div>
+                                    <label class="text-[9px] font-bold text-slate-500 uppercase ml-1">Nama Lengkap</label>
+                                    <input type="text" id="reg-name" placeholder="Nama Sesuai KTP" required class="w-full p-4 rounded-xl border border-slate-800 outline-none mt-1">
+                                </div>
+                                <div>
+                                    <label class="text-[9px] font-bold text-slate-500 uppercase ml-1">No. Telepon</label>
+                                    <input type="tel" id="reg-phone" placeholder="08..." required class="w-full p-4 rounded-xl border border-slate-800 outline-none mt-1">
+                                </div>
+                                <div>
+                                    <label class="text-[9px] font-bold text-slate-500 uppercase ml-1">Alamat Domisili</label>
+                                    <textarea id="reg-address" placeholder="Alamat Lengkap..." class="w-full p-4 rounded-xl border border-slate-800 outline-none mt-1 h-20"></textarea>
+                                </div>
+                                <div>
+                                    <label class="text-[9px] font-bold text-slate-500 uppercase ml-1">Upload Foto KTP</label>
+                                    <input type="file" id="reg-ktp" accept="image/*" class="w-full p-3 rounded-xl border border-slate-800 mt-1 text-xs file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-[#c5a059]/10 file:text-[#c5a059] hover:file:bg-[#c5a059]/20">
+                                </div>
+                                <button type="submit" id="btn-submit-driver" class="w-full gold-gradient py-4 rounded-xl font-bold text-white uppercase tracking-widest shadow-lg">Simpan Data Driver</button>
+                                <button type="button" id="btn-cancel-edit" onclick="resetDriverForm()" class="hidden w-full bg-slate-800 py-3 rounded-xl font-bold text-white uppercase text-xs">Batal Edit</button>
                             </form>
                         </div>
                     </div>
                     <div class="lg:col-span-8">
-                        <div class="card rounded-[2rem] overflow-hidden">
-                            <table class="w-full text-sm">
-                                <thead class="bg-slate-900/50 text-slate-500 text-[10px] uppercase tracking-widest">
-                                    <tr>
-                                        <th class="px-6 py-4 text-left">ID Driver</th>
-                                        <th class="px-6 py-4 text-left">Nama Mitra</th>
-                                        <th class="px-6 py-4 text-center">Kontak</th>
-                                        <th class="px-6 py-4 text-center">Aksi</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="driver-body" class="divide-y divide-slate-800/30"></tbody>
-                            </table>
+                        <div class="card rounded-[2rem] overflow-hidden shadow-2xl">
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-sm">
+                                    <thead class="bg-slate-900/50 text-slate-500 text-[10px] uppercase tracking-widest">
+                                        <tr>
+                                            <th class="px-6 py-4 text-left">Mitra Driver</th>
+                                            <th class="px-6 py-4 text-left">Alamat</th>
+                                            <th class="px-6 py-4 text-center">KTP</th>
+                                            <th class="px-6 py-4 text-center">Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="driver-body" class="divide-y divide-slate-800/30"></tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -271,7 +289,6 @@
     </div>
 
     <script>
-        // Supabase Init
         const SUPABASE_URL = "https://qdxchvogaxiibzqvuupf.supabase.co"; 
         const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkeGNodm9nYXhpaWJ6cXZ1dXBmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAxODE5NTIsImV4cCI6MjA4NTc1Nzk1Mn0.8U_zk81b6wFfdZdPRupk5KSk3g39nOPs8SpZVkWbqkc";
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -279,16 +296,13 @@
         let services = [];
         let selectedDriver = null;
 
-        // Navigation
         function switchTab(tab) {
-            // UI Update
             document.querySelectorAll('[id^="section-"]').forEach(s => s.classList.add('hidden'));
             document.getElementById(`section-${tab}`).classList.remove('hidden');
-            
             document.querySelectorAll('.nav-link').forEach(b => b.classList.remove('active'));
-            document.getElementById(`menu-${tab}`).classList.add('active');
+            const activeMenu = document.getElementById(`menu-${tab}`);
+            if(activeMenu) activeMenu.classList.add('active');
 
-            // Data Load
             if(tab === 'drivers') fetchDrivers();
             if(tab === 'services') loadServices();
             if(tab === 'history') fetchCommissions();
@@ -309,9 +323,7 @@
                         <td class="px-6 py-5 text-right font-mono">Rp ${s.price.toLocaleString()}</td>
                         <td class="px-6 py-5 text-right text-[#c5a059] font-black">Rp ${s.commission.toLocaleString()}</td>
                         <td class="px-6 py-5 text-center">
-                            <button onclick="deleteService('${s.id}')" class="w-8 h-8 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all">
-                                <i class="fa-solid fa-trash-can"></i>
-                            </button>
+                            <button onclick="deleteService('${s.id}')" class="text-red-500 hover:scale-110 transition-transform"><i class="fa-solid fa-trash"></i></button>
                         </td>
                     </tr>`).join('');
             }
@@ -322,23 +334,18 @@
             const id = e.target.value.trim();
             const statusEl = document.getElementById('id-status');
             const btn = document.getElementById('btn-save-tr');
-            
-            if (id.length < 3) {
-                statusEl.innerText = "";
-                return;
-            }
-
+            if (id.length < 2) { statusEl.innerText = ""; return; }
             const { data } = await supabaseClient.from('drivers').select('*').eq('driver_id', id).single();
             if (data) {
                 selectedDriver = data;
                 document.getElementById('display-name').value = data.name;
-                statusEl.innerText = "✓ Driver Terdaftar";
+                statusEl.innerText = "✓ Driver: " + data.name;
                 statusEl.className = "text-[10px] mt-1 text-emerald-500 font-bold";
                 btn.disabled = false; btn.classList.remove('opacity-50');
             } else {
                 selectedDriver = null;
                 document.getElementById('display-name').value = "";
-                statusEl.innerText = "⚠ ID Tidak Ditemukan";
+                statusEl.innerText = "⚠ Driver Tidak Terdaftar";
                 statusEl.className = "text-[10px] mt-1 text-red-500 font-bold";
                 btn.disabled = true; btn.classList.add('opacity-50');
             }
@@ -356,7 +363,6 @@
                 document.getElementById('calc-total').innerText = "Rp 0";
             }
         }
-
         document.getElementById('select-service').addEventListener('change', updateTotals);
         document.getElementById('guest-count').addEventListener('input', updateTotals);
 
@@ -367,7 +373,6 @@
             const service = services.find(s => s.id == svcId);
             const guests = parseInt(document.getElementById('guest-count').value);
             const totalComm = service.commission * guests;
-            const totalVal = service.price * guests;
 
             const { error } = await supabaseClient.from('commissions').insert([{
                 driver_id: selectedDriver.driver_id,
@@ -376,23 +381,19 @@
                 service_name: service.name,
                 massage_guests: guests,
                 commission_amount: totalComm,
-                total_massage_value: totalVal
+                total_massage_value: service.price * guests
             }]);
 
             if(!error) {
-                // Prepare Print Area
                 document.getElementById('p-date').innerText = new Date().toLocaleString('id-ID');
                 document.getElementById('p-name').innerText = selectedDriver.name;
                 document.getElementById('p-service').innerText = service.name;
                 document.getElementById('p-guests').innerText = guests;
                 document.getElementById('p-rate').innerText = `@ Rp ${service.commission.toLocaleString()}`;
                 document.getElementById('p-total').innerText = `Rp ${totalComm.toLocaleString()}`;
-                
-                showToast("Transaksi Berhasil!", "success");
+                showToast("Transaksi Disimpan!", "success");
                 window.print();
-                
-                e.target.reset();
-                updateTotals();
+                e.target.reset(); updateTotals();
             }
         });
 
@@ -401,17 +402,16 @@
             const { data } = await supabaseClient.from('commissions').select('*').order('created_at', { ascending: false }).limit(50);
             if (data) {
                 document.getElementById('tr-body').innerHTML = data.map(i => `
-                    <tr class="hover:bg-slate-800/20 transition-colors">
+                    <tr class="hover:bg-slate-800/20">
                         <td class="px-8 py-5 text-slate-500 font-mono text-xs">
-                            ${new Date(i.created_at).toLocaleDateString('id-ID')}
-                            <br><span class="opacity-50">${new Date(i.created_at).toLocaleTimeString('id-ID')}</span>
+                            ${new Date(i.created_at).toLocaleDateString('id-ID')} ${new Date(i.created_at).toLocaleTimeString('id-ID')}
                         </td>
                         <td class="px-8 py-5">
                             <p class="font-bold text-slate-200">${i.driver_name}</p>
-                            <p class="text-[10px] text-slate-500 font-mono tracking-tighter">${i.driver_id}</p>
+                            <p class="text-[10px] text-emerald-500 font-bold uppercase tracking-tighter">ID: ${i.driver_id}</p>
                         </td>
                         <td class="px-8 py-5">
-                            <p class="font-semibold text-white">${i.service_name || '-'}</p>
+                            <p class="font-semibold text-white">${i.service_name}</p>
                             <p class="text-[10px] text-[#c5a059] font-bold uppercase">${i.massage_guests} Tamu</p>
                         </td>
                         <td class="px-8 py-5 text-right font-mono text-slate-400 italic">Rp ${(i.total_massage_value || 0).toLocaleString()}</td>
@@ -426,13 +426,20 @@
             if(data) {
                 document.getElementById('driver-body').innerHTML = data.map(d => `
                     <tr>
-                        <td class="px-6 py-5 font-mono text-xs text-[#c5a059] font-bold">${d.driver_id}</td>
-                        <td class="px-6 py-5 font-bold text-slate-200">${d.name}</td>
-                        <td class="px-6 py-5 text-center text-slate-400">${d.phone}</td>
+                        <td class="px-6 py-5">
+                            <p class="font-bold text-slate-100">${d.name}</p>
+                            <p class="text-[11px] font-mono text-[#c5a059] font-bold">ID: ${d.driver_id}</p>
+                            <p class="text-[10px] text-slate-500">${d.phone}</p>
+                        </td>
+                        <td class="px-6 py-5 text-xs text-slate-400 max-w-[150px] truncate">${d.address || '-'}</td>
                         <td class="px-6 py-5 text-center">
-                            <button onclick="deleteDriver('${d.driver_id}')" class="text-red-400 hover:text-red-300">
-                                <i class="fa-solid fa-user-xmark"></i>
-                            </button>
+                            ${d.ktp_url ? `<i class="fa-solid fa-id-card text-emerald-400 text-lg"></i>` : `<i class="fa-solid fa-circle-question text-slate-700"></i>`}
+                        </td>
+                        <td class="px-6 py-5 text-center">
+                            <div class="flex gap-4 justify-center">
+                                <button onclick="editDriver('${d.driver_id}')" class="text-blue-400 hover:scale-125 transition-all"><i class="fa-solid fa-pen-to-square"></i></button>
+                                <button onclick="deleteDriver('${d.driver_id}')" class="text-red-400 hover:scale-125 transition-all"><i class="fa-solid fa-trash"></i></button>
+                            </div>
                         </td>
                     </tr>`).join('');
             }
@@ -440,23 +447,64 @@
 
         document.getElementById('driver-reg-form').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const { error } = await supabaseClient.from('drivers').insert([{
+            const editId = document.getElementById('edit-mode-id').value;
+            const payload = {
                 driver_id: document.getElementById('reg-id').value,
                 name: document.getElementById('reg-name').value,
-                phone: document.getElementById('reg-phone').value
-            }]);
-            if(!error) { showToast("Driver Berhasil Didaftar", "success"); e.target.reset(); fetchDrivers(); }
+                phone: document.getElementById('reg-phone').value,
+                address: document.getElementById('reg-address').value
+            };
+
+            let res;
+            if(editId) {
+                res = await supabaseClient.from('drivers').update(payload).eq('driver_id', editId);
+            } else {
+                res = await supabaseClient.from('drivers').insert([payload]);
+            }
+
+            if(!res.error) {
+                showToast(editId ? "Update Berhasil!" : "Driver Berhasil Didaftar", "success");
+                resetDriverForm();
+                fetchDrivers();
+            } else {
+                showToast("Gagal Simpan!", "error");
+            }
         });
 
+        async function editDriver(id) {
+            const { data } = await supabaseClient.from('drivers').select('*').eq('driver_id', id).single();
+            if(data) {
+                document.getElementById('edit-mode-id').value = data.driver_id;
+                document.getElementById('reg-id').value = data.driver_id;
+                document.getElementById('reg-name').value = data.name;
+                document.getElementById('reg-phone').value = data.phone;
+                document.getElementById('reg-address').value = data.address || "";
+                
+                document.getElementById('driver-form-title').innerText = "Edit Data Driver";
+                document.getElementById('btn-submit-driver').innerText = "Update Data Driver";
+                document.getElementById('btn-cancel-edit').classList.remove('hidden');
+                document.getElementById('reg-id').readOnly = true;
+            }
+        }
+
+        function resetDriverForm() {
+            document.getElementById('driver-reg-form').reset();
+            document.getElementById('edit-mode-id').value = "";
+            document.getElementById('driver-form-title').innerText = "Registrasi Driver";
+            document.getElementById('btn-submit-driver').innerText = "Simpan Data Driver";
+            document.getElementById('btn-cancel-edit').classList.add('hidden');
+            document.getElementById('reg-id').readOnly = false;
+        }
+
         async function deleteDriver(id) {
-            if(confirm("Hapus driver ini secara permanen?")) {
+            if(confirm("Hapus data driver ini?")) {
                 await supabaseClient.from('drivers').delete().eq('driver_id', id);
                 fetchDrivers();
             }
         }
 
         async function deleteService(id) {
-            if(confirm("Hapus paket layanan ini?")) {
+            if(confirm("Hapus paket ini?")) {
                 await supabaseClient.from('services').delete().eq('id', id);
                 loadServices();
             }
@@ -471,7 +519,7 @@
         }
 
         function logout() { sessionStorage.clear(); window.location.href = 'login.html'; }
-
+        
         // Boot
         loadServices();
     </script>
