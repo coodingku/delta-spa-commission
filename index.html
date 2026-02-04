@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delta SPA - Driver Commission System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Urbanist', sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+        }
+        .gold-gradient {
+            background: linear-gradient(135deg, #c5a059 0%, #926d27 100%);
+        }
+        .card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(197, 160, 89, 0.2);
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #c5a059; border-radius: 10px; }
+    </style>
+</head>
+<body class="min-h-screen p-4 md:p-8">
+
+    <div class="max-w-4xl mx-auto">
+        <header class="flex flex-col md:flex-row justify-between items-center mb-10 gap-4">
+            <div>
+                <h1 class="text-3xl font-bold text-[#c5a059]">DELTA SPA</h1>
+                <p class="text-slate-400">Driver Commission Management System</p>
+            </div>
+            <div id="status-badge" class="px-4 py-2 rounded-full bg-red-900/30 text-red-400 border border-red-800 text-sm">
+                Supabase Not Connected
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <section class="card p-6 rounded-2xl shadow-xl">
+                <h2 class="text-xl font-semibold mb-6 flex items-center gap-2">
+                    <span class="w-8 h-8 gold-gradient rounded-lg flex items-center justify-center text-white text-sm">01</span>
+                    Input Transaksi Baru
+                </h2>
+
+                <form id="commission-form" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1 text-slate-300">Nama Driver</label>
+                        <input type="text" id="driver-name" required placeholder="Masukkan nama driver..." 
+                            class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 focus:outline-none focus:border-[#c5a059] transition-all text-white">
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-1 text-slate-300 text-yellow-500">Tamu Massage</label>
+                            <input type="number" id="guest-massage" value="0" min="0" 
+                                class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 focus:outline-none focus:border-[#c5a059] text-white">
+                            <p class="text-[10px] mt-1 text-slate-500 text-center">Rp 100.000 / pax</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1 text-slate-300">Tamu Fasilitas</label>
+                            <input type="number" id="guest-facility" value="0" min="0" 
+                                class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 focus:outline-none focus:border-slate-500 text-white">
+                            <p class="text-[10px] mt-1 text-slate-500 text-center">Rp 0 / pax</p>
+                        </div>
+                    </div>
+
+                    <div class="pt-4">
+                        <div class="bg-slate-900/50 p-4 rounded-xl mb-4 border border-slate-800">
+                            <div class="flex justify-between items-center text-sm">
+                                <span>Estimasi Komisi:</span>
+                                <span id="preview-amount" class="text-xl font-bold text-[#c5a059]">Rp 0</span>
+                            </div>
+                        </div>
+                        <button type="submit" id="btn-submit" class="w-full gold-gradient hover:opacity-90 text-white font-bold py-4 rounded-xl shadow-lg transition-transform active:scale-[0.98]">
+                            Simpan Transaksi
+                        </button>
+                    </div>
+                </form>
+            </section>
+
+            <section class="space-y-6">
+                <div class="card p-6 rounded-2xl">
+                    <h2 class="text-xl font-semibold mb-6 flex items-center gap-2">
+                        <span class="w-8 h-8 gold-gradient rounded-lg flex items-center justify-center text-white text-sm">02</span>
+                        Dashboard Hari Ini
+                    </h2>
+                    
+                    <div class="grid grid-cols-2 gap-4 mb-6">
+                        <div class="bg-slate-800/40 p-4 rounded-xl border border-slate-700">
+                            <span class="text-xs text-slate-400 uppercase">Total Komisi</span>
+                            <div id="total-commission-today" class="text-2xl font-bold text-[#c5a059]">Rp 0</div>
+                        </div>
+                        <div class="bg-slate-800/40 p-4 rounded-xl border border-slate-700">
+                            <span class="text-xs text-slate-400 uppercase">Tamu Massage</span>
+                            <div id="total-massage-today" class="text-2xl font-bold">0</div>
+                        </div>
+                    </div>
+
+                    <h3 class="text-sm font-semibold text-slate-400 uppercase mb-3">Aktivitas Terakhir</h3>
+                    <div id="recent-logs" class="space-y-3 max-h-[300px] overflow-y-auto pr-2">
+                        <div class="text-center py-10 text-slate-500 text-sm italic">
+                            Memuat data transaksi...
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <div id="notification" class="fixed bottom-10 right-10 transform translate-y-20 opacity-0 transition-all duration-300 z-50">
+        <div id="notif-bg" class="bg-emerald-600 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3">
+            <span id="notification-msg">Data berhasil disimpan!</span>
+        </div>
+    </div>
+
+    <script>
+        // MASUKKAN URL DAN KEY SUPABASE ANDA DI SINI
+        const SUPABASE_URL = ""; 
+        const SUPABASE_ANON_KEY = "";
+        
+        let supabaseClient = null;
+
+        // Inisialisasi Supabase
+        if (SUPABASE_URL && SUPABASE_ANON_KEY) {
+            supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            document.getElementById('status-badge').innerText = 'Supabase Connected';
+            document.getElementById('status-badge').classList.replace('bg-red-900/30', 'bg-emerald-900/30');
+            document.getElementById('status-badge').classList.replace('text-red-400', 'text-emerald-400');
+            document.getElementById('status-badge').classList.replace('border-red-800', 'border-emerald-800');
+            loadInitialData();
+        }
+
+        const form = document.getElementById('commission-form');
+        const previewEl = document.getElementById('preview-amount');
+        const massageInput = document.getElementById('guest-massage');
+        const logContainer = document.getElementById('recent-logs');
+        const btnSubmit = document.getElementById('btn-submit');
+
+        function updatePreview() {
+            const massageCount = parseInt(massageInput.value) || 0;
+            const total = massageCount * 100000;
+            previewEl.innerText = `Rp ${total.toLocaleString('id-ID')}`;
+        }
+
+        massageInput.addEventListener('input', updatePreview);
+
+        function showNotification(msg, type = 'success') {
+            const notif = document.getElementById('notification');
+            const notifBg = document.getElementById('notif-bg');
+            document.getElementById('notification-msg').innerText = msg;
+            
+            notifBg.className = type === 'success' ? 'bg-emerald-600 text-white px-6 py-4 rounded-2xl' : 'bg-red-600 text-white px-6 py-4 rounded-2xl';
+            
+            notif.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => { notif.classList.add('translate-y-20', 'opacity-0'); }, 3000);
+        }
+
+        async function loadInitialData() {
+            if (!supabaseClient) return;
+            const { data, error } = await supabaseClient
+                .from('commissions')
+                .select('*')
+                .order('created_at', { ascending: false })
+                .limit(10);
+            
+            if (data) {
+                logContainer.innerHTML = '';
+                let totalC = 0;
+                let totalM = 0;
+                data.forEach(item => {
+                    addLogToUI({
+                        driver_name: item.driver_name,
+                        massage_guests: item.massage_guests,
+                        facility_guests: item.facility_guests,
+                        commission_amount: item.commission_amount,
+                        timestamp: new Date(item.created_at).toLocaleTimeString('id-ID')
+                    });
+                    totalC += item.commission_amount;
+                    totalM += item.massage_guests;
+                });
+                updateTodayStats(totalC, totalM, true);
+            }
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            btnSubmit.disabled = true;
+            btnSubmit.innerText = "Memproses...";
+            
+            const driverName = document.getElementById('driver-name').value;
+            const massageCount = parseInt(massageInput.value) || 0;
+            const facilityCount = parseInt(document.getElementById('guest-facility').value) || 0;
+            const totalCommission = massageCount * 100000;
+
+            const newEntry = {
+                driver_name: driverName,
+                massage_guests: massageCount,
+                facility_guests: facilityCount,
+                commission_amount: totalCommission
+            };
+
+            if (supabaseClient) {
+                const { error } = await supabaseClient.from('commissions').insert([newEntry]);
+                if (error) {
+                    showNotification("Gagal simpan ke database!", "error");
+                    console.error(error);
+                } else {
+                    showNotification(`Berhasil mencatat komisi ${driverName}`);
+                    addLogToUI({...newEntry, timestamp: new Date().toLocaleTimeString('id-ID')});
+                    updateTodayStats(totalCommission, massageCount);
+                    form.reset();
+                    updatePreview();
+                }
+            } else {
+                showNotification("Supabase belum terhubung!", "error");
+            }
+            
+            btnSubmit.disabled = false;
+            btnSubmit.innerText = "Simpan Transaksi";
+        });
+
+        function addLogToUI(entry) {
+            const div = document.createElement('div');
+            div.className = "flex justify-between items-center p-4 bg-slate-900/40 border border-slate-800 rounded-xl mb-3";
+            div.innerHTML = `
+                <div>
+                    <div class="font-semibold">${entry.driver_name}</div>
+                    <div class="text-[10px] text-slate-500">${entry.timestamp} • ${entry.massage_guests} Massage, ${entry.facility_guests} Fasilitas</div>
+                </div>
+                <div class="text-[#c5a059] font-bold">
+                    +${(entry.commission_amount / 1000).toLocaleString('id-ID')}k
+                </div>
+            `;
+            logContainer.prepend(div);
+        }
+
+        let runningTotal = 0;
+        let runningMassage = 0;
+        function updateTodayStats(comm, massage, isInitial = false) {
+            if (isInitial) {
+                runningTotal = comm;
+                runningMassage = massage;
+            } else {
+                runningTotal += comm;
+                runningMassage += massage;
+            }
+            document.getElementById('total-commission-today').innerText = `Rp ${runningTotal.toLocaleString('id-ID')}`;
+            document.getElementById('total-massage-today').innerText = runningMassage;
+        }
+    </script>
+</body>
+</html>
