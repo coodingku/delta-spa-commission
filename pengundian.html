@@ -28,8 +28,8 @@
             align-items: center;
             border: 4px solid #d4af37;
             background: #000;
-            border-radius: 20px;
-            box-shadow: 0 0 30px rgba(212, 175, 55, 0.3);
+            border-radius: 24px;
+            box-shadow: 0 0 30px rgba(212, 175, 55, 0.2);
         }
 
         .winner-anim { animation: celebrate 0.5s ease infinite alternate; }
@@ -37,6 +37,12 @@
             from { transform: scale(1); filter: brightness(1); }
             to { transform: scale(1.05); filter: brightness(1.3); }
         }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #d4af37; }
     </style>
 </head>
 <body class="min-h-screen flex">
@@ -58,9 +64,18 @@
 
     <main class="flex-1 p-6 md:p-10">
         <div class="max-w-5xl mx-auto">
-            <header class="mb-10">
-                <h1 class="text-4xl font-black uppercase italic gold-text">Lucky <span class="text-white">Draw Driver</span></h1>
-                <p class="text-slate-500 font-medium">Apresiasi Driver: Undian berdasarkan akumulasi poin aktif.</p>
+            <header class="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-4">
+                <div>
+                    <h1 class="text-4xl font-black uppercase italic gold-text">Lucky <span class="text-white">Draw</span></h1>
+                    <p class="text-slate-500 font-medium">Pengundian poin otomatis & reset sistem.</p>
+                </div>
+                <div class="bg-white/5 border border-white/10 px-6 py-3 rounded-2xl flex items-center gap-4">
+                    <div class="text-right">
+                        <p class="text-[10px] text-slate-500 font-bold uppercase">Status Database</p>
+                        <p id="db-status" class="text-xs font-black text-emerald-500 uppercase italic">Terhubung</p>
+                    </div>
+                    <i class="fa-solid fa-database text-slate-700 text-2xl"></i>
+                </div>
             </header>
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -69,7 +84,7 @@
                     <div class="card p-10 rounded-[40px] text-center relative overflow-hidden">
                         <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#d4af37] to-transparent"></div>
                         
-                        <h2 class="text-slate-400 text-xs font-black uppercase tracking-[0.3em] mb-8">System Pengundian Otomatis</h2>
+                        <h2 class="text-slate-400 text-xs font-black uppercase tracking-[0.3em] mb-8">Main Prize Draw</h2>
                         
                         <div class="slot-machine mb-8">
                             <div id="display-winner" class="text-4xl md:text-5xl font-black text-white uppercase italic tracking-tighter">
@@ -77,42 +92,53 @@
                             </div>
                         </div>
 
-                        <div id="winner-info" class="hidden mb-8 p-6 bg-white/5 rounded-2xl border border-white/10">
-                            <p class="text-slate-400 text-xs uppercase font-bold mb-1">Pemenang Terpilih:</p>
-                            <h3 id="winner-name" class="text-3xl font-black gold-text mb-2">-</h3>
-                            <p id="winner-points" class="text-white font-mono text-sm opacity-70">Total Poin: 0</p>
+                        <div id="winner-info" class="hidden mb-8 p-6 bg-white/5 rounded-3xl border border-white/10 animate-in fade-in zoom-in duration-500">
+                            <p class="text-slate-400 text-[10px] uppercase font-black mb-1 tracking-widest">🏆 Pemenang Terpilih 🏆</p>
+                            <h3 id="winner-name" class="text-4xl font-black gold-text mb-2 tracking-tighter uppercase italic">-</h3>
+                            <p id="winner-points" class="text-white font-mono text-xs opacity-60">Total Poin Diundi: 0</p>
                         </div>
 
-                        <button id="btn-draw" onclick="startDrawing()" class="w-full py-6 gold-button rounded-2xl text-xl font-black uppercase tracking-widest hover:scale-[1.02] transition-all shadow-2xl shadow-[#d4af37]/30 disabled:opacity-50 disabled:cursor-not-allowed">
-                            MULAI UNDIAN SEKARANG
+                        <button id="btn-draw" onclick="startDrawing()" class="w-full py-6 gold-button rounded-2xl text-xl font-black uppercase tracking-widest hover:scale-[1.02] active:scale-95 transition-all shadow-2xl shadow-[#d4af37]/30 disabled:opacity-30 disabled:grayscale disabled:cursor-not-allowed">
+                            <i class="fa-solid fa-rotate mr-2"></i> ACAK SEKARANG
                         </button>
                         
-                        <p class="text-[10px] text-slate-500 mt-6 italic">Catatan: Setelah pemenang dikonfirmasi, poin semua driver yang memenuhi syarat akan di-reset ke nol secara otomatis.</p>
+                        <div class="mt-8 flex items-center justify-center gap-6 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                            <span class="flex items-center gap-2"><i class="fa-solid fa-check-circle text-emerald-500"></i> Auto Reset</span>
+                            <span class="flex items-center gap-2"><i class="fa-solid fa-check-circle text-emerald-500"></i> Cloud Sync</span>
+                        </div>
                     </div>
 
-                    <!-- History Undian -->
+                    <!-- History -->
                     <div class="card p-6 rounded-3xl">
-                        <h3 class="text-sm font-black gold-text uppercase mb-4 flex items-center gap-2">
-                            <i class="fa-solid fa-history"></i> Riwayat Undian Terakhir
-                        </h3>
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="text-xs font-black text-white uppercase tracking-widest">Riwayat Pemenang</h3>
+                            <button onclick="fetchCandidates()" class="text-[10px] font-bold gold-text hover:underline uppercase">Refresh Data</button>
+                        </div>
                         <div id="draw-history" class="space-y-3">
-                            <div class="text-center py-8 text-slate-600 text-xs italic uppercase tracking-widest">Belum ada riwayat undian</div>
+                            <div class="text-center py-6 text-slate-600 text-[10px] italic uppercase font-bold">Belum ada aktivitas undian</div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Sisi Kanan: Daftar Kandidat -->
                 <div class="space-y-6">
-                    <div class="card p-6 rounded-3xl">
-                        <h3 class="text-sm font-black text-white uppercase mb-4">Kandidat Aktif</h3>
-                        <div class="flex items-center justify-between mb-4 bg-white/5 p-3 rounded-xl border border-white/5">
-                            <span class="text-[10px] text-slate-400 font-bold uppercase">Min. Poin Ikut:</span>
-                            <span class="text-xs font-black gold-text">10 POIN</span>
+                    <div class="card p-6 rounded-3xl border-[#d4af37]/20">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-xs font-black text-white uppercase tracking-widest">Kandidat Valid</h3>
+                            <span class="text-[10px] bg-[#d4af37]/10 text-[#d4af37] px-2 py-0.5 rounded font-black">MIN 10 PT</span>
                         </div>
                         
-                        <div id="candidate-list" class="space-y-3 max-h-[500px] overflow-y-auto pr-2">
+                        <div id="candidate-list" class="space-y-2 max-h-[500px] overflow-y-auto pr-2">
                             <!-- Loading candidates... -->
                         </div>
+                    </div>
+
+                    <div class="p-6 bg-amber-500/10 border border-amber-500/20 rounded-3xl">
+                        <h4 class="text-[10px] font-black text-amber-500 uppercase mb-2">Informasi Sistem</h4>
+                        <p class="text-[10px] text-slate-400 leading-relaxed">
+                            Poin driver yang sudah mencapai 10 atau lebih akan otomatis masuk ke sistem undian. 
+                            <strong>Penting:</strong> Setelah pemenang ditentukan, seluruh poin aktif di database akan di-reset menjadi 0 (is_redeemed = true).
+                        </p>
                     </div>
                 </div>
             </div>
@@ -120,6 +146,7 @@
     </main>
 
     <script>
+        // Gunakan kredensial yang sama
         const SUPABASE_URL = "https://qdxchvogaxiibzqvuupf.supabase.co"; 
         const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkeGNodm9nYXhpaWJ6cXZ1dXBmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAxODE5NTIsImV4cCI6MjA4NTc1Nzk1Mn0.8U_zk81b6wFfdZdPRupk5KSk3g39nOPs8SpZVkWbqkc";
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -133,26 +160,27 @@
 
         async function fetchCandidates() {
             const listEl = document.getElementById('candidate-list');
-            listEl.innerHTML = '<div class="text-center py-4 text-slate-500 animate-pulse text-xs uppercase">Memuat Data...</div>';
+            listEl.innerHTML = '<div class="text-center py-10 opacity-50"><i class="fa-solid fa-spinner fa-spin text-2xl gold-text"></i></div>';
 
             try {
-                // Ambil data yang BELUM pernah diundi (is_redeemed != true)
-                // Catatan: Jika kolom is_redeemed belum ada di tabel, Supabase akan mengabaikan filter ini atau error.
+                // Ambil data yang is_redeemed-nya FALSE atau NULL
                 const { data, error } = await supabaseClient
                     .from('commissions')
-                    .select('driver_name, points_earned')
-                    .is('is_redeemed', null);
+                    .select('driver_name, points_earned, is_redeemed');
 
                 if (error) throw error;
 
-                // Agregasi poin per driver
-                const summary = data.reduce((acc, curr) => {
+                // Filter manual di JS untuk keamanan data NULL/FALSE
+                const activeData = data.filter(item => !item.is_redeemed);
+
+                // Agregasi poin
+                const summary = activeData.reduce((acc, curr) => {
                     const name = curr.driver_name || 'Tanpa Nama';
                     acc[name] = (acc[name] || 0) + (parseInt(curr.points_earned) || 0);
                     return acc;
                 }, {});
 
-                // Transform ke array dan filter berdasarkan minimal poin
+                // Map & Filter Kandidat
                 candidates = Object.keys(summary)
                     .map(name => ({ name, points: summary[name] }))
                     .filter(d => d.points >= MIN_POINTS)
@@ -160,62 +188,71 @@
 
                 renderCandidates();
             } catch (err) {
-                console.error(err);
-                listEl.innerHTML = '<div class="text-red-500 text-[10px] text-center">Gagal memuat data driver</div>';
+                console.error("Fetch Error:", err);
+                document.getElementById('db-status').innerText = "Error Kolom";
+                document.getElementById('db-status').classList.replace('text-emerald-500', 'text-red-500');
+                listEl.innerHTML = `
+                    <div class="text-center py-6 bg-red-500/10 rounded-2xl border border-red-500/20">
+                        <p class="text-[10px] text-red-500 font-bold uppercase p-2">Kolom 'is_redeemed' tidak ditemukan di database.</p>
+                        <p class="text-[8px] text-slate-500 px-4">Pastikan Anda sudah menjalankan SQL ALTER TABLE di Supabase Editor.</p>
+                    </div>
+                `;
             }
         }
 
         function renderCandidates() {
             const listEl = document.getElementById('candidate-list');
+            const btn = document.getElementById('btn-draw');
+
             if (candidates.length === 0) {
-                listEl.innerHTML = '<div class="text-center py-8 text-slate-700 text-[10px] uppercase font-bold italic">Tidak ada driver yang memenuhi syarat poin minimum</div>';
-                document.getElementById('btn-draw').disabled = true;
+                listEl.innerHTML = '<div class="text-center py-12 text-slate-700 text-[10px] uppercase font-black italic tracking-widest">Kosong</div>';
+                btn.disabled = true;
+                btn.innerHTML = 'KANDIDAT TIDAK CUKUP';
                 return;
             }
 
-            document.getElementById('btn-draw').disabled = false;
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-rotate mr-2"></i> ACAK SEKARANG';
             listEl.innerHTML = candidates.map(c => `
-                <div class="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5 hover:border-[#d4af37]/30 transition-all">
+                <div class="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5 hover:border-[#d4af37]/30 transition-all group">
                     <div>
-                        <p class="text-xs font-black text-slate-200 uppercase">${c.name}</p>
-                        <p class="text-[9px] text-slate-500">Kandidat Valid</p>
+                        <p class="text-xs font-black text-slate-200 uppercase group-hover:gold-text transition-colors">${c.name}</p>
+                        <p class="text-[9px] text-slate-500 font-bold">QUALIFIED</p>
                     </div>
                     <div class="text-right">
-                        <p class="text-sm font-black gold-text">${c.points}</p>
-                        <p class="text-[8px] text-slate-500 uppercase tracking-tighter">Poin Aktif</p>
+                        <p class="text-sm font-black text-white">${c.points}</p>
+                        <p class="text-[8px] text-slate-500 uppercase font-black">Points</p>
                     </div>
                 </div>
             `).join('');
         }
 
         async function startDrawing() {
-            if (candidates.length === 0) return;
-
             const btn = document.getElementById('btn-draw');
             const display = document.getElementById('display-winner');
             const info = document.getElementById('winner-info');
             
             btn.disabled = true;
             info.classList.add('hidden');
-            display.classList.remove('winner-anim');
+            display.classList.remove('winner-anim', 'gold-text');
+            display.classList.add('text-white');
 
-            // Sound Effect (Optional)
             let counter = 0;
-            const duration = 3000; // 3 detik putar
+            const duration = 3000;
             const interval = setInterval(() => {
                 const randomName = candidates[Math.floor(Math.random() * candidates.length)].name;
                 display.innerText = randomName;
-                counter += 100;
+                counter += 80;
                 
                 if (counter >= duration) {
                     clearInterval(interval);
                     finalizeWinner();
                 }
-            }, 100);
+            }, 80);
         }
 
         async function finalizeWinner() {
-            // Bobot peluang berdasarkan jumlah poin
+            // Weighted Random Logic
             const pool = [];
             candidates.forEach(c => {
                 for (let i = 0; i < c.points; i++) pool.push(c);
@@ -223,60 +260,70 @@
 
             const winner = pool[Math.floor(Math.random() * pool.length)];
             
-            // Tampilkan Pemenang
             const display = document.getElementById('display-winner');
             display.innerText = winner.name;
             display.classList.add('winner-anim', 'gold-text');
+            display.classList.remove('text-white');
             
             document.getElementById('winner-name').innerText = winner.name;
-            document.getElementById('winner-points').innerText = `Total Poin Saat Ini: ${winner.points}`;
+            document.getElementById('winner-points').innerText = `Total Akumulasi Poin: ${winner.points}`;
             document.getElementById('winner-info').classList.remove('hidden');
 
-            // Confetti
             confetti({
-                particleCount: 150,
-                spread: 70,
-                origin: { y: 0.6 },
-                colors: ['#d4af37', '#ffffff', '#a67c00']
+                particleCount: 200,
+                spread: 90,
+                origin: { y: 0.7 },
+                colors: ['#d4af37', '#ffffff', '#fbbf24']
             });
 
-            // RESET POIN OTOMATIS
+            // Jalankan Reset Database
             await resetAllPoints();
         }
 
         async function resetAllPoints() {
             try {
-                // Logika: Tandai semua kolom is_redeemed menjadi true 
-                // agar di undian berikutnya poin mulai dari nol.
+                // Update SEMUA record yang saat ini aktif menjadi redeemeed
                 const { error } = await supabaseClient
                     .from('commissions')
                     .update({ is_redeemed: true })
-                    .is('is_redeemed', null);
+                    .eq('is_redeemed', false); 
+                
+                // Jika error pertama (mungkin karena filter eq false tidak kena NULL), coba ini:
+                if (error) {
+                    await supabaseClient
+                        .from('commissions')
+                        .update({ is_redeemed: true })
+                        .is('is_redeemed', null);
+                }
 
-                if (error) throw error;
-
-                // Update riwayat lokal (UI)
+                // Log riwayat ke UI
                 const historyEl = document.getElementById('draw-history');
+                if (historyEl.innerHTML.includes('Belum ada')) historyEl.innerHTML = '';
+                
                 const now = new Date();
-                const newHistory = `
-                    <div class="flex items-center justify-between p-3 bg-emerald-500/5 border border-emerald-500/20 rounded-xl">
+                const timeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+                
+                const log = `
+                    <div class="flex items-center justify-between p-4 bg-emerald-500/5 border border-emerald-500/10 rounded-2xl animate-in slide-in-from-right">
                         <div>
-                            <p class="text-[10px] font-black text-emerald-400 uppercase">${document.getElementById('winner-name').innerText}</p>
-                            <p class="text-[8px] text-slate-500">${now.toLocaleDateString()} - ${now.toLocaleTimeString()}</p>
+                            <p class="text-[11px] font-black text-white uppercase italic">${document.getElementById('winner-name').innerText}</p>
+                            <p class="text-[8px] text-slate-500 font-bold">${now.toLocaleDateString()} • ${timeStr} WIB</p>
                         </div>
-                        <span class="text-[8px] px-2 py-1 bg-emerald-500/10 text-emerald-500 rounded font-black">RESET SUKSES</span>
+                        <div class="text-right">
+                            <span class="text-[8px] px-2 py-1 bg-emerald-500/20 text-emerald-400 rounded-lg font-black uppercase tracking-tighter">System Reset OK</span>
+                        </div>
                     </div>
                 `;
-                historyEl.innerHTML = newHistory + historyEl.innerHTML;
+                historyEl.innerHTML = log + historyEl.innerHTML;
 
-                // Refresh kandidat (jadi kosong karena sudah di reset)
+                // Refresh data kandidat (akan jadi kosong)
                 setTimeout(() => {
                     fetchCandidates();
-                }, 2000);
+                }, 3000);
 
             } catch (err) {
-                console.error("Gagal Reset Poin:", err);
-                alert("Pemenang terpilih, namun sistem gagal me-reset poin ke nol. Silakan hubungi admin.");
+                console.error("Reset Failed:", err);
+                alert("Sistem gagal melakukan reset otomatis. Silakan periksa koneksi database.");
             }
         }
 
