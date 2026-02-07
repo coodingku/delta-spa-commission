@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Delta Spa - Riwayat & Performa</title>
+    <title>Dashboard Performa - Finex Pos</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -15,80 +15,68 @@
         .nav-link { display: flex; align-items: center; gap: 12px; padding: 14px 20px; border-radius: 16px; color: #94a3b8; transition: 0.3s; margin-bottom: 8px; font-weight: 500; }
         .nav-link:hover { background: rgba(212, 175, 55, 0.05); color: #d4af37; }
         .nav-link.active { background: linear-gradient(135deg, #d4af37 0%, #a67c00 100%); color: white; }
+        .gold-text { color: #d4af37; }
         .gold-gradient { background: linear-gradient(135deg, #d4af37 0%, #a67c00 100%); }
+        
+        /* Trophy Animation */
+        .trophy-bounce { animation: bounce 2s infinite; }
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
     </style>
 </head>
 <body class="min-h-screen flex">
     <!-- Sidebar -->
     <aside class="w-72 shrink-0 flex flex-col sidebar hidden md:flex">
         <div class="p-8">
-            <h1 class="text-2xl font-black italic text-[#d4af37] tracking-tighter">DELTA <span class="text-white">SPA</span></h1>
+            <h1 class="text-2xl font-black italic gold-text tracking-tighter uppercase">Delta<span class="text-white">Spa</span></h1>
+            <p class="text-[10px] text-slate-500 font-bold tracking-widest uppercase mt-1">Finex Pos - Bali</p>
         </div>
         <nav class="flex-1 px-4">
-            <a href="dashboard.html" class="nav-link"><i class="fa-solid fa-chart-pie w-5"></i> Dashboard</a>
+            <a href="dashboard.html" class="nav-link active"><i class="fa-solid fa-chart-pie w-5"></i> Dashboard</a>
             <a href="pendaftaran_driver.html" class="nav-link"><i class="fa-solid fa-id-card w-5"></i> Registrasi Driver</a>
             <a href="transaksi_komisi.html" class="nav-link"><i class="fa-solid fa-money-bill-transfer w-5"></i> Input Transaksi</a>
-            <a href="riwayat_transaksi.html" class="nav-link active"><i class="fa-solid fa-clock-rotate-left w-5"></i> Riwayat & Performa</a>
+            <a href="riwayat_transaksi.html" class="nav-link"><i class="fa-solid fa-clock-rotate-left w-5"></i> Riwayat & Komisi</a>
         </nav>
     </aside>
 
-    <main class="flex-1 p-10 overflow-y-auto">
-        <div class="max-w-7xl mx-auto">
-            <header class="mb-10 flex justify-between items-center">
+    <main class="flex-1 p-6 md:p-10 overflow-y-auto">
+        <div class="max-w-6xl mx-auto">
+            <header class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
                 <div>
-                    <h1 class="text-3xl font-bold uppercase italic text-[#d4af37]">Delta Spa <span class="text-white">Performance</span></h1>
-                    <p class="text-slate-500 text-sm">Laporan komisi dan statistik kunjungan driver.</p>
+                    <h2 class="text-3xl font-bold italic">Performa <span class="gold-text">Driver</span></h2>
+                    <p class="text-slate-500 text-sm">Analisis kunjungan dan kontribusi tamu terbanyak.</p>
                 </div>
                 <div class="flex gap-3">
-                    <button onclick="location.reload()" class="px-6 py-3 gold-gradient rounded-xl text-xs font-bold text-white shadow-lg hover:brightness-110 transition-all">REFRESH DATA</button>
+                    <div class="card px-4 py-2 rounded-xl flex items-center gap-3">
+                        <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                        <span id="live-count" class="text-xs font-bold uppercase tracking-wider">Memuat Data...</span>
+                    </div>
                 </div>
             </header>
 
-            <!-- Stats Performa -->
-            <div class="mb-12">
-                <div class="flex items-center gap-3 mb-4">
-                    <i class="fa-solid fa-crown text-[#d4af37]"></i>
-                    <h3 class="text-xs font-bold text-[#d4af37] uppercase tracking-[0.2em]">Top Driver (Paling Sering Berkunjung)</h3>
-                </div>
-                <div class="card rounded-[2.5rem] overflow-hidden">
-                    <table class="w-full text-sm">
-                        <thead class="bg-slate-900/80 text-slate-500 text-[10px] uppercase tracking-widest">
-                            <tr>
-                                <th class="px-8 py-5 text-left">Nama Driver</th>
-                                <th class="px-8 py-5 text-center">Frekuensi Kunjungan</th>
-                                <th class="px-8 py-5 text-center">Total Tamu</th>
-                                <th class="px-8 py-5 text-right">Akumulasi Komisi</th>
-                            </tr>
-                        </thead>
-                        <tbody id="top-drivers" class="divide-y divide-slate-800/30">
-                            <tr><td colspan="4" class="p-10 text-center text-slate-500 italic">Menganalisis data...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
+            <!-- Top 3 Drivers Highlight -->
+            <div id="top-drivers-container" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+                <!-- Data akan diisi oleh JS -->
             </div>
 
-            <!-- Log Transaksi -->
-            <div class="mb-6 flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                    <i class="fa-solid fa-list-ul text-slate-500"></i>
-                    <h3 class="text-xs font-bold text-slate-500 uppercase tracking-[0.2em]">Detail Log Transaksi Terakhir</h3>
+            <!-- Leaderboard Table -->
+            <div class="card rounded-[2rem] overflow-hidden">
+                <div class="p-6 border-b border-white/5 flex justify-between items-center">
+                    <h3 class="font-bold text-lg"><i class="fa-solid fa-ranking-star gold-text mr-2"></i> Peringkat Keseluruhan</h3>
+                    <span class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Update Real-time</span>
                 </div>
-            </div>
-            
-            <div class="card rounded-[2.5rem] overflow-hidden">
                 <div class="overflow-x-auto">
-                    <table class="w-full text-sm">
-                        <thead class="bg-slate-900 text-slate-500 text-[10px] uppercase tracking-widest">
-                            <tr>
-                                <th class="px-8 py-6 text-left">Waktu / Driver</th>
-                                <th class="px-8 py-6 text-left">Paket Massage</th>
-                                <th class="px-8 py-6 text-right">Nilai Massage</th>
-                                <th class="px-8 py-6 text-right">Komisi Satuan</th>
-                                <th class="px-8 py-6 text-right text-[#d4af37]">Total Komisi</th>
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-white/5 text-[10px] uppercase tracking-[0.2em] text-slate-400">
+                                <th class="px-6 py-4 font-bold">Peringkat</th>
+                                <th class="px-6 py-4 font-bold">Driver</th>
+                                <th class="px-6 py-4 font-bold text-center">Total Kunjungan</th>
+                                <th class="px-6 py-4 font-bold text-center">Total Tamu</th>
+                                <th class="px-6 py-4 font-bold text-right">Poin Akumulasi</th>
                             </tr>
                         </thead>
-                        <tbody id="tr-list" class="divide-y divide-slate-800/30">
-                            <tr><td colspan="5" class="p-20 text-center text-slate-500 italic">Memuat log transaksi...</td></tr>
+                        <tbody id="leaderboard-body" class="divide-y divide-white/5">
+                            <!-- Data baris -->
                         </tbody>
                     </table>
                 </div>
@@ -101,84 +89,109 @@
         const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkeGNodm9nYXhpaWJ6cXZ1dXBmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAxODE5NTIsImV4cCI6MjA4NTc1Nzk1Mn0.8U_zk81b6wFfdZdPRupk5KSk3g39nOPs8SpZVkWbqkc";
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        async function loadData() {
-            const { data, error } = await supabaseClient.from('commissions').select('*').order('created_at', { ascending: false });
-            
-            if(error) {
-                console.error(error);
-                return;
+        async function fetchPerformanceData() {
+            try {
+                // Ambil semua data komisi
+                const { data: commissions, error } = await supabaseClient
+                    .from('commissions')
+                    .select('driver_id, driver_name, massage_guests, points_earned');
+
+                if (error) throw error;
+
+                // Grouping data per driver
+                const performance = commissions.reduce((acc, curr) => {
+                    if (!acc[curr.driver_id]) {
+                        acc[curr.driver_id] = {
+                            id: curr.driver_id,
+                            name: curr.driver_name,
+                            visits: 0,
+                            total_guests: 0,
+                            total_points: 0
+                        };
+                    }
+                    acc[curr.driver_id].visits += 1;
+                    acc[curr.driver_id].total_guests += (curr.massage_guests || 0);
+                    acc[curr.driver_id].total_points += (curr.points_earned || 0);
+                    return acc;
+                }, {});
+
+                // Ubah object ke array dan urutkan berdasarkan total tamu terbanyak
+                const sortedData = Object.values(performance).sort((a, b) => b.total_guests - a.total_guests);
+                
+                renderUI(sortedData);
+                document.getElementById('live-count').innerText = `${commissions.length} Transaksi Terdeteksi`;
+            } catch (err) {
+                console.error("Error fetching data:", err);
             }
-
-            if(!data || data.length === 0) {
-                document.getElementById('tr-list').innerHTML = `<tr><td colspan="5" class="p-20 text-center text-slate-500">Belum ada transaksi tercatat.</td></tr>`;
-                document.getElementById('top-drivers').innerHTML = `<tr><td colspan="4" class="p-10 text-center text-slate-500">Tidak ada data performa.</td></tr>`;
-                return;
-            }
-
-            // Render Detail Log Transaksi
-            document.getElementById('tr-list').innerHTML = data.map(i => {
-                const unitPrice = i.service_unit_price || 0;
-                const totalValue = i.total_massage_value || (unitPrice * i.massage_guests);
-                const commUnit = i.commission_unit || (i.commission_amount / (i.massage_guests || 1));
-
-                return `
-                <tr class="hover:bg-slate-800/10 transition-colors">
-                    <td class="px-8 py-5">
-                        <p class="text-[10px] text-slate-500 mb-1 font-mono uppercase tracking-tighter">
-                            ${new Date(i.created_at).toLocaleDateString('id-ID')} | ${new Date(i.created_at).toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'})}
-                        </p>
-                        <p class="font-bold text-white uppercase tracking-tight">${i.driver_name}</p>
-                    </td>
-                    <td class="px-8 py-5">
-                        <p class="font-semibold text-slate-300 text-xs">${i.service_name || 'Massage'}</p>
-                        <p class="text-[10px] text-[#d4af37] font-bold mt-0.5 tracking-widest">${i.massage_guests} TAMU</p>
-                    </td>
-                    <td class="px-8 py-5 text-right">
-                        <p class="text-slate-500 text-[10px] mb-0.5">@ Rp ${unitPrice.toLocaleString('id-ID')}</p>
-                        <p class="font-bold text-slate-400 text-xs">Rp ${totalValue.toLocaleString('id-ID')}</p>
-                    </td>
-                    <td class="px-8 py-5 text-right">
-                        <p class="text-xs text-emerald-500 font-medium">Rp ${commUnit.toLocaleString('id-ID')}</p>
-                    </td>
-                    <td class="px-8 py-5 text-right bg-[#d4af37]/5">
-                        <p class="text-base font-black text-[#d4af37]">Rp ${i.commission_amount.toLocaleString('id-ID')}</p>
-                    </td>
-                </tr>`;
-            }).join('');
-
-            // Kalkulasi Statistik Performa Driver
-            const stats = {};
-            data.forEach(d => {
-                if(!stats[d.driver_id]) {
-                    stats[d.driver_id] = { name: d.driver_name, count: 0, guests: 0, money: 0 };
-                }
-                stats[d.driver_id].count++;
-                stats[d.driver_id].guests += (d.massage_guests || 0);
-                stats[d.driver_id].money += (d.commission_amount || 0);
-            });
-
-            // Urutkan berdasarkan kunjungan terbanyak (Frekuensi)
-            const sortedDrivers = Object.values(stats).sort((a,b) => b.count - a.count);
-
-            document.getElementById('top-drivers').innerHTML = sortedDrivers.map(s => `
-                <tr class="hover:bg-slate-800/20 transition-colors">
-                    <td class="px-8 py-5 font-bold text-white uppercase tracking-tight">${s.name}</td>
-                    <td class="px-8 py-5 text-center">
-                        <span class="text-[#d4af37] font-black text-lg">${s.count}</span>
-                        <span class="text-[10px] text-slate-500 uppercase font-bold ml-1">Kunjungan</span>
-                    </td>
-                    <td class="px-8 py-5 text-center">
-                        <span class="px-4 py-1.5 bg-slate-800 rounded-full text-[10px] font-bold text-slate-300 border border-slate-700">
-                            <i class="fa-solid fa-users mr-1.5 opacity-50"></i> ${s.guests} TAMU
-                        </span>
-                    </td>
-                    <td class="px-8 py-5 text-right font-black text-emerald-400 text-base">
-                        Rp ${s.money.toLocaleString('id-ID')}
-                    </td>
-                </tr>`).join('');
         }
 
-        window.onload = loadData;
+        function renderUI(data) {
+            const topContainer = document.getElementById('top-drivers-container');
+            const tableBody = document.getElementById('leaderboard-body');
+
+            // Render Top 3
+            const top3 = data.slice(0, 3);
+            const medals = [
+                { color: 'text-yellow-400', label: 'Juara 1', icon: 'fa-crown', bg: 'bg-yellow-400/10' },
+                { color: 'text-slate-300', label: 'Juara 2', icon: 'fa-medal', bg: 'bg-slate-300/10' },
+                { color: 'text-amber-600', label: 'Juara 3', icon: 'fa-award', bg: 'bg-amber-600/10' }
+            ];
+
+            topContainer.innerHTML = top3.map((d, i) => `
+                <div class="card p-6 rounded-[2rem] relative overflow-hidden group">
+                    <div class="absolute -right-4 -top-4 text-6xl opacity-10 ${medals[i].color} trophy-bounce">
+                        <i class="fa-solid ${medals[i].icon}"></i>
+                    </div>
+                    <div class="flex items-center gap-4 mb-4">
+                        <div class="w-12 h-12 rounded-full ${medals[i].bg} flex items-center justify-center ${medals[i].color} font-bold text-xl">
+                            ${i + 1}
+                        </div>
+                        <div>
+                            <p class="text-[10px] font-black uppercase tracking-widest ${medals[i].color}">${medals[i].label}</p>
+                            <h4 class="font-bold text-lg truncate">${d.name}</h4>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-white/5 p-3 rounded-xl">
+                            <p class="text-[9px] text-slate-500 uppercase font-bold tracking-widest">Total Tamu</p>
+                            <p class="text-xl font-black gold-text">${d.total_guests}</p>
+                        </div>
+                        <div class="bg-white/5 p-3 rounded-xl">
+                            <p class="text-[9px] text-slate-500 uppercase font-bold tracking-widest">Poin</p>
+                            <p class="text-xl font-black text-blue-400">${d.total_points}</p>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            // Render Table
+            tableBody.innerHTML = data.map((d, i) => `
+                <tr class="hover:bg-white/[0.02] transition-colors group">
+                    <td class="px-6 py-4">
+                        <span class="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center text-xs font-bold text-slate-400 group-hover:bg-gold-gradient group-hover:text-white transition-all">
+                            #${i + 1}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div>
+                            <p class="font-bold text-white text-sm">${d.name}</p>
+                            <p class="text-[10px] text-slate-500 uppercase tracking-tighter">ID: ${d.id}</p>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                        <span class="px-3 py-1 rounded-full bg-blue-500/10 text-blue-400 text-xs font-bold">${d.visits}x</span>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                        <span class="font-black text-white">${d.total_guests}</span>
+                    </td>
+                    <td class="px-6 py-4 text-right">
+                        <span class="text-sm font-bold gold-text italic">${d.total_points.toLocaleString()} Pts</span>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        window.onload = fetchPerformanceData;
     </script>
 </body>
 </html>
