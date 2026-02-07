@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Input Transaksi - BeautyBloom</title>
+    <title>Input Transaksi - Delta Spa</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <!-- Load Face-API.js library -->
@@ -34,8 +34,8 @@
     <!-- Sidebar -->
     <aside class="w-72 shrink-0 flex flex-col sidebar hidden md:flex">
         <div class="p-8">
-            <h1 class="text-2xl font-black italic gold-text tracking-tighter uppercase">Beauty<span class="text-white">Bloom</span></h1>
-            <p class="text-[10px] text-slate-500 font-bold tracking-widest uppercase mt-1">BeautyBloom Bali</p>
+            <h1 class="text-2xl font-black italic gold-text tracking-tighter uppercase">Delta<span class="text-white">Spa</span></h1>
+            <p class="text-[10px] text-slate-500 font-bold tracking-widest uppercase mt-1">Finex Pos - Bali</p>
         </div>
         <nav class="flex-1 px-4">
             <a href="dashboard.html" class="nav-link"><i class="fa-solid fa-chart-pie w-5"></i> Dashboard</a>
@@ -51,7 +51,7 @@
                 <div id="auth-status-badge" class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-500/10 border border-red-500/20 text-red-500 text-[10px] font-bold uppercase tracking-widest mb-4">
                     <i class="fa-solid fa-lock"></i> Belum Terverifikasi
                 </div>
-                <h2 class="text-3xl font-bold">Input <span class="gold-text italic">Komisi Massage</span></h2>
+                <h2 class="text-3xl font-bold">Input <span class="gold-text italic">Komisi Delta Spa</span></h2>
                 <p class="text-slate-500 text-sm mt-1">Sistem Finex Pos - Verifikasi Biometrik</p>
             </header>
 
@@ -136,7 +136,7 @@
                             <h3 id="commission-display" class="text-xl font-black gold-text italic">Rp 0</h3>
                         </div>
                         <div class="bg-blue-500/5 p-5 rounded-2xl border border-blue-500/20 text-center">
-                            <p class="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Poin Diperoleh</p>
+                            <p class="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Poin Berhak</p>
                             <h3 id="points-display" class="text-xl font-black text-blue-400 italic">0 Pts</h3>
                         </div>
                     </div>
@@ -162,22 +162,17 @@
         let selectedServiceName = "";
         let faceMatcher = null;
 
-        // Initialize Face-API Models dengan optimasi model ringan
         async function loadModels() {
             const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
             try {
-                // Gunakan TinyFaceDetector untuk performa lebih cepat jika diperlukan, 
-                // tapi SSDMobilenetv1 lebih akurat untuk matching.
                 await Promise.all([
                     faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
                     faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
                     faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
                 ]);
                 isAiReady = true;
-                console.log("Face AI Ready");
             } catch (e) {
                 console.error("Gagal load AI:", e);
-                alert("Gagal memuat sistem kecerdasan wajah. Periksa koneksi internet.");
             }
         }
 
@@ -227,11 +222,8 @@
             document.getElementById('selected-driver-name').value = name;
             document.getElementById('display-name').innerText = name;
             document.getElementById('display-id').innerText = "NIK: " + id;
-            
-            // Tambahkan cache busting agar gambar terbaru yang diambil
             const photoUrl = `${photo}?t=${new Date().getTime()}`;
             document.getElementById('driver-photo-ref').src = photoUrl;
-            
             document.getElementById('selected-driver-info').classList.remove('hidden');
             document.getElementById('search-section').classList.add('hidden');
             resultsDiv.classList.add('hidden');
@@ -239,7 +231,6 @@
 
         document.getElementById('btn-start-verify').onclick = async () => {
             if (!isAiReady) return alert("Sistem AI sedang bersiap...");
-            
             const video = document.getElementById('video');
             const container = document.getElementById('camera-container');
             const statusLabel = document.getElementById('ai-status');
@@ -247,36 +238,26 @@
 
             btn.disabled = true;
             btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> MEMPROSES...`;
-            statusLabel.innerText = "MENGANALISA FOTO PROFIL...";
 
-            // 1. Ambil Descriptor dari Foto Referensi terlebih dahulu
             const refImg = document.getElementById('driver-photo-ref');
             try {
-                // Penting: Deteksi wajah pada foto referensi
                 const refDetection = await faceapi.detectSingleFace(refImg).withFaceLandmarks().withFaceDescriptor();
-                
                 if (!refDetection) {
                     btn.disabled = false;
                     btn.innerHTML = `<i class="fa-solid fa-face-viewfinder text-[#d4af37]"></i><span>MULAI SCAN WAJAH</span>`;
-                    return alert("Wajah pada foto profil tidak jelas / tidak terdeteksi. Silakan update foto driver.");
+                    return alert("Wajah pada foto profil tidak jelas. Silakan update foto driver.");
                 }
 
-                faceMatcher = new faceapi.FaceMatcher(refDetection, 0.55); // Threshold 0.55 (lebih toleran dari 0.4, lebih ketat dari 0.6)
-                
-                // 2. Jika referensi OK, buka kamera
+                faceMatcher = new faceapi.FaceMatcher(refDetection, 0.55);
                 container.style.display = 'block';
                 videoStream = await navigator.mediaDevices.getUserMedia({ 
                     video: { facingMode: "user", width: 640, height: 480 } 
                 });
                 video.srcObject = videoStream;
-                
-                statusLabel.innerText = "HADAPKAN WAJAH KE KAMERA";
                 startLiveMatching();
             } catch (err) {
-                console.error(err);
                 btn.disabled = false;
-                btn.innerHTML = `<i class="fa-solid fa-face-viewfinder text-[#d4af37]"></i><span>MULAI SCAN WAJAH</span>`;
-                alert("Gagal mengakses kamera atau memproses foto.");
+                alert("Gagal mengakses kamera.");
             }
         };
 
@@ -285,18 +266,10 @@
             const statusLabel = document.getElementById('ai-status');
 
             const matchTimer = setInterval(async () => {
-                if (!videoStream) {
-                    clearInterval(matchTimer);
-                    return;
-                }
-
+                if (!videoStream) { clearInterval(matchTimer); return; }
                 const detections = await faceapi.detectSingleFace(video).withFaceLandmarks().withFaceDescriptor();
-                
                 if (detections) {
                     const match = faceMatcher.findBestMatch(detections.descriptor);
-                    
-                    // Match.distance: semakin rendah semakin mirip. 
-                    // 0.0 = identik, 1.0 = sangat berbeda.
                     if (match.distance < 0.55) { 
                         clearInterval(matchTimer);
                         statusLabel.innerHTML = "<span class='text-green-400'>COCOK! VERIFIKASI BERHASIL</span>";
@@ -304,8 +277,6 @@
                     } else {
                         statusLabel.innerHTML = `<span class='text-orange-400'>TIDAK COCOK (${Math.round((1 - match.distance) * 100)}%)</span>`;
                     }
-                } else {
-                    statusLabel.innerText = "POSISIKAN WAJAH DI TENGAH...";
                 }
             }, 600);
         }
@@ -314,9 +285,7 @@
             if (videoStream) videoStream.getTracks().forEach(t => t.stop());
             document.getElementById('camera-container').style.display = 'none';
             document.getElementById('btn-start-verify').style.display = 'none';
-
             document.getElementById('transaction-fields').className = "unlocked-area space-y-6";
-            
             const badge = document.getElementById('auth-status-badge');
             badge.className = "inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-500/10 border border-green-500/20 text-green-500 text-[10px] font-bold uppercase tracking-widest mb-4";
             badge.innerHTML = `<i class="fa-solid fa-circle-check"></i> Driver Terverifikasi`;
@@ -334,7 +303,9 @@
 
                 const totalComm = currentCommRate * count;
                 const totalMassage = currentServicePrice * count;
-                const points = Math.floor(totalComm / 10000);
+                
+                // 1 tamu = 1 poin
+                const points = count; 
 
                 document.getElementById('commission-display').innerText = `Rp ${totalComm.toLocaleString('id-ID')}`;
                 document.getElementById('total-massage-display').innerText = `Rp ${totalMassage.toLocaleString('id-ID')}`;
@@ -348,6 +319,8 @@
         document.getElementById('form-transaksi').onsubmit = async (e) => {
             e.preventDefault();
             const btn = document.getElementById('btn-submit');
+            const guestCount = parseInt(document.getElementById('guest-count').value);
+            
             btn.disabled = true;
             btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> MENYIMPAN...`;
 
@@ -357,10 +330,11 @@
                 service_id: document.getElementById('service-select').value,
                 service_name: selectedServiceName,
                 guest_category: document.getElementById('guest-category').value,
-                massage_guests: parseInt(document.getElementById('guest-count').value),
-                commission_amount: currentCommRate * parseInt(document.getElementById('guest-count').value),
-                points_earned: Math.floor((currentCommRate * parseInt(document.getElementById('guest-count').value)) / 10000),
-                total_massage_value: currentServicePrice * parseInt(document.getElementById('guest-count').value),
+                massage_guests: guestCount,
+                commission_amount: currentCommRate * guestCount,
+                points_earned: guestCount, 
+                total_massage_value: currentServicePrice * guestCount,
+                is_redeemed: false,
                 notes: document.getElementById('transaction-note').value,
                 created_at: new Date().toISOString()
             };
@@ -376,7 +350,7 @@
                             <i class="fa-solid fa-check text-4xl text-green-500"></i>
                         </div>
                         <h3 class="text-2xl font-bold text-white mb-2">Berhasil!</h3>
-                        <p class="text-slate-400 text-sm mb-8">Transaksi komisi driver telah tercatat di database.</p>
+                        <p class="text-slate-400 text-sm mb-8">Transaksi Delta Spa (${guestCount} poin) telah tercatat.</p>
                         <button onclick="location.reload()" class="w-full bg-gradient-to-r from-[#d4af37] to-[#a67c00] text-white font-bold py-4 rounded-2xl">SELESAI</button>
                     </div>
                 `;
