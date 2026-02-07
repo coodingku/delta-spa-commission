@@ -20,34 +20,47 @@
         .gold-text { color: #d4af37; }
         .table-auto th { text-align: left; padding: 16px; font-size: 10px; color: #64748b; text-transform: uppercase; letter-spacing: 0.1em; border-bottom: 1px solid rgba(255,255,255,0.05); }
         .table-auto td { padding: 16px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 13px; }
+        .status-badge { padding: 4px 10px; border-radius: 8px; font-size: 10px; font-weight: 900; text-transform: uppercase; }
     </style>
 </head>
 <body class="min-h-screen flex">
 
+    <!-- Sidebar -->
     <aside class="w-64 shrink-0 flex flex-col sidebar hidden lg:flex h-screen sticky top-0">
         <div class="p-8">
             <h1 class="text-xl font-black italic gold-text">FINEX <span class="text-white">POS</span></h1>
             <p class="text-[9px] text-slate-500 font-bold tracking-widest mt-1 uppercase">BeautyBloom Management</p>
         </div>
         <nav class="flex-1 px-4">
-            <div onclick="switchPage('draw')" id="nav-draw" class="nav-link active"><i class="fa-solid fa-users-check w-5"></i> Cek Kandidat</div>
+            <div onclick="switchPage('draw')" id="nav-draw" class="nav-link active"><i class="fa-solid fa-users-check w-5"></i> Kandidat Undian</div>
             <div onclick="switchPage('report')" id="nav-report" class="nav-link"><i class="fa-solid fa-clock-rotate-left w-5"></i> Riwayat Laporan</div>
         </nav>
+        <div class="p-6">
+            <div id="db-status" class="bg-white/5 p-4 rounded-2xl border border-white/5">
+                <p class="text-[8px] text-slate-500 font-bold uppercase mb-2">Database Connection</p>
+                <div class="flex items-center gap-2">
+                    <div id="db-indicator" class="w-2 h-2 rounded-full bg-slate-500"></div>
+                    <span id="db-text" class="text-[10px] text-slate-400 font-bold italic uppercase">Checking...</span>
+                </div>
+            </div>
+        </div>
     </aside>
 
+    <!-- Main Content -->
     <main class="flex-1 p-6 md:p-10">
+        <!-- Page Draw -->
         <div id="page-draw" class="max-w-5xl mx-auto">
             <header class="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
                 <div>
-                    <h1 class="text-3xl font-black uppercase italic gold-text">Kandidat <span class="text-white">Undian</span></h1>
-                    <p class="text-slate-500 text-sm italic">Verifikasi driver yang mencapai target poin untuk diundi manual.</p>
+                    <h1 class="text-3xl font-black uppercase italic gold-text">Seleksi <span class="text-white">Undian</span></h1>
+                    <p class="text-slate-500 text-sm italic">Driver yang mencapai target poin periode ini.</p>
                 </div>
                 <div class="bg-white/5 border border-white/10 p-4 rounded-2xl flex items-center gap-6">
                     <div>
-                        <p class="text-[10px] text-slate-500 font-bold uppercase mb-1">Target Minimal Poin</p>
+                        <p class="text-[10px] text-slate-500 font-bold uppercase mb-1">Target Minimal</p>
                         <div class="flex items-center gap-2">
                             <input type="number" id="min-points-input" value="10" oninput="fetchCandidates()" 
-                            class="bg-transparent text-xl font-black text-amber-500 w-16 outline-none border-b border-amber-500/30 focus:border-amber-500">
+                            class="bg-transparent text-xl font-black text-amber-500 w-16 outline-none border-b border-amber-500/30">
                             <span class="text-xs font-bold text-slate-400 uppercase">Pts</span>
                         </div>
                     </div>
@@ -56,9 +69,9 @@
 
             <div class="card rounded-[32px] overflow-hidden">
                 <div class="p-6 border-b border-white/5 flex justify-between items-center bg-white/5">
-                    <h3 class="text-xs font-black text-white uppercase tracking-widest">Daftar Driver Berhak</h3>
-                    <button id="btn-save-reset" onclick="confirmReset()" class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-[10px] font-black uppercase transition-all disabled:opacity-30">
-                        <i class="fa-solid fa-cloud-arrow-up mr-2"></i> Simpan & Reset Poin
+                    <h3 class="text-xs font-black text-white uppercase tracking-widest">Daftar Kualifikasi</h3>
+                    <button id="btn-save-reset" onclick="confirmReset()" class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-[10px] font-black uppercase transition-all disabled:opacity-30 disabled:cursor-not-allowed">
+                        <i class="fa-solid fa-cloud-arrow-up mr-2"></i> Simpan & Reset
                     </button>
                 </div>
                 <div class="overflow-x-auto">
@@ -66,8 +79,8 @@
                         <thead>
                             <tr>
                                 <th>Nama Driver</th>
-                                <th>Total Poin Terkumpul</th>
-                                <th>Status Kelayakan</th>
+                                <th>Total Poin</th>
+                                <th>Status</th>
                             </tr>
                         </thead>
                         <tbody id="candidate-table-body"></tbody>
@@ -76,11 +89,12 @@
             </div>
         </div>
 
+        <!-- Page Report -->
         <div id="page-report" class="max-w-5xl mx-auto hidden">
             <header class="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
                 <div>
-                    <h1 class="text-3xl font-black uppercase italic gold-text">Riwayat <span class="text-white">Undian</span></h1>
-                    <p class="text-slate-500 text-sm italic">Data arsip driver yang pernah masuk kualifikasi undian.</p>
+                    <h1 class="text-3xl font-black uppercase italic gold-text">Riwayat <span class="text-white">Laporan</span></h1>
+                    <p class="text-slate-500 text-sm italic">Arsip data undian yang telah tersimpan di database.</p>
                 </div>
                 <div class="flex gap-3">
                     <button onclick="exportExcel()" class="px-5 py-2.5 bg-white/5 hover:bg-white/10 text-white rounded-xl text-[10px] font-black uppercase border border-white/10 transition-all">
@@ -92,37 +106,38 @@
                 </div>
             </header>
 
-            <div class="card rounded-[32px] overflow-hidden">
+            <div class="card rounded-[32px] overflow-hidden min-h-[400px]">
                 <div class="overflow-x-auto">
                     <table class="w-full table-auto">
                         <thead>
                             <tr class="bg-white/5">
-                                <th>Tanggal Simpan</th>
+                                <th>Tanggal</th>
                                 <th>Nama Driver</th>
-                                <th>Poin Akhir</th>
+                                <th>Poin</th>
                             </tr>
                         </thead>
                         <tbody id="report-table-body"></tbody>
                     </table>
                 </div>
-                <div id="report-empty" class="hidden text-center py-20">
-                    <i class="fa-solid fa-inbox text-4xl text-slate-800 mb-4"></i>
-                    <p class="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Tidak ada data riwayat</p>
+                <div id="report-empty" class="hidden text-center py-24">
+                    <i class="fa-solid fa-database text-4xl text-slate-800 mb-4"></i>
+                    <p class="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Tabel 'draw_reports' tidak ditemukan atau kosong</p>
                 </div>
             </div>
         </div>
     </main>
 
+    <!-- Modal Reset -->
     <div id="reset-modal" class="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 hidden flex items-center justify-center p-6">
         <div class="bg-[#0f172a] border border-white/10 p-8 rounded-[32px] max-w-sm w-full text-center">
             <div class="w-16 h-16 bg-emerald-500/10 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6">
-                <i class="fa-solid fa-file-shield text-2xl"></i>
+                <i class="fa-solid fa-shield-check text-2xl"></i>
             </div>
-            <h3 class="text-lg font-black text-white mb-2 uppercase italic">Arsipkan Data?</h3>
-            <p class="text-slate-400 text-xs leading-relaxed mb-8">Data akan dipindahkan ke riwayat laporan dan poin driver akan di-reset.</p>
+            <h3 class="text-lg font-black text-white mb-2 uppercase italic">Konfirmasi Simpan</h3>
+            <p class="text-slate-400 text-xs leading-relaxed mb-8">Data akan dipindahkan ke riwayat permanen dan poin driver akan di-reset (is_redeemed = true).</p>
             <div class="flex gap-4">
                 <button onclick="closeModal()" class="flex-1 py-3 bg-white/5 text-slate-400 rounded-xl text-[10px] font-black uppercase">Batal</button>
-                <button id="confirm-execute-btn" onclick="executeReset()" class="flex-1 py-3 bg-emerald-600 text-white rounded-xl text-[10px] font-black uppercase shadow-lg shadow-emerald-600/20">Ya, Simpan</button>
+                <button id="confirm-execute-btn" onclick="executeReset()" class="flex-1 py-3 bg-emerald-600 text-white rounded-xl text-[10px] font-black uppercase">Proses Simpan</button>
             </div>
         </div>
     </div>
@@ -136,8 +151,29 @@
         let reportData = [];
 
         async function init() {
+            await checkDatabase();
             await fetchCandidates();
             await fetchReport();
+        }
+
+        async function checkDatabase() {
+            const indicator = document.getElementById('db-indicator');
+            const text = document.getElementById('db-text');
+            try {
+                // Cek apakah tabel draw_reports ada
+                const { error } = await supabaseClient.from('draw_reports').select('id').limit(1);
+                if (error && error.code === '42P01') {
+                    indicator.className = "w-2 h-2 rounded-full bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.5)]";
+                    text.innerText = "Tabel Reports Hilang";
+                    text.classList.add('text-rose-500');
+                } else {
+                    indicator.className = "w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]";
+                    text.innerText = "Online & Connected";
+                    text.classList.add('text-emerald-500');
+                }
+            } catch (e) {
+                text.innerText = "Connection Error";
+            }
         }
 
         function switchPage(page) {
@@ -159,25 +195,26 @@
 
                 if (error) throw error;
                 const summary = data.reduce((acc, curr) => {
-                    const name = curr.driver_name || 'Tanpa Nama';
+                    const name = curr.driver_name || 'Driver';
                     acc[name] = (acc[name] || 0) + (parseFloat(curr.points_earned) || 0);
                     return acc;
                 }, {});
+                
                 candidates = Object.keys(summary)
                     .map(name => ({ name, points: summary[name] }))
                     .filter(d => d.points >= minPoints)
                     .sort((a, b) => b.points - a.points);
 
                 if(candidates.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="3" class="text-center py-20 text-slate-600 text-[10px] font-bold uppercase tracking-widest italic">Tidak ada kandidat mencapai target</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="3" class="text-center py-20 text-slate-600 text-[10px] font-black uppercase italic tracking-widest">Tidak ada kandidat memenuhi syarat</td></tr>`;
                     document.getElementById('btn-save-reset').disabled = true;
                 } else {
                     document.getElementById('btn-save-reset').disabled = false;
                     tbody.innerHTML = candidates.map(c => `
                         <tr>
-                            <td class="font-black text-white uppercase">${c.name}</td>
-                            <td class="font-bold text-amber-500">${c.points} PTS</td>
-                            <td><span class="px-2 py-1 bg-emerald-500/10 text-emerald-500 text-[9px] font-black rounded italic">BERHAK UNDI</span></td>
+                            <td class="font-black text-white uppercase tracking-tight">${c.name}</td>
+                            <td class="font-black text-amber-500">${c.points.toLocaleString()} PTS</td>
+                            <td><span class="status-badge bg-emerald-500/10 text-emerald-500 italic">Qualified</span></td>
                         </tr>
                     `).join('');
                 }
@@ -193,7 +230,14 @@
                     .select('*')
                     .order('created_at', { ascending: false });
 
-                if (error) throw error;
+                if (error) {
+                    if(error.code === '42P01') {
+                        tbody.innerHTML = '';
+                        empty.classList.remove('hidden');
+                        return;
+                    }
+                    throw error;
+                }
 
                 if (!data || data.length === 0) {
                     tbody.innerHTML = '';
@@ -205,15 +249,15 @@
                     tbody.innerHTML = data.map(row => `
                         <tr>
                             <td class="text-slate-500 text-[10px] font-bold">
-                                ${new Date(row.created_at).toLocaleString('id-ID')}
+                                ${new Date(row.created_at).toLocaleString('id-ID', {day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'})}
                             </td>
-                            <td class="font-black uppercase text-white">${row.driver_name}</td>
-                            <td class="font-bold text-slate-400">${row.points} PTS</td>
+                            <td class="font-black uppercase text-white tracking-tight">${row.driver_name}</td>
+                            <td class="font-bold text-slate-400">${row.points.toLocaleString()} PTS</td>
                         </tr>
                     `).join('');
                 }
             } catch (err) { 
-                console.error("Fetch Error:", err);
+                console.error("Fetch Report Error:", err);
                 empty.classList.remove('hidden'); 
             }
         }
@@ -223,23 +267,20 @@
 
         async function executeReset() {
             const btn = document.getElementById('confirm-execute-btn');
-            const originalText = btn.innerText;
             btn.disabled = true;
-            btn.innerText = "MENYIMPAN...";
+            btn.innerText = "SYNCING...";
 
             try {
-                const timestamp = new Date().toISOString();
                 const insertData = candidates.map(c => ({
                     driver_name: c.name,
-                    points: c.points,
-                    created_at: timestamp
+                    points: c.points
                 }));
 
-                // 1. Simpan ke riwayat
+                // 1. Simpan ke Riwayat
                 const { error: insertError } = await supabaseClient.from('draw_reports').insert(insertData);
                 if (insertError) throw insertError;
 
-                // 2. Tandai komisi driver sebagai sudah diundi
+                // 2. Reset Status Komisi
                 const namesToReset = candidates.map(c => c.name);
                 const { error: updateError } = await supabaseClient
                     .from('commissions')
@@ -249,54 +290,50 @@
                 
                 if (updateError) throw updateError;
 
-                // 3. Update tampilan secara real-time
-                await fetchReport(); // Ambil riwayat terbaru
-                await fetchCandidates(); // Kosongkan daftar kandidat karena sudah di-reset
+                // 3. UI Update
+                await fetchReport(); 
+                await fetchCandidates(); 
 
                 closeModal();
-                alert("Berhasil! Data telah diarsipkan dan poin driver telah di-reset.");
+                alert("Berhasil! Laporan telah disimpan dan poin driver di-reset.");
             } catch (err) {
-                console.error("Save Error:", err);
-                alert("Gagal menyimpan: " + err.message);
+                console.error("Process Error:", err);
+                if(err.code === '42P01') {
+                    alert("Error: Tabel 'draw_reports' tidak ditemukan. Harap buat tabel di dashboard Supabase terlebih dahulu.");
+                } else {
+                    alert("Gagal: " + err.message);
+                }
             } finally {
                 btn.disabled = false;
-                btn.innerText = originalText;
+                btn.innerText = "PROSES SIMPAN";
             }
         }
 
         function exportExcel() {
-            if (reportData.length === 0) return alert("Tidak ada data untuk diekspor");
+            if (reportData.length === 0) return alert("Data kosong");
             const wsData = reportData.map(r => ({
-                "Tanggal & Waktu": new Date(r.created_at).toLocaleString('id-ID'),
-                "Nama Driver": r.driver_name,
-                "Total Poin": r.points
+                "Waktu": new Date(r.created_at).toLocaleString('id-ID'),
+                "Driver": r.driver_name.toUpperCase(),
+                "Poin": r.points
             }));
             const ws = XLSX.utils.json_to_sheet(wsData);
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Laporan Undian");
-            XLSX.writeFile(wb, `Laporan_Finex_${new Date().getTime()}.xlsx`);
+            XLSX.utils.book_append_sheet(wb, ws, "Laporan");
+            XLSX.writeFile(wb, `Finex_Report_${Date.now()}.xlsx`);
         }
 
         function exportPDF() {
-            if (reportData.length === 0) return alert("Tidak ada data untuk diekspor");
+            if (reportData.length === 0) return alert("Data kosong");
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
-            doc.setFontSize(18);
-            doc.text("LAPORAN UNDIAN - BEAUTYBLOOM", 14, 20);
-            doc.setFontSize(10);
-            doc.text(`Dicetak pada: ${new Date().toLocaleString('id-ID')}`, 14, 28);
-            const tableBody = reportData.map(r => [
-                new Date(r.created_at).toLocaleString('id-ID'),
-                r.driver_name.toUpperCase(),
-                r.points + " PTS"
-            ]);
+            doc.text("LAPORAN UNDIAN FINEX", 14, 15);
             doc.autoTable({
-                startY: 35,
-                head: [['Tanggal & Waktu', 'Nama Driver', 'Poin Akhir']],
-                body: tableBody,
-                headStyles: { fillColor: [212, 175, 55] }
+                startY: 25,
+                head: [['Tanggal', 'Nama Driver', 'Poin']],
+                body: reportData.map(r => [new Date(r.created_at).toLocaleDateString('id-ID'), r.driver_name.toUpperCase(), r.points]),
+                theme: 'grid'
             });
-            doc.save(`Laporan_Finex_${new Date().getTime()}.pdf`);
+            doc.save(`Finex_Report_${Date.now()}.pdf`);
         }
 
         window.onload = init;
