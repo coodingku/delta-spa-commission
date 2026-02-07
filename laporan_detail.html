@@ -48,7 +48,7 @@
             <a href="dashboard.html" class="nav-link"><i class="fa-solid fa-chart-line w-5"></i> Dashboard</a>
             <a href="rekap_driver.html" class="nav-link"><i class="fa-solid fa-users-gear w-5"></i> Rekap Driver</a>
             <a href="#" class="nav-link active"><i class="fa-solid fa-list-check w-5"></i> Laporan Detail</a>
-            <a href="#" class="nav-link"><i class="fa-solid fa-history w-5"></i> Log Transaksi</a>
+            <a href="riwayat_transaksi.html" class="nav-link"><i class="fa-solid fa-history w-5"></i> Log Transaksi</a>
         </nav>
     </aside>
 
@@ -85,13 +85,13 @@
                         <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Kategori Tamu</label>
                         <select id="filter-category" class="input-dark px-4 py-2.5 rounded-xl text-sm outline-none">
                             <option value="">Semua Kategori</option>
-                            <option value="lokal">Lokal</option>
-                            <option value="asing">Asing</option>
+                            <option value="Lokal">Lokal</option>
+                            <option value="Asing">Asing</option>
                         </select>
                     </div>
                     <div class="md:col-span-2 flex flex-col gap-1">
                         <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Pencarian Universal</label>
-                        <input type="text" id="filter-search" placeholder="Cari Nama Driver, Tamu, Paket..." class="input-dark px-4 py-2.5 rounded-xl text-sm w-full uppercase font-bold italic">
+                        <input type="text" id="filter-search" placeholder="Cari Nama Driver, Paket, atau Catatan..." class="input-dark px-4 py-2.5 rounded-xl text-sm w-full uppercase font-bold italic">
                     </div>
                     <div class="flex items-end">
                         <button onclick="fetchDetailData()" class="w-full py-2.5 gold-button rounded-xl text-xs font-black uppercase tracking-widest hover:brightness-110 transition-all shadow-lg shadow-[#d4af37]/20">
@@ -109,7 +109,7 @@
                             <tr class="bg-slate-900/90 text-slate-500 text-[10px] uppercase tracking-widest font-black border-b border-white/5">
                                 <th class="px-6 py-5 text-left">Waktu</th>
                                 <th class="px-6 py-5 text-left">Driver</th>
-                                <th class="px-6 py-5 text-left">Tamu & Paket</th>
+                                <th class="px-6 py-5 text-left">Layanan & Catatan</th>
                                 <th class="px-6 py-5 text-center">Asal Tamu</th>
                                 <th class="px-6 py-5 text-center">Pax</th>
                                 <th class="px-6 py-5 text-right">Harga (S)</th>
@@ -168,15 +168,15 @@
 
                 if (error) throw error;
 
-                // Filter logic
+                // Perbaikan logic filter menggunakan 'guest_category'
                 currentData = data.filter(item => {
                     const driver = (item.driver_name || '').toLowerCase();
-                    const guest = (item.guest_name || '').toLowerCase();
-                    const package = (item.package_name || '').toLowerCase();
-                    const guestType = (item.guest_type || 'lokal').toLowerCase(); // Field: guest_type
+                    const service = (item.service_name || '').toLowerCase();
+                    const notes = (item.notes || '').toLowerCase();
+                    const category = (item.guest_category || 'Lokal'); // Ambil dari guest_category
 
-                    const matchesSearch = driver.includes(search) || guest.includes(search) || package.includes(search);
-                    const matchesCategory = catFilter === "" || guestType === catFilter;
+                    const matchesSearch = driver.includes(search) || service.includes(search) || notes.includes(search);
+                    const matchesCategory = catFilter === "" || category === catFilter;
 
                     return matchesSearch && matchesCategory;
                 });
@@ -209,7 +209,7 @@
                 const totalPrice = parseInt(item.total_massage_value) || 0;
                 const points = parseInt(item.points_earned) || 0; 
                 const totalComm = parseInt(item.commission_amount) || 0;
-                const guestType = (item.guest_type || 'lokal').toLowerCase(); 
+                const guestCategory = item.guest_category || 'Lokal'; 
 
                 const hargaSatuan = pax > 0 ? Math.round(totalPrice / pax) : 0;
 
@@ -218,10 +218,10 @@
                 tPoints += points;
                 tComm += totalComm;
 
-                if(guestType === 'asing') countAsing += pax;
+                if(guestCategory === 'Asing') countAsing += pax;
                 else countLokal += pax;
 
-                const badgeClass = guestType === 'asing' 
+                const badgeClass = guestCategory === 'Asing' 
                     ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' 
                     : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
 
@@ -236,12 +236,12 @@
                             <div class="text-[10px] text-slate-500 font-mono">${item.driver_id || '-'}</div>
                         </td>
                         <td class="px-6 py-4">
-                            <div class="font-bold text-white text-xs uppercase">${item.package_name || 'SERVICE'}</div>
-                            <div class="text-[10px] text-slate-400 italic">Tamu: ${item.guest_name || 'Guest'}</div>
+                            <div class="font-bold text-white text-xs uppercase">${item.service_name || 'MASSAGE SERVICE'}</div>
+                            <div class="text-[10px] text-slate-400 italic">${item.notes || '-'}</div>
                         </td>
                         <td class="px-6 py-4 text-center">
                             <span class="px-3 py-1 rounded-full text-[9px] font-black uppercase border ${badgeClass}">
-                                ${guestType}
+                                ${guestCategory}
                             </span>
                         </td>
                         <td class="px-6 py-4 text-center font-bold text-white">${pax}</td>
@@ -293,13 +293,12 @@
             doc.setTextColor(100);
             doc.text(`Periode: ${document.getElementById('filter-start').value} s/d ${document.getElementById('filter-end').value}`, 14, 28);
 
-            const headers = [["Waktu", "Driver", "Tamu", "Paket", "Kategori", "Pax", "Total Harga", "Poin", "Total Komisi"]];
+            const headers = [["Waktu", "Driver", "Layanan", "Kategori", "Pax", "Total Harga", "Poin", "Total Komisi"]];
             const data = currentData.map(item => [
                 new Date(item.created_at).toLocaleString('id-ID'),
                 item.driver_name,
-                item.guest_name,
-                item.package_name,
-                (item.guest_type || 'lokal').toUpperCase(),
+                item.service_name,
+                (item.guest_category || 'Lokal').toUpperCase(),
                 item.massage_guests,
                 parseInt(item.total_massage_value).toLocaleString('id-ID'),
                 item.points_earned || 0,
