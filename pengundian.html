@@ -3,133 +3,159 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Finex Pos - Professional Lucky Draw</title>
+    <title>Finex Pos - Undian Poin Driver</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;500;600;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #030712; color: #f3f4f6; }
-        .glass { background: rgba(17, 24, 39, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.05); }
-        .gold-gradient { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
-        .gold-text { background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        body { font-family: 'Urbanist', sans-serif; background-color: #020617; color: #f8fafc; overflow-x: hidden; }
+        .card { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(212, 175, 55, 0.1); }
+        .sidebar { background: #0f172a; border-right: 1px solid rgba(212, 175, 55, 0.1); }
+        .nav-link { display: flex; align-items: center; gap: 12px; padding: 14px 20px; border-radius: 16px; color: #94a3b8; transition: 0.3s; margin-bottom: 8px; font-weight: 500; }
+        .nav-link:hover { background: rgba(212, 175, 55, 0.05); color: #d4af37; }
+        .nav-link.active { background: linear-gradient(135deg, #d4af37 0%, #a67c00 100%); color: white; }
+        .gold-text { color: #d4af37; }
+        .gold-button { background: linear-gradient(135deg, #d4af37 0%, #a67c00 100%); color: white; }
         
-        .slot-box {
-            height: 100px;
+        .slot-machine {
+            height: 120px;
             overflow: hidden;
-            border: 2px solid #f59e0b;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: 4px solid #d4af37;
             background: #000;
-            border-radius: 20px;
-            box-shadow: 0 0 20px rgba(245, 158, 11, 0.15);
+            border-radius: 24px;
+            box-shadow: 0 0 30px rgba(212, 175, 55, 0.2);
         }
 
-        @keyframes pulse-gold {
-            0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); }
-            70% { box-shadow: 0 0 0 20px rgba(245, 158, 11, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+        .winner-anim { animation: celebrate 0.5s ease infinite alternate; }
+        @keyframes celebrate {
+            from { transform: scale(1); filter: brightness(1); }
+            to { transform: scale(1.05); filter: brightness(1.3); }
         }
-        .winner-active { animation: pulse-gold 2s infinite; }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
     </style>
 </head>
-<body class="min-h-screen">
+<body class="min-h-screen flex">
 
-    <div class="max-w-7xl mx-auto px-4 py-8">
-        <!-- Header -->
-        <header class="flex flex-col md:flex-row justify-between items-center mb-10 gap-6">
-            <div class="text-center md:text-left">
-                <h1 class="text-3xl font-extrabold italic tracking-tighter uppercase">Finex <span class="text-amber-500">Pos</span></h1>
-                <p class="text-slate-500 text-sm font-medium tracking-widest uppercase">BeautyBloom Driver Rewards</p>
+    <!-- Sidebar -->
+    <aside class="w-72 shrink-0 flex flex-col sidebar hidden lg:flex h-screen sticky top-0">
+        <div class="p-8 text-center">
+            <h1 class="text-2xl font-black italic gold-text tracking-tighter">FINEX <span class="text-white">POS</span></h1>
+            <p class="text-[10px] text-slate-500 font-bold tracking-[0.2em] mt-1 uppercase">BeautyBloom Management</p>
+            <div class="h-px bg-gradient-to-r from-transparent via-[#d4af37]/50 to-transparent my-4"></div>
+        </div>
+        <nav class="flex-1 px-4">
+            <a href="#" class="nav-link active"><i class="fa-solid fa-ticket w-5"></i> Undian Poin</a>
+        </nav>
+    </aside>
+
+    <main class="flex-1 p-6 md:p-10">
+        <div class="max-w-6xl mx-auto">
+            <header class="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-4">
+                <div>
+                    <h1 class="text-4xl font-black uppercase italic gold-text">Lucky <span class="text-white">Draw</span></h1>
+                    <p class="text-slate-500 font-medium italic">Filter kandidat secara manual dan undi hadiah.</p>
+                </div>
+                
+                <div class="bg-white/5 border border-white/10 px-6 py-3 rounded-2xl flex items-center gap-4">
+                    <div class="text-right">
+                        <p class="text-[10px] text-slate-500 font-bold uppercase">Target Poin Minimal</p>
+                        <div class="flex items-center gap-2 justify-end">
+                            <input type="number" id="min-points-input" value="10" oninput="fetchCandidates()" 
+                            class="bg-transparent text-2xl font-black text-amber-500 w-20 text-right outline-none border-b-2 border-amber-500/30 focus:border-amber-500 transition-all">
+                            <span class="text-xs font-bold text-slate-400">PTS</span>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                <!-- Panel Undian -->
+                <div class="lg:col-span-8 space-y-6">
+                    <div class="card p-10 rounded-[40px] text-center relative overflow-hidden">
+                        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#d4af37] to-transparent"></div>
+                        
+                        <h2 class="text-slate-400 text-[10px] font-black uppercase tracking-[0.3em] mb-8">Pilih Pemenang Dari Kandidat</h2>
+                        
+                        <div class="slot-machine mb-8">
+                            <div id="display-winner" class="text-4xl md:text-5xl font-black text-white uppercase italic tracking-tighter">
+                                ACARA UNDIAN
+                            </div>
+                        </div>
+
+                        <div id="winner-info" class="hidden mb-8 p-6 bg-white/5 rounded-3xl border border-white/10 animate-in fade-in zoom-in duration-500">
+                            <p class="text-amber-500 text-[10px] uppercase font-black mb-1 tracking-widest">Pemenang Terpilih</p>
+                            <h3 id="winner-name" class="text-4xl font-black gold-text mb-2 tracking-tighter uppercase italic">-</h3>
+                            <p id="winner-points" class="text-white/60 font-medium text-xs">Total Poin: 0</p>
+                        </div>
+
+                        <div class="flex gap-4">
+                            <button id="btn-draw" onclick="startDrawing()" class="flex-[2] py-6 gold-button rounded-2xl text-xl font-black uppercase tracking-widest hover:scale-[1.02] active:scale-95 transition-all shadow-2xl shadow-[#d4af37]/30 disabled:opacity-30">
+                                <i class="fa-solid fa-rotate mr-2"></i> ACAK NAMA
+                            </button>
+                            <button id="btn-save-reset" onclick="confirmReset()" class="flex-1 py-6 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl text-xs font-black uppercase tracking-widest transition-all disabled:opacity-30">
+                                <i class="fa-solid fa-floppy-disk mr-2"></i> SIMPAN & RESET
+                            </button>
+                        </div>
+                        
+                        <p class="mt-6 text-[10px] text-slate-500 font-bold italic">Catatan: Klik 'Simpan & Reset' untuk mengenolkan poin semua driver yang ada di daftar kanan.</p>
+                    </div>
+
+                    <!-- History Log -->
+                    <div class="card p-6 rounded-3xl">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-xs font-black text-white uppercase tracking-widest">Aktivitas Terkini</h3>
+                        </div>
+                        <div id="draw-history" class="space-y-3">
+                            <div class="text-center py-6 text-slate-700 text-[10px] uppercase font-bold italic tracking-widest">Belum ada riwayat undian hari ini</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Daftar Driver (Kandidat) -->
+                <div class="lg:col-span-4 space-y-6">
+                    <div class="card p-6 rounded-3xl border-[#d4af37]/20 flex flex-col h-full">
+                        <div class="flex items-center justify-between mb-6">
+                            <div>
+                                <h3 class="text-xs font-black text-white uppercase tracking-widest">Kandidat Hadir</h3>
+                                <p class="text-[9px] text-slate-500 font-bold uppercase mt-1">Berdasarkan Filter Poin</p>
+                            </div>
+                            <span id="candidate-count" class="bg-amber-500 text-black text-[10px] font-black px-2 py-1 rounded">0</span>
+                        </div>
+                        
+                        <div id="candidate-list" class="space-y-2 overflow-y-auto max-h-[600px] pr-2">
+                            <!-- JS Render -->
+                        </div>
+                        
+                        <div id="loading-state" class="hidden text-center py-10">
+                            <i class="fa-solid fa-circle-notch fa-spin text-amber-500 text-2xl"></i>
+                        </div>
+                    </div>
+                </div>
             </div>
-            
-            <div class="flex flex-wrap justify-center gap-4">
-                <div class="glass px-6 py-3 rounded-2xl flex flex-col items-center">
-                    <span class="text-[10px] text-slate-500 font-bold uppercase">Minimal Poin</span>
-                    <input type="number" id="min-points-input" value="10" onchange="fetchData()" class="bg-transparent text-amber-500 text-xl font-bold w-16 text-center focus:outline-none">
-                </div>
-                <div class="glass px-6 py-3 rounded-2xl flex flex-col items-center">
-                    <span class="text-[10px] text-slate-500 font-bold uppercase">Total Kandidat</span>
-                    <span id="stat-candidates" class="text-xl font-bold text-white">0</span>
-                </div>
+        </div>
+    </main>
+
+    <!-- Modal Konfirmasi Reset -->
+    <div id="reset-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-6">
+        <div class="bg-[#0f172a] border border-white/10 p-8 rounded-[32px] max-w-sm w-full text-center shadow-2xl">
+            <div class="w-20 h-20 bg-emerald-500/10 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                <i class="fa-solid fa-triangle-exclamation text-3xl"></i>
             </div>
-        </header>
-
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            
-            <!-- Sidebar: Kandidat & Hadiah -->
-            <div class="lg:col-span-4 space-y-6">
-                <!-- Input Hadiah -->
-                <div class="glass p-6 rounded-[32px]">
-                    <h3 class="text-xs font-black uppercase tracking-widest mb-4 flex items-center gap-2">
-                        <i class="fa-solid fa-gift text-amber-500"></i> Daftar Hadiah
-                    </h3>
-                    <textarea id="prize-list" class="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-sm text-slate-300 focus:border-amber-500 transition-all outline-none" rows="3" placeholder="Masukkan hadiah (pisahkan dengan koma)...">Sepeda Motor, Uang Tunai Rp 1 Juta, Smartphone, Helm Eksklusif</textarea>
-                </div>
-
-                <!-- Daftar Kandidat -->
-                <div class="glass p-6 rounded-[32px] overflow-hidden">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-xs font-black uppercase tracking-widest">Kandidat Valid</h3>
-                        <button onclick="fetchData()" class="text-amber-500 text-xs font-bold hover:underline">Refresh</button>
-                    </div>
-                    <div id="list-container" class="space-y-2 max-h-[400px] overflow-y-auto pr-2">
-                        <!-- Content via JS -->
-                    </div>
-                </div>
+            <h3 class="text-xl font-black text-white mb-2 uppercase italic tracking-tighter">Konfirmasi Reset</h3>
+            <p class="text-slate-400 text-xs leading-relaxed mb-8">Anda akan me-reset poin semua driver yang muncul di daftar kandidat saat ini menjadi <span class="text-white font-bold">0</span>. Tindakan ini tidak dapat dibatalkan.</p>
+            <div class="flex gap-4">
+                <button onclick="closeModal()" class="flex-1 py-4 bg-white/5 hover:bg-white/10 text-slate-400 rounded-2xl text-[10px] font-black uppercase transition-all">Batal</button>
+                <button onclick="executeReset()" class="flex-1 py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl text-[10px] font-black uppercase transition-all">Ya, Reset Sekarang</button>
             </div>
-
-            <!-- Main Draw Area -->
-            <div class="lg:col-span-8 space-y-6">
-                <div class="glass p-10 rounded-[40px] relative overflow-hidden text-center">
-                    <div class="absolute top-0 left-0 w-full h-1.5 gold-gradient opacity-50"></div>
-                    
-                    <p class="text-slate-500 text-[10px] font-black uppercase tracking-[0.4em] mb-10">Undian Keberuntungan Driver</p>
-                    
-                    <!-- Slot Machine Display -->
-                    <div class="slot-box flex flex-col items-center justify-center mb-10">
-                        <div id="draw-display" class="text-4xl md:text-5xl font-black italic uppercase tracking-tighter text-white">
-                            READY TO ROLL
-                        </div>
-                        <div id="prize-display" class="hidden text-amber-500 font-bold text-sm mt-2 uppercase tracking-widest"></div>
-                    </div>
-
-                    <!-- Result Panel -->
-                    <div id="result-panel" class="hidden mb-10 p-8 bg-amber-500/10 border border-amber-500/20 rounded-[32px] animate-in zoom-in duration-500">
-                        <div class="flex justify-center mb-4">
-                            <span class="bg-amber-500 text-black text-[10px] font-black px-4 py-1 rounded-full uppercase">Selamat Kepada</span>
-                        </div>
-                        <h2 id="winner-name" class="text-5xl font-black gold-text italic uppercase mb-2">DRIVER NAME</h2>
-                        <div class="flex items-center justify-center gap-3">
-                            <span id="winner-prize" class="text-white font-bold text-lg">Hadiah Utama</span>
-                        </div>
-                        <p id="winner-meta" class="text-slate-500 text-xs mt-4 font-medium uppercase"></p>
-                    </div>
-
-                    <button id="btn-main" onclick="startDraw()" class="w-full py-6 gold-gradient text-black font-black text-xl rounded-2xl shadow-xl shadow-amber-500/20 hover:scale-[1.01] active:scale-95 transition-all disabled:opacity-20">
-                        MULAI PENGUNDIAN
-                    </button>
-
-                    <div class="mt-8 flex justify-center gap-8">
-                        <div class="text-center">
-                            <p class="text-slate-600 text-[9px] font-bold uppercase">System Security</p>
-                            <p class="text-emerald-500 text-[10px] font-black italic">ENCRYPTED</p>
-                        </div>
-                        <div class="text-center">
-                            <p class="text-slate-600 text-[9px] font-bold uppercase">Reset Mode</p>
-                            <p class="text-amber-500 text-[10px] font-black italic">AUTO-CLEAR</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- History -->
-                <div class="glass p-6 rounded-[32px]">
-                    <h3 class="text-xs font-black uppercase tracking-widest mb-4">Riwayat Pemenang Hari Ini</h3>
-                    <div id="history-list" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="col-span-full py-10 text-center text-slate-700 text-xs font-bold uppercase italic tracking-widest">Belum Ada Riwayat</div>
-                    </div>
-                </div>
-            </div>
-
         </div>
     </div>
 
@@ -138,160 +164,188 @@
         const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkeGNodm9nYXhpaWJ6cXZ1dXBmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAxODE5NTIsImV4cCI6MjA4NTc1Nzk1Mn0.8U_zk81b6wFfdZdPRupk5KSk3g39nOPs8SpZVkWbqkc";
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        let driverData = [];
-        let isSpinning = false;
+        let candidates = [];
 
         async function init() {
-            await fetchData();
+            await fetchCandidates();
         }
 
-        async function fetchData() {
+        async function fetchCandidates() {
+            const listEl = document.getElementById('candidate-list');
+            const loader = document.getElementById('loading-state');
             const minPoints = parseInt(document.getElementById('min-points-input').value) || 0;
-            const listContainer = document.getElementById('list-container');
-            listContainer.innerHTML = '<div class="text-center py-10 opacity-20"><i class="fa-solid fa-circle-notch fa-spin text-2xl"></i></div>';
+
+            loader.classList.remove('hidden');
+            listEl.classList.add('opacity-20');
 
             try {
-                // Ambil data yang belum diundi
                 const { data, error } = await supabaseClient
                     .from('commissions')
-                    .select('driver_name, points_earned, is_redeemed')
-                    .or('is_redeemed.eq.false,is_redeemed.is.null');
+                    .select('driver_name, points_earned, is_redeemed');
 
                 if (error) throw error;
 
+                // Hanya ambil yang is_redeemed-nya belum True
+                const activeData = data.filter(item => !item.is_redeemed);
+
                 // Agregasi poin per driver
-                const summary = data.reduce((acc, curr) => {
-                    const name = curr.driver_name || 'Driver Anonim';
+                const summary = activeData.reduce((acc, curr) => {
+                    const name = curr.driver_name || 'Driver Tanpa Nama';
                     acc[name] = (acc[name] || 0) + (parseFloat(curr.points_earned) || 0);
                     return acc;
                 }, {});
 
-                // Filter berdasarkan minimal poin input user
-                driverData = Object.keys(summary)
+                // Filter berdasarkan angka manual yang diketik user
+                candidates = Object.keys(summary)
                     .map(name => ({ name, points: summary[name] }))
                     .filter(d => d.points >= minPoints)
                     .sort((a, b) => b.points - a.points);
 
-                renderList();
-                document.getElementById('stat-candidates').innerText = driverData.length;
-                document.getElementById('btn-main').disabled = driverData.length === 0;
+                renderCandidates();
             } catch (err) {
                 console.error(err);
-                listContainer.innerHTML = '<p class="text-red-500 text-xs text-center p-4">Gagal memuat data database.</p>';
+            } finally {
+                loader.classList.add('hidden');
+                listEl.classList.remove('opacity-20');
             }
         }
 
-        function renderList() {
-            const listContainer = document.getElementById('list-container');
-            if (driverData.length === 0) {
-                listContainer.innerHTML = '<p class="text-slate-600 text-center py-10 text-[10px] font-bold uppercase italic">Tidak ada driver mencapai target</p>';
+        function renderCandidates() {
+            const listEl = document.getElementById('candidate-list');
+            document.getElementById('candidate-count').innerText = candidates.length;
+            const btnDraw = document.getElementById('btn-draw');
+            const btnSave = document.getElementById('btn-save-reset');
+
+            if (candidates.length === 0) {
+                listEl.innerHTML = `
+                    <div class="text-center py-12">
+                        <p class="text-[10px] text-slate-700 font-black uppercase italic tracking-widest">Tidak ada driver mencapai target poin</p>
+                    </div>`;
+                btnDraw.disabled = true;
+                btnSave.disabled = true;
                 return;
             }
 
-            listContainer.innerHTML = driverData.map(d => `
-                <div class="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5 hover:border-amber-500/30 transition-all">
-                    <span class="text-xs font-bold uppercase text-slate-300">${d.name}</span>
+            btnDraw.disabled = false;
+            btnSave.disabled = false;
+            listEl.innerHTML = candidates.map(c => `
+                <div class="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5 hover:border-amber-500/20 transition-all">
+                    <div>
+                        <p class="text-[11px] font-black text-slate-200 uppercase">${c.name}</p>
+                        <p class="text-[8px] text-emerald-500 font-bold tracking-widest">QUALIFIED</p>
+                    </div>
                     <div class="text-right">
-                        <span class="text-sm font-black text-amber-500">${d.points}</span>
-                        <span class="text-[8px] block text-slate-600 font-bold uppercase">Poin</span>
+                        <p class="text-sm font-black text-white">${c.points}</p>
+                        <p class="text-[8px] text-slate-500 uppercase font-black">Points</p>
                     </div>
                 </div>
             `).join('');
         }
 
-        function startDraw() {
-            if (isSpinning || driverData.length === 0) return;
-            
-            const prizes = document.getElementById('prize-list').value.split(',').map(p => p.trim()).filter(p => p);
-            if (prizes.length === 0) {
-                alert("Masukkan minimal satu hadiah!");
-                return;
-            }
-
-            isSpinning = true;
-            const btn = document.getElementById('btn-main');
-            const display = document.getElementById('draw-display');
-            const resPanel = document.getElementById('result-panel');
+        function startDrawing() {
+            const btn = document.getElementById('btn-draw');
+            const display = document.getElementById('display-winner');
+            const info = document.getElementById('winner-info');
             
             btn.disabled = true;
-            resPanel.classList.add('hidden');
-            display.classList.remove('gold-text');
+            info.classList.add('hidden');
+            display.classList.remove('winner-anim', 'gold-text');
 
-            let timer = 0;
+            let counter = 0;
             const duration = 3000;
-            const spinInterval = setInterval(() => {
-                const randomDriver = driverData[Math.floor(Math.random() * driverData.length)].name;
-                display.innerText = randomDriver;
-                timer += 50;
+            const interval = setInterval(() => {
+                const randomName = candidates[Math.floor(Math.random() * candidates.length)].name;
+                display.innerText = randomName;
+                counter += 100;
                 
-                if (timer >= duration) {
-                    clearInterval(spinInterval);
-                    finishDraw(prizes);
+                if (counter >= duration) {
+                    clearInterval(interval);
+                    finalizeWinner();
+                    btn.disabled = false;
                 }
-            }, 50);
+            }, 100);
         }
 
-        async function finishDraw(prizes) {
-            // Peluang berbasis poin (Weighted Random)
-            let weightedPool = [];
-            driverData.forEach(d => {
-                // Tiap 1 poin = 1 tiket di kolam undian
-                for(let i=0; i < Math.floor(d.points); i++) weightedPool.push(d);
+        function finalizeWinner() {
+            // Peluang berdasarkan jumlah poin
+            const pool = [];
+            candidates.forEach(c => {
+                for(let i=0; i<Math.floor(c.points); i++) pool.push(c);
             });
 
-            const winner = weightedPool[Math.floor(Math.random() * weightedPool.length)];
-            const randomPrize = prizes[Math.floor(Math.random() * prizes.length)];
-
-            // Update UI
-            const display = document.getElementById('draw-display');
+            const winner = pool[Math.floor(Math.random() * pool.length)];
+            
+            const display = document.getElementById('display-winner');
             display.innerText = winner.name;
-            display.classList.add('gold-text');
+            display.classList.add('winner-anim', 'gold-text');
             
             document.getElementById('winner-name').innerText = winner.name;
-            document.getElementById('winner-prize').innerText = randomPrize;
-            document.getElementById('winner-meta').innerText = `Menang dengan akumulasi ${winner.points} poin`;
-            document.getElementById('result-panel').classList.remove('hidden');
+            document.getElementById('winner-points').innerText = `Total Akumulasi Poin: ${winner.points}`;
+            document.getElementById('winner-info').classList.remove('hidden');
 
             confetti({
-                particleCount: 150,
+                particleCount: 200,
                 spread: 70,
                 origin: { y: 0.6 },
-                colors: ['#f59e0b', '#ffffff']
+                colors: ['#d4af37', '#ffffff', '#fbbf24']
             });
 
-            await saveAndReset(winner, randomPrize);
-            
-            isSpinning = false;
-            document.getElementById('btn-main').disabled = false;
-        }
-
-        async function saveAndReset(winner, prize) {
-            // Update History di UI
-            const historyList = document.getElementById('history-list');
-            if (historyList.innerText.includes('Belum Ada')) historyList.innerHTML = '';
+            // Tambahkan ke riwayat tampilan sementara
+            const historyEl = document.getElementById('draw-history');
+            if (historyEl.innerHTML.includes('Belum ada')) historyEl.innerHTML = '';
             
             const log = `
-                <div class="p-4 bg-white/5 rounded-2xl border border-amber-500/20 flex justify-between items-center">
-                    <div>
-                        <p class="text-xs font-black uppercase text-white">${winner.name}</p>
-                        <p class="text-[9px] font-bold text-amber-500 uppercase">${prize}</p>
-                    </div>
-                    <span class="text-[8px] text-slate-600 font-bold">${new Date().toLocaleTimeString()}</span>
+                <div class="flex items-center justify-between p-4 bg-amber-500/5 border border-amber-500/10 rounded-2xl animate-in slide-in-from-right">
+                    <p class="text-[11px] font-black text-white uppercase italic">${winner.name}</p>
+                    <span class="text-[8px] px-2 py-1 bg-amber-500/20 text-amber-500 rounded-lg font-black uppercase italic">Menang Undian</span>
                 </div>
             `;
-            historyList.innerHTML = log + historyList.innerHTML;
+            historyEl.innerHTML = log + historyEl.innerHTML;
+        }
 
-            // Reset Poin di Database (Tandai sudah diundi)
+        function confirmReset() {
+            document.getElementById('reset-modal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('reset-modal').classList.add('hidden');
+        }
+
+        async function executeReset() {
+            closeModal();
+            const btnSave = document.getElementById('btn-save-reset');
+            btnSave.disabled = true;
+            btnSave.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> MEMPROSES...';
+
             try {
-                await supabaseClient
+                // Ambil daftar nama driver yang ada di kandidat saat ini
+                const namesToReset = candidates.map(c => c.name);
+
+                // Update database: Tandai is_redeemed = true untuk nama-nama ini
+                const { error } = await supabaseClient
                     .from('commissions')
                     .update({ is_redeemed: true })
+                    .in('driver_name', namesToReset)
                     .or('is_redeemed.eq.false,is_redeemed.is.null');
+
+                if (error) throw error;
+
+                // Refresh data (kandidat akan kosong karena poin sudah di-reset)
+                await fetchCandidates();
                 
-                // Refresh data setelah beberapa detik
-                setTimeout(fetchData, 2000);
+                // Beri notifikasi visual sederhana
+                document.getElementById('display-winner').innerText = "DATA DI-RESET!";
+                setTimeout(() => {
+                    document.getElementById('display-winner').innerText = "SIAP DIUNDI";
+                    document.getElementById('winner-info').classList.add('hidden');
+                }, 3000);
+
             } catch (err) {
-                console.error("Database reset error:", err);
+                console.error("Reset Error:", err);
+                alert("Gagal meriset data. Periksa koneksi internet Anda.");
+            } finally {
+                btnSave.disabled = false;
+                btnSave.innerHTML = '<i class="fa-solid fa-floppy-disk mr-2"></i> SIMPAN & RESET';
             }
         }
 
