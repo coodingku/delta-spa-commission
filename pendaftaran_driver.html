@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Delta Spa - Registry Driver Pro</title>
+    <title>Delta Spa - Registry Driver Face ID</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -20,6 +20,13 @@
         .gold-text { color: #c5a059; }
         input, textarea { background: #0f172a !important; border: 1px solid #1e293b !important; color: white !important; }
         input:focus { border-color: #c5a059 !important; outline: none; }
+        
+        /* Camera UI Enhancement */
+        #camera-container { width: 160px; height: 160px; position: relative; border-radius: 2rem; overflow: hidden; border: 2px solid rgba(197, 160, 89, 0.3); background: #000; margin-bottom: 1rem; }
+        #video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+        #captured-image { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); display: none; }
+        .face-overlay { position: absolute; inset: 0; border: 2px dashed rgba(197, 160, 89, 0.4); border-radius: 50%; margin: 10px; pointer-events: none; }
+        
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
     </style>
@@ -32,16 +39,11 @@
             <p class="text-[10px] text-slate-500 font-bold uppercase tracking-[0.3em] mt-1 text-center font-mono">Finex Pos System</p>
         </div>
         <nav class="flex-1 px-4">
-            <a href="#" class="nav-link"><i class="fa-solid fa-chart-pie w-5"></i> Dashboard</a>
-            <a href="#" class="nav-link active"><i class="fa-solid fa-id-card w-5"></i> Registrasi Driver</a>
-            <a href="#" class="nav-link"><i class="fa-solid fa-clock-rotate-left w-5"></i> Riwayat & Komisi</a>
-            <a href="#" class="nav-link"><i class="fa-solid fa-gears w-5"></i> Master Harga</a>
+            <a href="dashboard.html" class="nav-link"><i class="fa-solid fa-chart-pie w-5"></i> Dashboard</a>
+            <a href="registrasi_driver.html" class="nav-link active"><i class="fa-solid fa-id-card w-5"></i> Registrasi Driver</a>
+            <a href="riwayat_komisi.html" class="nav-link"><i class="fa-solid fa-clock-rotate-left w-5"></i> Riwayat & Komisi</a>
+            <a href="master_harga.html" class="nav-link"><i class="fa-solid fa-gears w-5"></i> Master Harga</a>
         </nav>
-        <div class="p-6 border-t border-slate-800/50">
-            <button onclick="logout()" class="nav-link w-full text-red-400 hover:bg-red-900/10">
-                <i class="fa-solid fa-right-from-bracket w-5"></i> Logout
-            </button>
-        </div>
     </aside>
 
     <!-- Main Content -->
@@ -49,7 +51,7 @@
         <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
             <div>
                 <h2 class="text-3xl font-bold uppercase tracking-tight">Data <span class="gold-text">Mitra Driver</span></h2>
-                <p class="text-slate-500 text-sm mt-1">Manajemen database driver dan berkas profil.</p>
+                <p class="text-slate-500 text-sm mt-1">Manajemen database driver dan berkas Face ID.</p>
             </div>
             <div class="flex flex-wrap gap-3">
                 <button onclick="downloadTemplate()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-xl text-[10px] font-bold tracking-widest uppercase flex items-center gap-2 transition-all">
@@ -69,22 +71,30 @@
             <!-- Form Input -->
             <div class="lg:col-span-4">
                 <div class="card p-8 rounded-[2.5rem] sticky top-0">
-                    <h3 id="form-title" class="text-xs font-bold gold-text uppercase tracking-[0.2em] mb-6">Informasi Driver</h3>
+                    <h3 id="form-title" class="text-xs font-bold gold-text uppercase tracking-[0.2em] mb-6">Pendaftaran Face ID</h3>
+                    
+                    <!-- Face Capture Section -->
+                    <div class="flex flex-col items-center mb-6">
+                        <div id="camera-container">
+                            <video id="video" autoplay muted playsinline></video>
+                            <img id="captured-image" alt="Captured Face">
+                            <div class="face-overlay"></div>
+                        </div>
+                        
+                        <div class="flex gap-2 mb-2">
+                            <button type="button" id="btn-capture" onclick="takeSnapshot()" class="px-4 py-2 bg-slate-800 text-[9px] font-black uppercase tracking-widest rounded-lg hover:bg-slate-700">
+                                <i class="fa-solid fa-camera mr-1"></i> Capture
+                            </button>
+                            <button type="button" id="btn-reset-cam" onclick="resetCamera()" class="hidden px-4 py-2 bg-red-900/30 text-red-400 text-[9px] font-black uppercase tracking-widest rounded-lg hover:bg-red-900/50">
+                                <i class="fa-solid fa-rotate mr-1"></i> Ulangi
+                            </button>
+                        </div>
+                        <p class="text-[9px] text-slate-500 uppercase font-bold text-center">Pendaftaran Wajah Driver (Face ID)</p>
+                    </div>
+
                     <form id="driver-form" class="space-y-4">
                         <input type="hidden" id="edit-mode-id">
                         
-                        <div class="flex flex-col items-center mb-6">
-                            <div class="w-24 h-24 rounded-2xl bg-slate-900 border-2 border-dashed border-slate-700 flex items-center justify-center overflow-hidden relative group">
-                                <img id="photo-preview" src="" class="absolute inset-0 w-full h-full object-cover hidden">
-                                <i id="photo-placeholder" class="fa-solid fa-camera text-2xl text-slate-700"></i>
-                                <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity cursor-pointer">
-                                    <span class="text-[10px] font-bold text-white uppercase">Upload</span>
-                                </div>
-                                <input type="file" id="photo-input" class="absolute inset-0 opacity-0 cursor-pointer" accept="image/*" onchange="previewPhoto(event)">
-                            </div>
-                            <p class="text-[9px] text-slate-500 mt-2 uppercase font-bold">Foto Profil (Max 1MB)</p>
-                        </div>
-
                         <div>
                             <label class="text-[10px] font-bold text-slate-500 uppercase ml-1">NIK / ID Driver</label>
                             <input type="text" id="reg-id" required class="w-full p-4 rounded-2xl mt-1 text-sm font-medium">
@@ -101,7 +111,8 @@
                             <label class="text-[10px] font-bold text-slate-500 uppercase ml-1">Alamat Domisili</label>
                             <textarea id="reg-address" class="w-full p-4 rounded-2xl mt-1 h-20 text-sm font-medium"></textarea>
                         </div>
-                        <button type="submit" id="btn-submit" class="w-full gold-gradient py-4 rounded-2xl font-bold text-white uppercase tracking-widest shadow-lg hover:brightness-110 active:scale-95 transition-all">Simpan Data</button>
+                        
+                        <button type="submit" id="btn-submit" class="w-full gold-gradient py-4 rounded-2xl font-bold text-white uppercase tracking-widest shadow-lg hover:brightness-110 active:scale-95 transition-all">Simpan Driver</button>
                         <button type="button" id="btn-cancel" onclick="resetForm()" class="hidden w-full bg-slate-800 py-3 rounded-2xl font-bold text-white uppercase text-xs">Batal Edit</button>
                     </form>
                 </div>
@@ -121,14 +132,14 @@
                         <table class="w-full text-sm">
                             <thead class="bg-slate-900/50 text-slate-500 text-[10px] uppercase tracking-widest">
                                 <tr>
-                                    <th class="px-6 py-4 text-left">Foto</th>
+                                    <th class="px-6 py-4 text-left">Foto / Face ID</th>
                                     <th class="px-6 py-4 text-left">Profil Driver</th>
                                     <th class="px-6 py-4 text-left">Kontak</th>
                                     <th class="px-6 py-4 text-center">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody id="driver-list" class="divide-y divide-slate-800/30">
-                                <!-- Data rows go here -->
+                                <!-- Data rows -->
                             </tbody>
                         </table>
                     </div>
@@ -137,33 +148,63 @@
         </div>
     </main>
 
+    <!-- Hidden Canvas for capturing -->
+    <canvas id="canvas" class="hidden" width="400" height="500"></canvas>
+
     <script>
-        // Supabase Configuration
         const SUPABASE_URL = "https://qdxchvogaxiibzqvuupf.supabase.co"; 
         const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkeGNodm9nYXhpaWJ6cXZ1dXBmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAxODE5NTIsImV4cCI6MjA4NTc1Nzk1Mn0.8U_zk81b6wFfdZdPRupk5KSk3g39nOPs8SpZVkWbqkc";
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let currentDrivers = [];
         let existingPhotoUrl = "";
+        let capturedBlob = null;
 
-        // UI Helpers
-        function previewPhoto(event) {
-            const reader = new FileReader();
-            reader.onload = function(){
-                const output = document.getElementById('photo-preview');
-                output.src = reader.result;
-                output.classList.remove('hidden');
-                document.getElementById('photo-placeholder').classList.add('hidden');
-            };
-            if(event.target.files[0]) reader.readAsDataURL(event.target.files[0]);
+        // --- Camera Logic ---
+        const video = document.getElementById('video');
+        const capturedImg = document.getElementById('captured-image');
+        const canvas = document.getElementById('canvas');
+
+        async function initCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: "user", width: 400, height: 500 } 
+                });
+                video.srcObject = stream;
+            } catch (err) {
+                console.error("Camera error:", err);
+            }
         }
 
+        function takeSnapshot() {
+            const context = canvas.getContext('2d');
+            // Mirror flip for canvas to match preview
+            context.translate(canvas.width, 0);
+            context.scale(-1, 1);
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            canvas.toBlob((blob) => {
+                capturedBlob = blob;
+                capturedImg.src = URL.createObjectURL(blob);
+                capturedImg.style.display = 'block';
+                video.style.display = 'none';
+                document.getElementById('btn-capture').classList.add('hidden');
+                document.getElementById('btn-reset-cam').classList.remove('hidden');
+            }, 'image/jpeg', 0.9);
+        }
+
+        function resetCamera() {
+            capturedBlob = null;
+            capturedImg.style.display = 'none';
+            video.style.display = 'block';
+            document.getElementById('btn-capture').classList.remove('hidden');
+            document.getElementById('btn-reset-cam').classList.add('hidden');
+        }
+
+        // --- Data Logic ---
         async function fetchDrivers() {
             const { data, error } = await supabaseClient.from('drivers').select('*').order('name');
-            if (error) {
-                console.error("Fetch Error:", error);
-                return;
-            }
+            if (error) return console.error(error);
             currentDrivers = data || [];
             renderTable(currentDrivers);
         }
@@ -175,8 +216,8 @@
             tbody.innerHTML = data.map(d => `
                 <tr class="hover:bg-slate-800/10 transition-colors group">
                     <td class="px-6 py-4">
-                        <div class="w-10 h-10 rounded-xl bg-slate-800 overflow-hidden ring-1 ring-slate-700 group-hover:ring-[#c5a059]">
-                            <img src="${d.ktp_url || 'https://ui-avatars.com/api/?name='+encodeURIComponent(d.name)+'&background=0f172a&color=c5a059'}" class="w-full h-full object-cover">
+                        <div class="w-12 h-12 rounded-2xl bg-slate-800 overflow-hidden ring-1 ring-slate-700 group-hover:ring-[#c5a059]">
+                            <img src="${d.photo_url || d.ktp_url || 'https://ui-avatars.com/api/?name='+encodeURIComponent(d.name)+'&background=0f172a&color=c5a059'}" class="w-full h-full object-cover">
                         </div>
                     </td>
                     <td class="px-6 py-4">
@@ -189,51 +230,46 @@
                     </td>
                     <td class="px-6 py-4">
                         <div class="flex gap-4 justify-center">
-                            <button onclick="edit('${d.driver_id}')" class="text-blue-400 hover:text-blue-300 transition-all" title="Edit"><i class="fa-solid fa-pen-to-square"></i></button>
-                            <button onclick="del('${d.driver_id}')" class="text-red-400 hover:text-red-300 transition-all" title="Hapus"><i class="fa-solid fa-trash-can"></i></button>
+                            <button onclick="edit('${d.driver_id}')" class="text-blue-400 hover:text-blue-300 transition-all"><i class="fa-solid fa-pen-to-square"></i></button>
+                            <button onclick="del('${d.driver_id}')" class="text-red-400 hover:text-red-300 transition-all"><i class="fa-solid fa-trash-can"></i></button>
                         </div>
                     </td>
-                </tr>`).join('') || '<tr><td colspan="4" class="p-20 text-center text-slate-600 italic">Belum ada data driver terdaftar</td></tr>';
+                </tr>`).join('') || '<tr><td colspan="4" class="p-20 text-center text-slate-600 italic">Belum ada data driver</td></tr>';
         }
 
-        function filterTable() {
-            const val = document.getElementById('search-bar').value.toLowerCase();
-            const filtered = currentDrivers.filter(d => 
-                d.name.toLowerCase().includes(val) || 
-                d.driver_id.toLowerCase().includes(val)
-            );
-            renderTable(filtered);
-        }
-
-        // Form Submission
         document.getElementById('driver-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('btn-submit');
             btn.disabled = true;
-            btn.innerText = "Processing...";
+            btn.innerHTML = `<i class="fa-solid fa-circle-notch animate-spin"></i> PROSES...`;
 
             const editId = document.getElementById('edit-mode-id').value;
-            const file = document.getElementById('photo-input').files[0];
+            const driverId = document.getElementById('reg-id').value;
             let photoUrl = existingPhotoUrl;
 
             try {
-                if (file) {
-                    const fileExt = file.name.split('.').pop();
-                    const fileName = `drivers/${Date.now()}.${fileExt}`;
-                    const { data: uploadData, error: uploadError } = await supabaseClient.storage.from('assets').upload(fileName, file);
+                // Upload captured photo if exists
+                if (capturedBlob) {
+                    const fileName = `face_id_${driverId}_${Date.now()}.jpg`;
+                    const { data: uploadData, error: uploadError } = await supabaseClient.storage
+                        .from('assets') // Ensure you have 'assets' bucket
+                        .upload(`drivers/${fileName}`, capturedBlob);
+                    
                     if (uploadError) throw uploadError;
-                    const { data: publicUrlData } = supabaseClient.storage.from('assets').getPublicUrl(fileName);
+                    
+                    const { data: publicUrlData } = supabaseClient.storage.from('assets').getPublicUrl(`drivers/${fileName}`);
                     photoUrl = publicUrlData.publicUrl;
                 }
 
                 const payload = {
-                    driver_id: document.getElementById('reg-id').value,
+                    driver_id: driverId,
                     name: document.getElementById('reg-name').value,
                     phone: document.getElementById('reg-phone').value,
                     address: document.getElementById('reg-address').value,
-                    ktp_url: photoUrl
+                    photo_url: photoUrl,
+                    ktp_url: photoUrl // Sync with your old column name if needed
                 };
-                
+
                 let result;
                 if(editId) {
                     result = await supabaseClient.from('drivers').update(payload).eq('driver_id', editId);
@@ -243,50 +279,45 @@
 
                 if (result.error) throw result.error;
 
-                resetForm(); 
+                alert("Data Driver Berhasil Disimpan!");
+                resetForm();
                 await fetchDrivers();
-                alert("Data berhasil disimpan!");
 
             } catch (err) {
-                console.error("Operation Failed:", err);
-                alert("Error: " + err.message);
+                alert("Gagal: " + err.message);
             } finally {
                 btn.disabled = false;
-                btn.innerText = editId ? "Update Mitra" : "Simpan Data";
+                btn.innerText = "Simpan Driver";
             }
         });
 
-        // Edit & Delete
         async function edit(id) {
             const { data, error } = await supabaseClient.from('drivers').select('*').eq('driver_id', id).single();
             if(error) return alert("Gagal mengambil data");
 
-            if(data) {
-                document.getElementById('edit-mode-id').value = data.driver_id;
-                document.getElementById('reg-id').value = data.driver_id;
-                document.getElementById('reg-name').value = data.name;
-                document.getElementById('reg-phone').value = data.phone;
-                document.getElementById('reg-address').value = data.address || "";
-                
-                existingPhotoUrl = data.ktp_url || "";
-                if (data.ktp_url) {
-                    const img = document.getElementById('photo-preview');
-                    img.src = data.ktp_url;
-                    img.classList.remove('hidden');
-                    document.getElementById('photo-placeholder').classList.add('hidden');
-                }
-
-                document.getElementById('form-title').innerText = "Edit Informasi Mitra";
-                document.getElementById('btn-submit').innerText = "Update Mitra";
-                document.getElementById('btn-cancel').classList.remove('hidden');
-                document.getElementById('reg-id').readOnly = true;
+            document.getElementById('edit-mode-id').value = data.driver_id;
+            document.getElementById('reg-id').value = data.driver_id;
+            document.getElementById('reg-name').value = data.name;
+            document.getElementById('reg-phone').value = data.phone;
+            document.getElementById('reg-address').value = data.address || "";
+            
+            existingPhotoUrl = data.photo_url || data.ktp_url || "";
+            if (existingPhotoUrl) {
+                capturedImg.src = existingPhotoUrl;
+                capturedImg.style.display = 'block';
+                video.style.display = 'none';
+                document.getElementById('btn-capture').classList.add('hidden');
+                document.getElementById('btn-reset-cam').classList.remove('hidden');
             }
+
+            document.getElementById('form-title').innerText = "Edit Mitra Face ID";
+            document.getElementById('btn-cancel').classList.remove('hidden');
+            document.getElementById('reg-id').readOnly = true;
         }
 
         async function del(id) {
-            if(confirm("Yakin ingin menghapus mitra ini?")) {
-                const { error } = await supabaseClient.from('drivers').delete().eq('driver_id', id);
-                if(error) alert("Gagal hapus: " + error.message);
+            if(confirm("Hapus mitra driver ini?")) {
+                await supabaseClient.from('drivers').delete().eq('driver_id', id);
                 fetchDrivers();
             }
         }
@@ -295,61 +326,22 @@
             document.getElementById('driver-form').reset();
             document.getElementById('edit-mode-id').value = "";
             existingPhotoUrl = "";
-            document.getElementById('form-title').innerText = "Informasi Driver";
-            document.getElementById('btn-submit').innerText = "Simpan Data";
+            resetCamera();
+            document.getElementById('form-title').innerText = "Pendaftaran Face ID";
             document.getElementById('btn-cancel').classList.add('hidden');
             document.getElementById('reg-id').readOnly = false;
-            document.getElementById('photo-preview').classList.add('hidden');
-            document.getElementById('photo-placeholder').classList.remove('hidden');
-            document.getElementById('photo-preview').src = "";
         }
 
-        // FUNGSI UTAMA: IMPORT DENGAN DEDUPLIKASI
-        function importData(event) {
-            const file = event.target.files[0];
-            const reader = new FileReader();
-            reader.onload = async (e) => {
-                const data = new Uint8Array(e.target.result);
-                const workbook = XLSX.read(data, { type: 'array' });
-                const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
-                
-                // MENGGUNAKAN MAP UNTUK MENCEGAH DUPLIKASI ID DALAM ARRAY IMPORT
-                const driverMap = new Map();
-
-                rows.forEach(r => {
-                    const id = (r.NIK_ID || r.driver_id || "").toString().trim();
-                    const name = r.Nama || r.name || "";
-                    if (id && name) {
-                        driverMap.set(id, {
-                            driver_id: id,
-                            name: name,
-                            phone: (r.WhatsApp || r.phone || "").toString(),
-                            address: r.Alamat || r.address || ""
-                        });
-                    }
-                });
-
-                const formatted = Array.from(driverMap.values());
-
-                if (formatted.length > 0) {
-                    // Gunakan upsert agar jika ID sudah ada di DB akan diupdate, jika belum akan ditambah
-                    const { error } = await supabaseClient.from('drivers').upsert(formatted, { onConflict: 'driver_id' });
-                    
-                    if (error) {
-                        console.error("Import Error:", error);
-                        alert("Gagal import: " + error.message);
-                    } else { 
-                        alert(`Berhasil mengimpor ${formatted.length} driver unik!`); 
-                        fetchDrivers(); 
-                    }
-                } else {
-                    alert("Tidak ada data valid yang ditemukan di file Excel.");
-                }
-                event.target.value = ''; // Reset input file
-            };
-            if(file) reader.readAsArrayBuffer(file);
+        // Search
+        function filterTable() {
+            const val = document.getElementById('search-bar').value.toLowerCase();
+            const filtered = currentDrivers.filter(d => 
+                d.name.toLowerCase().includes(val) || d.driver_id.toLowerCase().includes(val)
+            );
+            renderTable(filtered);
         }
 
+        // Excel Ops
         function exportToExcel() {
             const ws = XLSX.utils.json_to_sheet(currentDrivers.map(d => ({
                 NIK_ID: d.driver_id,
@@ -359,18 +351,21 @@
             })));
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "Drivers");
-            XLSX.writeFile(wb, "Database_Driver_DeltaSpa.xlsx");
+            XLSX.writeFile(wb, "DeltaSpa_Drivers.xlsx");
         }
 
         function downloadTemplate() {
-            const template = [{ NIK_ID: "12345", Nama: "Budi Santoso", WhatsApp: "08123456789", Alamat: "Jl. Sudirman No 1" }];
+            const template = [{ NIK_ID: "ID001", Nama: "Nama Driver", WhatsApp: "081...", Alamat: "..." }];
             const ws = XLSX.utils.json_to_sheet(template);
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "Template");
-            XLSX.writeFile(wb, "Template_Import_Driver.xlsx");
+            XLSX.writeFile(wb, "Template_Driver.xlsx");
         }
 
-        window.onload = fetchDrivers;
+        window.onload = () => {
+            fetchDrivers();
+            initCamera();
+        };
     </script>
 </body>
 </html>
