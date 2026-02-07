@@ -1,249 +1,375 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { 
-  Camera, 
-  UserCheck, 
-  AlertCircle, 
-  RefreshCcw, 
-  CheckCircle2, 
-  Search,
-  Users,
-  Star
-} from 'lucide-react';
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Input Transaksi - BeautyBloom</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Load Face-API.js library -->
+    <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        body { font-family: 'Urbanist', sans-serif; background-color: #020617; color: #f8fafc; }
+        .card { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(212, 175, 55, 0.1); }
+        .sidebar { background: #0f172a; border-right: 1px solid rgba(212, 175, 55, 0.1); }
+        .nav-link { display: flex; align-items: center; gap: 12px; padding: 14px 20px; border-radius: 16px; color: #94a3b8; transition: 0.3s; margin-bottom: 8px; font-weight: 500; }
+        .nav-link:hover { background: rgba(212, 175, 55, 0.05); color: #d4af37; }
+        .nav-link.active { background: linear-gradient(135deg, #d4af37 0%, #a67c00 100%); color: white; }
+        .gold-text { color: #d4af37; }
+        .input-field { background: rgba(30, 41, 59, 0.5); border: 1px solid rgba(148, 163, 184, 0.1); color: white; width: 100%; padding: 12px 20px; border-radius: 12px; outline: none; transition: 0.3s; }
+        .input-field:focus { border-color: #d4af37; box-shadow: 0 0 10px rgba(212, 175, 55, 0.1); }
+        select option { background: #0f172a; color: white; }
 
-// Simulasi Face Recognition Library logic (e.g. face-api.js concept)
-const App = () => {
-  const [step, setStep] = useState('scan'); // scan, detail, success
-  const [isScanning, setIsScanning] = useState(false);
-  const [error, setError] = useState(null);
-  const [statusMessage, setStatusMessage] = useState('Posisikan wajah di dalam lingkaran');
-  const [matchedDriver, setMatchedDriver] = useState(null);
-  const videoRef = useRef(null);
-  const canvasRef = useRef(null);
-
-  // Mock data driver untuk simulasi
-  const drivers = [
-    { id: 'DRV001', name: 'BUDI SANTOSO', points: 125, photo: 'ref_budi.jpg' },
-    { id: 'DRV002', name: 'I WAYAN SUDRA', points: 88, photo: 'ref_wayan.jpg' }
-  ];
-
-  useEffect(() => {
-    if (step === 'scan') {
-      startCamera();
-    }
-  }, [step]);
-
-  const startCamera = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { 
-          facingMode: 'user',
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
-        } 
-      });
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-      }
-    } catch (err) {
-      setError("Kamera tidak dapat diakses. Pastikan izin kamera diberikan.");
-    }
-  };
-
-  const handleScan = () => {
-    setIsScanning(true);
-    setStatusMessage('Menganalisis fitur wajah...');
-    setError(null);
-
-    // Simulasi proses pemindaian yang lebih teliti (3 detik)
-    setTimeout(() => {
-      // Logika simulasi: Berhasil 80% dari waktu untuk demonstrasi
-      const isSuccess = Math.random() > 0.2;
-
-      if (isSuccess) {
-        setMatchedDriver(drivers[0]);
-        setIsScanning(false);
-        setStep('detail');
-      } else {
-        setIsScanning(false);
-        setError("Wajah tidak cocok atau kurang jelas. Coba cari pencahayaan yang lebih terang.");
-        setStatusMessage('Gagal. Coba lagi atau gunakan pencarian manual.');
-      }
-    }, 2500);
-  };
-
-  return (
-    <div className="min-h-screen bg-[#020617] text-white font-['Urbanist'] p-6 flex items-center justify-center">
-      <div className="max-w-md w-full">
+        /* Camera UI Custom Styles */
+        #camera-container { display: none; position: relative; width: 100%; max-width: 320px; aspect-ratio: 4/5; margin: 20px auto; border-radius: 20px; overflow: hidden; border: 2px solid #d4af37; }
+        #video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+        .scan-anim { position: absolute; width: 100%; height: 2px; background: #d4af37; box-shadow: 0 0 15px #d4af37; top: 0; animation: scan 2s linear infinite; }
+        @keyframes scan { 0% { top: 0% } 100% { top: 100% } }
         
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-2xl font-black italic text-[#d4af37] tracking-tighter uppercase">
-            FINEX <span className="text-white">POS</span>
-          </h1>
-          <p className="text-slate-500 text-[10px] font-bold tracking-[0.2em] uppercase">BeautyBloom Management</p>
+        /* Form Lock State */
+        .locked-area { opacity: 0.4; pointer-events: none; filter: grayscale(0.8); transition: 0.5s ease; }
+        .unlocked-area { opacity: 1; pointer-events: auto; filter: grayscale(0); }
+    </style>
+</head>
+<body class="min-h-screen flex">
+    <!-- Sidebar -->
+    <aside class="w-72 shrink-0 flex flex-col sidebar hidden md:flex">
+        <div class="p-8">
+            <h1 class="text-2xl font-black italic gold-text tracking-tighter uppercase">Beauty<span class="text-white">Bloom</span></h1>
+            <p class="text-[10px] text-slate-500 font-bold tracking-widest uppercase mt-1">BeautyBloom Bali</p>
         </div>
+        <nav class="flex-1 px-4">
+            <a href="dashboard.html" class="nav-link"><i class="fa-solid fa-chart-pie w-5"></i> Dashboard</a>
+            <a href="pendaftaran_driver.html" class="nav-link"><i class="fa-solid fa-id-card w-5"></i> Registrasi Driver</a>
+            <a href="transaksi_komisi.html" class="nav-link active"><i class="fa-solid fa-money-bill-transfer w-5"></i> Input Transaksi</a>
+            <a href="riwayat_transaksi.html" class="nav-link"><i class="fa-solid fa-clock-rotate-left w-5"></i> Riwayat & Komisi</a>
+        </nav>
+    </aside>
 
-        {step === 'scan' && (
-          <div className="space-y-6">
-            <div className="relative aspect-square rounded-[40px] overflow-hidden border-2 border-slate-800 bg-slate-900 shadow-2xl">
-              {/* Camera Feed */}
-              <video 
-                ref={videoRef} 
-                autoPlay 
-                playsInline 
-                className="w-full h-full object-cover grayscale-[0.3]"
-              />
-              
-              {/* Face Overlay Guideline */}
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className={`w-64 h-80 border-2 rounded-[100px] transition-all duration-500 ${isScanning ? 'border-[#d4af37] scale-105 border-dashed animate-spin-slow' : 'border-white/20'}`}>
-                  {/* Scanner Line */}
-                  {isScanning && (
-                    <div className="w-full h-1 bg-gradient-to-r from-transparent via-[#d4af37] to-transparent absolute animate-scan-line top-0 shadow-[0_0_15px_#d4af37]"></div>
-                  )}
+    <main class="flex-1 p-6 md:p-10 overflow-y-auto">
+        <div class="max-w-3xl mx-auto">
+            <header class="mb-10 text-center">
+                <div id="auth-status-badge" class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-500/10 border border-red-500/20 text-red-500 text-[10px] font-bold uppercase tracking-widest mb-4">
+                    <i class="fa-solid fa-lock"></i> Belum Terverifikasi
                 </div>
-              </div>
+                <h2 class="text-3xl font-bold">Input <span class="gold-text italic">Komisi Massage</span></h2>
+                <p class="text-slate-500 text-sm mt-1">Sistem Finex Pos - Manajemen Layanan & Komisi</p>
+            </header>
 
-              {/* Status Overlay */}
-              <div className="absolute bottom-6 inset-x-0 flex justify-center">
-                <div className="bg-black/60 backdrop-blur-md px-4 py-2 rounded-full border border-white/10 flex items-center gap-2">
-                  {isScanning ? (
-                    <RefreshCcw className="w-4 h-4 text-[#d4af37] animate-spin" />
-                  ) : error ? (
-                    <AlertCircle className="w-4 h-4 text-rose-500" />
-                  ) : (
-                    <UserCheck className="w-4 h-4 text-emerald-500" />
-                  )}
-                  <span className={`text-[11px] font-bold uppercase tracking-wider ${error ? 'text-rose-400' : 'text-slate-200'}`}>
-                    {statusMessage}
-                  </span>
+            <form id="form-transaksi" class="card p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem] space-y-6">
+                <!-- Pencarian Driver -->
+                <div id="search-section">
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 ml-1">Cari Driver (NIK / Nama)</label>
+                    <div class="relative">
+                        <input type="text" id="search-driver" placeholder="Ketik NIK atau Nama Driver..." class="input-field pl-12" autocomplete="off">
+                        <i class="fa-solid fa-id-badge absolute left-5 top-4 text-slate-500 text-sm"></i>
+                        <div id="driver-results" class="absolute z-20 w-full mt-2 bg-slate-900 border border-slate-800 rounded-xl hidden max-h-48 overflow-y-auto shadow-2xl"></div>
+                    </div>
                 </div>
-              </div>
-            </div>
 
-            {error && (
-              <div className="bg-rose-500/10 border border-rose-500/20 p-4 rounded-2xl flex items-start gap-3">
-                <AlertCircle className="w-5 h-5 text-rose-500 shrink-0 mt-0.5" />
-                <p className="text-xs text-rose-200 leading-relaxed">{error}</p>
-              </div>
-            )}
+                <!-- Info Driver Terpilih + Tombol Scan -->
+                <div id="selected-driver-info" class="hidden animate-in fade-in duration-500">
+                    <div class="p-4 rounded-xl bg-[#d4af37]/10 border border-[#d4af37]/20 flex items-center gap-4 mb-4">
+                        <img id="driver-photo-ref" src="" class="w-14 h-14 rounded-lg object-cover border-2 border-[#d4af37]" crossorigin="anonymous">
+                        <div class="flex-1 min-w-0">
+                            <p class="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Driver Terpilih</p>
+                            <h4 id="display-name" class="font-bold text-white text-lg truncate">-</h4>
+                            <p id="display-id" class="text-xs gold-text truncate">-</p>
+                        </div>
+                        <button type="button" onclick="resetDriver()" class="text-xs text-red-400 hover:underline shrink-0">Ganti</button>
+                    </div>
 
-            <div className="flex flex-col gap-3">
-              <button 
-                onClick={handleScan}
-                disabled={isScanning}
-                className="w-full py-4 bg-gradient-to-r from-[#d4af37] to-[#a67c00] rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-lg shadow-[#d4af37]/20 hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-50"
-              >
-                {isScanning ? 'Menganalisis...' : 'Mulai Scan Wajah'}
-              </button>
-              
-              <div className="flex items-center gap-4 py-2">
-                <div className="h-px bg-slate-800 flex-1"></div>
-                <span className="text-[10px] font-bold text-slate-600 uppercase">Atau</span>
-                <div className="h-px bg-slate-800 flex-1"></div>
-              </div>
+                    <!-- Tombol Pemicu Kamera -->
+                    <button type="button" id="btn-start-verify" class="w-full bg-white/5 border border-white/10 hover:bg-white/10 text-white font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-3">
+                        <i class="fa-solid fa-face-viewfinder text-[#d4af37]"></i>
+                        <span>VERIFIKASI WAJAH DRIVER</span>
+                    </button>
 
-              <button className="w-full py-4 bg-slate-900 border border-slate-800 rounded-2xl font-bold text-xs uppercase tracking-widest text-slate-400 hover:text-white transition-all flex items-center justify-center gap-2">
-                <Search className="w-4 h-4" /> Cari Driver Manual
-              </button>
-            </div>
-
-            <div className="bg-amber-500/5 border border-amber-500/10 p-4 rounded-2xl">
-              <h4 className="text-[10px] font-black text-[#d4af37] uppercase mb-2 flex items-center gap-2">
-                <AlertCircle className="w-3 h-3" /> Tips Agar Cepat Terdeteksi:
-              </h4>
-              <ul className="text-[10px] text-slate-500 space-y-1 italic">
-                <li>• Pastikan wajah menghadap tepat ke arah kamera</li>
-                <li>• Hindari membelakangi cahaya (backlight)</li>
-                <li>• Lepas kacamata hitam atau topi jika perlu</li>
-                <li>• Jarak wajah jangan terlalu jauh (sekitar 30-50cm)</li>
-              </ul>
-            </div>
-          </div>
-        )}
-
-        {step === 'detail' && matchedDriver && (
-          <div className="bg-slate-900/50 border border-[#d4af37]/20 rounded-[40px] p-8 animate-in fade-in zoom-in duration-500">
-            <div className="flex flex-col items-center text-center">
-              <div className="w-24 h-24 rounded-full border-2 border-[#d4af37] p-1 mb-4">
-                <div className="w-full h-full rounded-full bg-slate-800 flex items-center justify-center">
-                  <Users className="w-10 h-10 text-[#d4af37]" />
+                    <!-- Camera Viewer -->
+                    <div id="camera-container">
+                        <video id="video" autoplay muted playsinline></video>
+                        <div class="scan-anim"></div>
+                        <div class="absolute bottom-0 inset-x-0 bg-black/60 p-2 text-center">
+                            <span id="ai-status" class="text-[10px] font-bold tracking-tighter uppercase">Menginisialisasi Kamera...</span>
+                        </div>
+                    </div>
                 </div>
-              </div>
-              <h2 className="text-xl font-black italic uppercase text-white tracking-tight">{matchedDriver.name}</h2>
-              <p className="text-[#d4af37] text-xs font-bold tracking-widest mb-6">{matchedDriver.id}</p>
-              
-              <div className="grid grid-cols-2 gap-4 w-full mb-8">
-                <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
-                  <span className="text-[10px] text-slate-500 uppercase font-bold block mb-1">Total Poin</span>
-                  <div className="flex items-center justify-center gap-2">
-                    <Star className="w-4 h-4 text-orange-400 fill-orange-400" />
-                    <span className="text-xl font-black">{matchedDriver.points}</span>
-                  </div>
+
+                <div id="transaction-fields" class="locked-area space-y-6">
+                    <input type="hidden" id="selected-driver-id">
+                    <input type="hidden" id="selected-driver-name">
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 ml-1">Kategori Tamu</label>
+                            <select id="guest-category" class="input-field" required>
+                                <option value="Lokal">Tamu Lokal</option>
+                                <option value="Asing">Tamu Asing</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 ml-1">Pilih Layanan</label>
+                            <select id="service-select" class="input-field" required>
+                                <option value="">-- Pilih Paket --</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 ml-1">Jumlah Tamu (Pax)</label>
+                            <input type="number" id="guest-count" min="1" value="1" class="input-field" required>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 ml-1">No. Kamar / Catatan</label>
+                            <input type="text" id="transaction-note" placeholder="Contoh: Room 201" class="input-field">
+                        </div>
+                    </div>
+
+                    <!-- Preview Perhitungan -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="bg-slate-900/50 p-5 rounded-2xl border border-slate-800 text-center">
+                            <p class="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Total Transaksi</p>
+                            <h3 id="total-massage-display" class="text-xl font-black text-white italic">Rp 0</h3>
+                        </div>
+                        <div class="bg-[#d4af37]/5 p-5 rounded-2xl border border-[#d4af37]/20 text-center">
+                            <p class="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Komisi Driver</p>
+                            <h3 id="commission-display" class="text-xl font-black gold-text italic">Rp 0</h3>
+                        </div>
+                        <div class="bg-blue-500/5 p-5 rounded-2xl border border-blue-500/20 text-center">
+                            <p class="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Poin Diperoleh</p>
+                            <h3 id="points-display" class="text-xl font-black text-blue-400 italic">0 Pts</h3>
+                        </div>
+                    </div>
+
+                    <button type="submit" id="btn-submit" class="w-full bg-gradient-to-r from-[#d4af37] to-[#a67c00] text-white font-bold py-4 rounded-xl shadow-lg transition-all active:scale-[0.98] flex items-center justify-center gap-3">
+                        <i class="fa-solid fa-save"></i>
+                        <span>SIMPAN TRANSAKSI</span>
+                    </button>
                 </div>
-                <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
-                  <span className="text-[10px] text-slate-500 uppercase font-bold block mb-1">Status</span>
-                  <div className="flex items-center justify-center gap-1">
-                    <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
-                    <span className="text-xs font-black uppercase text-emerald-400 italic">Terverifikasi</span>
-                  </div>
-                </div>
-              </div>
+            </form>
+        </div>
+    </main>
 
-              <div className="space-y-3 w-full">
-                <button 
-                  onClick={() => setStep('success')}
-                  className="w-full py-4 bg-gradient-to-r from-[#d4af37] to-[#a67c00] rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-lg shadow-[#d4af37]/20"
-                >
-                  Konfirmasi & Input Komisi
-                </button>
-                <button 
-                  onClick={() => setStep('scan')}
-                  className="w-full py-4 bg-transparent border border-slate-700 rounded-2xl font-bold text-xs uppercase text-slate-500"
-                >
-                  Bukan Driver Ini? Ulangi
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+    <script>
+        const SUPABASE_URL = "https://qdxchvogaxiibzqvuupf.supabase.co"; 
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkeGNodm9nYXhpaWJ6cXZ1dXBmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAxODE5NTIsImV4cCI6MjA4NTc1Nzk1Mn0.8U_zk81b6wFfdZdPRupk5KSk3g39nOPs8SpZVkWbqkc";
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        {step === 'success' && (
-          <div className="text-center py-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            <div className="w-20 h-20 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-6 border border-emerald-500/30">
-              <CheckCircle2 className="w-10 h-10 text-emerald-500" />
-            </div>
-            <h2 className="text-2xl font-black italic uppercase mb-2">Berhasil!</h2>
-            <p className="text-slate-400 text-sm mb-8">Wajah terverifikasi dan komisi siap diproses.</p>
-            <button 
-              onClick={() => setStep('scan')}
-              className="px-8 py-3 bg-white/5 border border-white/10 rounded-xl text-xs font-bold uppercase tracking-widest text-slate-300"
-            >
-              Kembali ke Menu Utama
-            </button>
-          </div>
-        )}
+        let isAiReady = false;
+        let videoStream = null;
+        let currentCommRate = 0;
+        let currentServicePrice = 0;
+        let selectedServiceName = "";
 
-      </div>
-
-      <style jsx>{`
-        @keyframes scan-line {
-          0% { top: 0% }
-          100% { top: 100% }
+        // Initialize Face-API Models
+        async function loadModels() {
+            const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
+            try {
+                await faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL);
+                await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+                await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+                isAiReady = true;
+                console.log("Face AI Ready");
+            } catch (e) {
+                console.error("Gagal load AI:", e);
+            }
         }
-        .animate-scan-line {
-          animation: scan-line 2s linear infinite;
-        }
-        .animate-spin-slow {
-          animation: spin 8s linear infinite;
-        }
-        @keyframes spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
-    </div>
-  );
-};
 
-export default App;
+        window.onload = async () => {
+            loadModels();
+            const { data: services } = await supabaseClient.from('services').select('*').order('name');
+            const select = document.getElementById('service-select');
+            services?.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s.id;
+                opt.dataset.commission = s.commission;
+                opt.dataset.price = s.price || 0;
+                opt.textContent = `${s.name}`;
+                select.appendChild(opt);
+            });
+        };
+
+        const searchInput = document.getElementById('search-driver');
+        const resultsDiv = document.getElementById('driver-results');
+
+        searchInput.addEventListener('input', async (e) => {
+            const val = e.target.value.trim();
+            if (val.length < 2) { resultsDiv.classList.add('hidden'); return; }
+
+            const { data } = await supabaseClient.from('drivers')
+                .select('*')
+                .or(`driver_id.ilike.%${val}%,name.ilike.%${val}%`)
+                .limit(5);
+
+            if (data && data.length > 0) {
+                resultsDiv.innerHTML = data.map(d => `
+                    <div class="p-4 hover:bg-slate-800 cursor-pointer border-b border-slate-800 last:border-0 flex items-center gap-3" 
+                         onclick="selectDriver('${d.driver_id}', '${d.name}', '${d.photo_url}')">
+                        <img src="${d.photo_url}" class="w-10 h-10 rounded-full object-cover border border-slate-700">
+                        <div>
+                            <p class="font-bold text-sm text-white">${d.name}</p>
+                            <p class="text-[10px] text-slate-500 uppercase">ID: ${d.driver_id}</p>
+                        </div>
+                    </div>
+                `).join('');
+                resultsDiv.classList.remove('hidden');
+            } else {
+                resultsDiv.innerHTML = `<div class="p-4 text-center text-slate-500 text-xs italic">Driver tidak ditemukan</div>`;
+                resultsDiv.classList.remove('hidden');
+            }
+        });
+
+        function selectDriver(id, name, photo) {
+            document.getElementById('selected-driver-id').value = id;
+            document.getElementById('selected-driver-name').value = name;
+            document.getElementById('display-name').innerText = name;
+            document.getElementById('display-id').innerText = "NIK: " + id;
+            document.getElementById('driver-photo-ref').src = photo;
+            
+            document.getElementById('selected-driver-info').classList.remove('hidden');
+            document.getElementById('search-section').classList.add('hidden');
+            resultsDiv.classList.add('hidden');
+        }
+
+        function resetDriver() {
+            if (videoStream) videoStream.getTracks().forEach(t => t.stop());
+            location.reload();
+        }
+
+        document.getElementById('btn-start-verify').onclick = async () => {
+            if (!isAiReady) return alert("Sistem AI belum siap, tunggu sebentar...");
+            
+            const video = document.getElementById('video');
+            const container = document.getElementById('camera-container');
+            const statusLabel = document.getElementById('ai-status');
+
+            container.style.display = 'block';
+            
+            try {
+                videoStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: "user" } 
+                });
+                video.srcObject = videoStream;
+                
+                statusLabel.innerText = "MENCARI WAJAH...";
+                startVerification();
+            } catch (err) {
+                alert("Gagal akses kamera. Pastikan izin kamera aktif.");
+            }
+        };
+
+        async function startVerification() {
+            const video = document.getElementById('video');
+            const statusLabel = document.getElementById('ai-status');
+            const refImg = document.getElementById('driver-photo-ref');
+
+            const refDetection = await faceapi.detectSingleFace(refImg).withFaceLandmarks().withFaceDescriptor();
+            
+            if (!refDetection) {
+                statusLabel.innerHTML = "<span class='text-red-400'>FOTO PROFIL TIDAK VALID</span>";
+                return;
+            }
+
+            const faceMatcher = new faceapi.FaceMatcher(refDetection);
+
+            const timer = setInterval(async () => {
+                const detection = await faceapi.detectSingleFace(video).withFaceLandmarks().withFaceDescriptor();
+                
+                if (detection) {
+                    const match = faceMatcher.findBestMatch(detection.descriptor);
+                    
+                    if (match.distance < 0.5) { 
+                        clearInterval(timer);
+                        statusLabel.innerHTML = "<span class='text-green-400'>VERIFIKASI BERHASIL</span>";
+                        setTimeout(unlockTransaction, 500);
+                    } else {
+                        statusLabel.innerHTML = "<span class='text-orange-400'>WAJAH TIDAK COCOK</span>";
+                    }
+                } else {
+                    statusLabel.innerText = "WAJAH TIDAK TERDETEKSI...";
+                }
+            }, 800);
+        }
+
+        function unlockTransaction() {
+            if (videoStream) videoStream.getTracks().forEach(t => t.stop());
+            document.getElementById('camera-container').style.display = 'none';
+            document.getElementById('btn-start-verify').style.display = 'none';
+
+            document.getElementById('transaction-fields').className = "unlocked-area space-y-6";
+            
+            const badge = document.getElementById('auth-status-badge');
+            badge.className = "inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-500/10 border border-green-500/20 text-green-500 text-[10px] font-bold uppercase tracking-widest mb-4";
+            badge.innerHTML = `<i class="fa-solid fa-circle-check"></i> Driver Terverifikasi`;
+        }
+
+        function updateCalc() {
+            const select = document.getElementById('service-select');
+            const selectedOpt = select.options[select.selectedIndex];
+            const count = parseInt(document.getElementById('guest-count').value) || 0;
+            
+            if (selectedOpt && selectedOpt.value) {
+                currentCommRate = parseInt(selectedOpt.dataset.commission);
+                currentServicePrice = parseInt(selectedOpt.dataset.price);
+                selectedServiceName = selectedOpt.text;
+
+                const totalComm = currentCommRate * count;
+                const totalMassage = currentServicePrice * count;
+                const points = Math.floor(totalComm / 10000);
+
+                document.getElementById('commission-display').innerText = `Rp ${totalComm.toLocaleString('id-ID')}`;
+                document.getElementById('total-massage-display').innerText = `Rp ${totalMassage.toLocaleString('id-ID')}`;
+                document.getElementById('points-display').innerText = `${points} Pts`;
+            }
+        }
+
+        document.getElementById('service-select').onchange = updateCalc;
+        document.getElementById('guest-count').oninput = updateCalc;
+
+        document.getElementById('form-transaksi').onsubmit = async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btn-submit');
+            
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> MENYIMPAN...`;
+
+            const payload = {
+                driver_id: document.getElementById('selected-driver-id').value,
+                driver_name: document.getElementById('selected-driver-name').value,
+                service_id: document.getElementById('service-select').value,
+                service_name: selectedServiceName,
+                guest_category: document.getElementById('guest-category').value,
+                massage_guests: parseInt(document.getElementById('guest-count').value),
+                commission_amount: currentCommRate * parseInt(document.getElementById('guest-count').value),
+                points_earned: Math.floor((currentCommRate * parseInt(document.getElementById('guest-count').value)) / 10000),
+                total_massage_value: currentServicePrice * parseInt(document.getElementById('guest-count').value),
+                notes: document.getElementById('transaction-note').value,
+                created_at: new Date().toISOString()
+            };
+
+            const { error } = await supabaseClient.from('commissions').insert([payload]);
+
+            if (!error) {
+                const messageBox = document.createElement('div');
+                messageBox.className = "fixed inset-0 flex items-center justify-center bg-black/80 z-[100] p-6";
+                messageBox.innerHTML = `
+                    <div class="bg-slate-900 border border-green-500/50 p-8 rounded-3xl text-center max-w-sm w-full">
+                        <i class="fa-solid fa-circle-check text-5xl text-green-500 mb-4"></i>
+                        <h3 class="text-xl font-bold text-white mb-2">Transaksi Berhasil!</h3>
+                        <p class="text-slate-400 text-sm mb-6">Data komisi driver telah diperbarui di sistem Finex Pos.</p>
+                        <button onclick="location.reload()" class="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-xl transition-all">OK</button>
+                    </div>
+                `;
+                document.body.appendChild(messageBox);
+            } else {
+                alert("Gagal: " + error.message);
+                btn.disabled = false;
+                btn.innerHTML = `<i class="fa-solid fa-save"></i> <span>SIMPAN TRANSAKSI</span>`;
+            }
+        };
+    </script>
+</body>
+</html>
