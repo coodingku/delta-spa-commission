@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Scanner - Delta Spa</title>
+    <title>Input Transaksi - Delta Spa</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        body { font-family: 'Urbanist', sans-serif; background-color: #020617; color: #f8fafc; overflow-x: hidden; }
+        body { font-family: 'Urbanist', sans-serif; background-color: #020617; color: #f8fafc; }
         .card { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(212, 175, 55, 0.1); }
         .sidebar { background: #0f172a; border-right: 1px solid rgba(212, 175, 55, 0.1); }
         .nav-link { display: flex; align-items: center; gap: 12px; padding: 14px 20px; border-radius: 16px; color: #94a3b8; transition: 0.3s; margin-bottom: 8px; font-weight: 500; }
@@ -20,27 +20,16 @@
         .input-field { background: rgba(30, 41, 59, 0.5); border: 1px solid rgba(148, 163, 184, 0.1); color: white; width: 100%; padding: 12px 20px; border-radius: 12px; outline: none; transition: 0.3s; }
         .input-field:focus { border-color: #d4af37; box-shadow: 0 0 10px rgba(212, 175, 55, 0.1); }
         
-        #camera-wrapper { position: relative; width: 100%; max-width: 400px; aspect-ratio: 1/1; margin: 0 auto; border-radius: 50%; overflow: hidden; border: 4px solid rgba(212, 175, 55, 0.3); box-shadow: 0 0 50px rgba(212, 175, 55, 0.1); transition: 0.5s; }
+        #camera-container { display: none; position: relative; width: 280px; height: 280px; margin: 20px auto; border-radius: 50%; overflow: hidden; border: 3px solid #d4af37; box-shadow: 0 0 30px rgba(212, 175, 55, 0.2); }
         #video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
-        .scan-ring { position: absolute; inset: 0; border: 2px solid #d4af37; border-radius: 50%; animation: pulse 2s infinite; opacity: 0.5; }
-        @keyframes pulse { 0% { transform: scale(1); opacity: 0.5; } 100% { transform: scale(1.1); opacity: 0; } }
+        .scan-anim { position: absolute; width: 100%; height: 2px; background: #d4af37; box-shadow: 0 0 15px #d4af37; top: 0; animation: scan 2s linear infinite; z-index: 10; }
+        @keyframes scan { 0% { top: 0% } 100% { top: 100% } }
         
-        .locked-area { display: none; opacity: 0; transform: translateY(20px); transition: 0.5s ease; }
-        .unlocked-area { display: block; opacity: 1; transform: translateY(0); }
-
-        .loader-overlay { position: fixed; inset: 0; background: #020617; z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: 0.5s; }
+        .locked-area { opacity: 0.2; pointer-events: none; filter: grayscale(1); transition: 0.4s; }
+        .unlocked-area { opacity: 1; pointer-events: auto; filter: grayscale(0); }
     </style>
 </head>
 <body class="min-h-screen flex">
-    <!-- Full Screen Loader -->
-    <div id="initial-loader" class="loader-overlay">
-        <h1 class="text-3xl font-black italic gold-text tracking-tighter uppercase mb-6">Delta<span class="text-white">Spa</span></h1>
-        <div class="w-48 h-1.5 bg-white/10 rounded-full overflow-hidden mb-4">
-            <div id="load-progress" class="h-full bg-[#d4af37] w-0 transition-all duration-300"></div>
-        </div>
-        <p id="load-status" class="text-[10px] font-bold tracking-[0.3em] text-slate-500 uppercase">Menyiapkan Database Wajah...</p>
-    </div>
-
     <!-- Sidebar -->
     <aside class="w-72 shrink-0 flex flex-col sidebar hidden md:flex">
         <div class="p-8">
@@ -50,93 +39,105 @@
         <nav class="flex-1 px-4">
             <a href="dashboard.html" class="nav-link"><i class="fa-solid fa-chart-pie w-5"></i> Dashboard</a>
             <a href="pendaftaran_driver.html" class="nav-link"><i class="fa-solid fa-id-card w-5"></i> Registrasi Driver</a>
-            <a href="transaksi_komisi.html" class="nav-link active"><i class="fa-solid fa-face-viewfinder w-5"></i> Input Transaksi</a>
+            <a href="transaksi_komisi.html" class="nav-link active"><i class="fa-solid fa-money-bill-transfer w-5"></i> Input Transaksi</a>
             <a href="riwayat_transaksi.html" class="nav-link"><i class="fa-solid fa-clock-rotate-left w-5"></i> Riwayat & Komisi</a>
         </nav>
     </aside>
 
     <main class="flex-1 p-6 md:p-10 overflow-y-auto">
         <div class="max-w-3xl mx-auto">
-            <!-- Scan Section -->
-            <div id="scan-view" class="text-center mb-10 mt-10">
-                <h2 id="welcome-title" class="text-3xl font-bold mb-2">Arahkan Wajah Anda</h2>
-                <p id="instruction-text" class="text-slate-400 text-sm mb-12">Sistem Finex Pos mendeteksi identitas secara otomatis...</p>
-
-                <div id="camera-wrapper">
-                    <video id="video" autoplay muted playsinline></video>
-                    <div class="scan-ring"></div>
+            <header class="mb-10 text-center">
+                <div id="auth-status-badge" class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-500/10 border border-red-500/20 text-red-500 text-[10px] font-bold uppercase tracking-widest mb-4">
+                    <i class="fa-solid fa-lock"></i> Belum Terverifikasi
                 </div>
-            </div>
+                <h2 class="text-3xl font-bold">Input <span class="gold-text italic">Komisi Delta Spa</span></h2>
+                <p class="text-slate-500 text-sm mt-1">Sistem Finex Pos - Verifikasi Ultra Cepat</p>
+            </header>
 
-            <!-- Form Section (Initially Hidden) -->
-            <form id="form-transaksi" class="locked-area card p-6 md:p-8 rounded-[2.5rem] space-y-6">
-                <div class="flex items-center gap-6 p-6 rounded-3xl bg-white/5 border border-white/10 mb-8">
+            <form id="form-transaksi" class="card p-6 md:p-8 rounded-[2.5rem] space-y-6">
+                <!-- Pencarian Driver -->
+                <div id="search-section">
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 ml-1">Cari Driver</label>
                     <div class="relative">
-                        <img id="detected-photo" src="" class="w-20 h-20 rounded-2xl object-cover border-2 border-[#d4af37]">
-                        <div class="absolute -bottom-2 -right-2 bg-green-500 text-white p-1.5 rounded-full text-[10px]">
-                            <i class="fa-solid fa-check"></i>
+                        <input type="text" id="search-driver" placeholder="Ketik NIK atau Nama Driver..." class="input-field pl-12" autocomplete="off">
+                        <i class="fa-solid fa-magnifying-glass absolute left-5 top-4 text-slate-500 text-sm"></i>
+                        <div id="driver-results" class="absolute z-20 w-full mt-2 bg-slate-900 border border-slate-800 rounded-xl hidden max-h-48 overflow-y-auto shadow-2xl"></div>
+                    </div>
+                </div>
+
+                <!-- Info Driver Terpilih -->
+                <div id="selected-driver-info" class="hidden animate-in fade-in duration-300">
+                    <div class="p-4 rounded-2xl bg-white/5 border border-white/10 flex items-center gap-4 mb-4">
+                        <img id="driver-photo-ref" src="" class="w-16 h-16 rounded-xl object-cover border-2 border-[#d4af37]" crossorigin="anonymous">
+                        <div class="flex-1 min-w-0">
+                            <p class="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Konfirmasi Driver</p>
+                            <h4 id="display-name" class="font-bold text-white text-lg truncate">-</h4>
+                            <p id="display-id" class="text-xs gold-text truncate">-</p>
+                        </div>
+                        <button type="button" onclick="location.reload()" class="text-xs text-red-400 p-2 hover:bg-red-400/10 rounded-lg">Batal</button>
+                    </div>
+
+                    <button type="button" id="btn-start-verify" class="w-full bg-white text-black font-bold py-4 rounded-xl transition-all flex items-center justify-center gap-3">
+                        <i class="fa-solid fa-face-viewfinder"></i>
+                        <span>VERIFIKASI SEKARANG</span>
+                    </button>
+
+                    <div id="camera-container">
+                        <video id="video" autoplay muted playsinline></video>
+                        <div class="scan-anim"></div>
+                        <div class="absolute bottom-0 inset-x-0 bg-black/80 p-2 text-center">
+                            <span id="ai-status" class="text-[9px] font-bold tracking-widest text-white uppercase">Menunggu Wajah...</span>
                         </div>
                     </div>
-                    <div class="flex-1">
-                        <p class="text-[10px] text-slate-500 uppercase font-bold tracking-widest mb-1">Identitas Terverifikasi</p>
-                        <h4 id="detected-name" class="text-2xl font-bold text-white">Bapak/Ibu</h4>
-                        <p id="detected-id" class="text-sm gold-text font-medium italic"></p>
+                </div>
+
+                <!-- Fields Transaksi -->
+                <div id="transaction-fields" class="locked-area space-y-6">
+                    <input type="hidden" id="selected-driver-id">
+                    <input type="hidden" id="selected-driver-name">
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 ml-1">Kategori</label>
+                            <select id="guest-category" class="input-field" required>
+                                <option value="Lokal">Tamu Lokal</option>
+                                <option value="Asing">Tamu Asing</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 ml-1">Layanan</label>
+                            <select id="service-select" class="input-field" required>
+                                <option value="">-- Pilih Paket --</option>
+                            </select>
+                        </div>
                     </div>
-                    <button type="button" onclick="location.reload()" class="p-3 bg-white/5 hover:bg-red-500/10 text-slate-500 hover:text-red-400 rounded-xl transition-all">
-                        <i class="fa-solid fa-rotate-right"></i>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 ml-1">Pax</label>
+                            <input type="number" id="guest-count" min="1" value="1" class="input-field" required>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 ml-1">Room / Catatan</label>
+                            <input type="text" id="transaction-note" placeholder="..." class="input-field">
+                        </div>
+                    </div>
+
+                    <div class="bg-blue-500/5 p-4 rounded-2xl border border-blue-500/10 flex justify-between items-center">
+                        <div>
+                            <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Estimasi Komisi</p>
+                            <h3 id="commission-display" class="text-xl font-black gold-text italic">Rp 0</h3>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Poin</p>
+                            <h3 id="points-display" class="text-xl font-black text-blue-400">0 Pts</h3>
+                        </div>
+                    </div>
+
+                    <button type="submit" id="btn-submit" class="w-full bg-gradient-to-r from-[#d4af37] to-[#a67c00] text-white font-bold py-4 rounded-xl shadow-lg flex items-center justify-center gap-3">
+                        <i class="fa-solid fa-save"></i> SIMPAN DATA
                     </button>
                 </div>
-
-                <input type="hidden" id="driver-id">
-                <input type="hidden" id="driver-name">
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 ml-1">Kategori Tamu</label>
-                        <select id="guest-category" class="input-field" required>
-                            <option value="Lokal">Tamu Lokal</option>
-                            <option value="Asing">Tamu Asing</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 ml-1">Pilih Layanan</label>
-                        <select id="service-select" class="input-field" required>
-                            <option value="">-- Pilih Paket --</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 ml-1">Jumlah Tamu (Pax)</label>
-                        <input type="number" id="guest-count" min="1" value="1" class="input-field" required>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 ml-1">No. Kamar / Catatan</label>
-                        <input type="text" id="transaction-note" placeholder="Contoh: Room 302" class="input-field">
-                    </div>
-                </div>
-
-                <!-- Preview Area -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 py-4">
-                    <div class="bg-slate-900/50 p-4 rounded-2xl border border-slate-800 text-center">
-                        <p class="text-[9px] text-slate-500 uppercase font-bold tracking-widest mb-1">Total Bill</p>
-                        <h3 id="display-bill" class="text-lg font-black text-white">Rp 0</h3>
-                    </div>
-                    <div class="bg-[#d4af37]/5 p-4 rounded-2xl border border-[#d4af37]/20 text-center">
-                        <p class="text-[9px] text-slate-500 uppercase font-bold tracking-widest mb-1">Komisi</p>
-                        <h3 id="display-commission" class="text-lg font-black gold-text">Rp 0</h3>
-                    </div>
-                    <div class="bg-blue-500/5 p-4 rounded-2xl border border-blue-500/20 text-center">
-                        <p class="text-[9px] text-slate-500 uppercase font-bold tracking-widest mb-1">Poin Baru</p>
-                        <h3 id="display-points" class="text-lg font-black text-blue-400">0 Pts</h3>
-                    </div>
-                </div>
-
-                <button type="submit" id="btn-submit" class="w-full bg-gradient-to-r from-[#d4af37] to-[#a67c00] text-white font-bold py-5 rounded-2xl shadow-lg transition-all active:scale-[0.98] flex items-center justify-center gap-3">
-                    <i class="fa-solid fa-paper-plane"></i>
-                    <span>SIMPAN TRANSAKSI</span>
-                </button>
             </form>
         </div>
     </main>
@@ -146,169 +147,163 @@
         const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkeGNodm9nYXhpaWJ6cXZ1dXBmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAxODE5NTIsImV4cCI6MjA4NTc1Nzk1Mn0.8U_zk81b6wFfdZdPRupk5KSk3g39nOPs8SpZVkWbqkc";
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        let faceMatcher = null;
+        let isAiReady = false;
         let videoStream = null;
-        let allDrivers = [];
+        let faceMatcher = null;
+        let currentCommRate = 0;
+        let currentServicePrice = 0;
 
-        async function initApp() {
-            const statusText = document.getElementById('load-status');
-            const progressBar = document.getElementById('load-progress');
-
+        // Model TinyFaceDetector jauh lebih cepat daripada SSDMobilenet
+        async function loadModels() {
+            const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
             try {
-                // 1. Load AI Models
-                statusText.innerText = "Memuat Modul Biometrik...";
-                progressBar.style.width = "30%";
-                const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
                 await Promise.all([
-                    faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
+                    faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL), // Lebih Ringan
                     faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
                     faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
                 ]);
-
-                // 2. Fetch Data
-                statusText.innerText = "Mengambil Data Driver...";
-                progressBar.style.width = "50%";
-                const [{ data: drivers }, { data: services }] = await Promise.all([
-                    supabaseClient.from('drivers').select('*'),
-                    supabaseClient.from('services').select('*').order('name')
-                ]);
-
-                allDrivers = drivers || [];
-                
-                // Populate Services Select
-                const select = document.getElementById('service-select');
-                services?.forEach(s => {
-                    const opt = document.createElement('option');
-                    opt.value = s.id;
-                    opt.dataset.commission = s.commission;
-                    opt.dataset.price = s.price || 0;
-                    opt.textContent = s.name;
-                    select.appendChild(opt);
-                });
-
-                // 3. Pre-train Face Matcher
-                statusText.innerText = "Mempelajari Wajah Driver...";
-                progressBar.style.width = "80%";
-                await trainAI();
-
-                // 4. Cleanup Loader
-                progressBar.style.width = "100%";
-                setTimeout(() => {
-                    document.getElementById('initial-loader').style.opacity = '0';
-                    setTimeout(() => document.getElementById('initial-loader').style.display = 'none', 500);
-                    startCamera();
-                }, 500);
-
-            } catch (err) {
-                console.error(err);
-                alert("Gagal menginisialisasi sistem Finex Pos.");
-            }
+                isAiReady = true;
+                console.log("AI Ready with Tiny Detector");
+            } catch (e) { console.error("AI Error:", e); }
         }
 
-        async function trainAI() {
-            const labeledDescriptors = [];
-
-            // Memproses semua foto driver sekaligus agar scan nanti jadi instant
-            const descriptorsPromises = allDrivers.map(async (driver) => {
-                try {
-                    const img = await faceapi.fetchImage(driver.photo_url);
-                    const detection = await faceapi.detectSingleFace(img).withFaceLandmarks().withFaceDescriptor();
-                    if (detection) {
-                        return new faceapi.LabeledFaceDescriptors(driver.driver_id, [detection.descriptor]);
-                    }
-                } catch (e) {
-                    console.warn(`Error processing ${driver.name}`);
-                }
-                return null;
+        window.onload = async () => {
+            loadModels();
+            const { data: services } = await supabaseClient.from('services').select('*').order('name');
+            const select = document.getElementById('service-select');
+            services?.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s.id;
+                opt.dataset.commission = s.commission;
+                opt.dataset.price = s.price || 0;
+                opt.textContent = s.name;
+                select.appendChild(opt);
             });
+        };
 
-            const results = await Promise.all(descriptorsPromises);
-            const finalDescriptors = results.filter(res => res !== null);
+        const searchInput = document.getElementById('search-driver');
+        const resultsDiv = document.getElementById('driver-results');
 
-            if (finalDescriptors.length > 0) {
-                faceMatcher = new faceapi.FaceMatcher(finalDescriptors, 0.55);
+        searchInput.addEventListener('input', async (e) => {
+            const val = e.target.value.trim();
+            if (val.length < 2) { resultsDiv.classList.add('hidden'); return; }
+
+            const { data } = await supabaseClient.from('drivers')
+                .select('*')
+                .or(`driver_id.ilike.%${val}%,name.ilike.%${val}%`)
+                .limit(5);
+
+            if (data?.length > 0) {
+                resultsDiv.innerHTML = data.map(d => `
+                    <div class="p-3 hover:bg-slate-800 cursor-pointer border-b border-slate-800 last:border-0 flex items-center gap-3" 
+                         onclick="selectDriver('${d.driver_id}', '${d.name}', '${d.photo_url}')">
+                        <img src="${d.photo_url}" class="w-8 h-8 rounded-full object-cover">
+                        <div>
+                            <p class="font-bold text-xs text-white">${d.name}</p>
+                            <p class="text-[9px] text-slate-500 uppercase">NIK: ${d.driver_id}</p>
+                        </div>
+                    </div>
+                `).join('');
+                resultsDiv.classList.remove('hidden');
             }
+        });
+
+        function selectDriver(id, name, photo) {
+            document.getElementById('selected-driver-id').value = id;
+            document.getElementById('selected-driver-name').value = name;
+            document.getElementById('display-name').innerText = name;
+            document.getElementById('display-id').innerText = "NIK: " + id;
+            document.getElementById('driver-photo-ref').src = photo + "?t=" + Date.now();
+            document.getElementById('selected-driver-info').classList.remove('hidden');
+            document.getElementById('search-section').classList.add('hidden');
+            resultsDiv.classList.add('hidden');
         }
 
-        async function startCamera() {
+        document.getElementById('btn-start-verify').onclick = async () => {
+            if (!isAiReady) return;
+            const btn = document.getElementById('btn-start-verify');
             const video = document.getElementById('video');
+            const container = document.getElementById('camera-container');
+            const statusLabel = document.getElementById('ai-status');
+
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> LOADING AI...`;
+
             try {
+                // Deteksi foto referensi (dilakukan sekali saja)
+                const refImg = document.getElementById('driver-photo-ref');
+                // Gunakan Tiny Detector agar cepat
+                const refDetection = await faceapi.detectSingleFace(refImg, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
+                
+                if (!refDetection) {
+                    btn.disabled = false;
+                    btn.innerText = "FOTO REFERENSI TIDAK JELAS";
+                    return;
+                }
+
+                faceMatcher = new faceapi.FaceMatcher(refDetection, 0.5);
+                container.style.display = 'block';
+                btn.style.display = 'none';
+
                 videoStream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: "user", width: 480, height: 480 } 
+                    video: { width: 320, height: 320, facingMode: "user" } 
                 });
                 video.srcObject = videoStream;
-                runRecognitionLoop();
-            } catch (err) {
-                alert("Izin kamera diperlukan untuk scanner wajah.");
-            }
-        }
-
-        async function runRecognitionLoop() {
-            const video = document.getElementById('video');
-            
-            // Loop cepat: deteksi wajah setiap 400ms
-            const scanInterval = setInterval(async () => {
-                if (!faceMatcher) return;
-
-                const detection = await faceapi.detectSingleFace(video).withFaceLandmarks().withFaceDescriptor();
                 
-                if (detection) {
-                    const bestMatch = faceMatcher.findBestMatch(detection.descriptor);
-                    
-                    if (bestMatch.label !== 'unknown') {
-                        clearInterval(scanInterval);
-                        onFaceFound(bestMatch.label);
+                startScanning();
+            } catch (err) {
+                alert("Kamera Error");
+                btn.disabled = false;
+            }
+        };
+
+        async function startScanning() {
+            const video = document.getElementById('video');
+            const statusLabel = document.getElementById('ai-status');
+            
+            // Loop deteksi sangat cepat
+            const matchTimer = setInterval(async () => {
+                if (!videoStream) { clearInterval(matchTimer); return; }
+
+                // Gunakan TinyFaceDetectorOptions untuk kecepatan maksimal
+                const detections = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
+                
+                if (detections) {
+                    const match = faceMatcher.findBestMatch(detections.descriptor);
+                    if (match.distance < 0.5) { 
+                        clearInterval(matchTimer);
+                        statusLabel.innerHTML = "<span class='text-green-400'>BERHASIL!</span>";
+                        setTimeout(unlock, 500);
+                    } else {
+                        statusLabel.innerHTML = "MENCARI WAJAH...";
                     }
                 }
-            }, 400);
+            }, 200); // Cek setiap 200ms
         }
 
-        function onFaceFound(driverId) {
-            const driver = allDrivers.find(d => d.driver_id === driverId);
-            if (!driver) return;
-
-            // Suara / Notifikasi Visual
-            document.getElementById('welcome-title').innerHTML = `Selamat Datang <span class="gold-text">Bapak/Ibu ${driver.name}</span>`;
-            document.getElementById('instruction-text').innerText = "Wajah Terverifikasi!";
-            
-            // Isi Form Otomatis
-            document.getElementById('driver-id').value = driver.driver_id;
-            document.getElementById('driver-name').value = driver.name;
-            document.getElementById('detected-name').innerText = driver.name;
-            document.getElementById('detected-id').innerText = `NIK: ${driver.driver_id}`;
-            document.getElementById('detected-photo').src = driver.photo_url;
-
-            // Animasi Transisi dari Scanner ke Form
-            setTimeout(() => {
-                document.getElementById('camera-wrapper').style.transform = "scale(0.8)";
-                document.getElementById('camera-wrapper').style.opacity = "0";
-                setTimeout(() => {
-                    document.getElementById('scan-view').style.display = "none";
-                    document.getElementById('form-transaksi').className = "unlocked-area card p-6 md:p-8 rounded-[2.5rem] space-y-6";
-                }, 400);
-            }, 1000);
+        function unlock() {
+            if (videoStream) videoStream.getTracks().forEach(t => t.stop());
+            document.getElementById('camera-container').style.display = 'none';
+            document.getElementById('transaction-fields').className = "unlocked-area space-y-6";
+            const badge = document.getElementById('auth-status-badge');
+            badge.className = "inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-500/10 border border-green-500/20 text-green-500 text-[10px] font-bold uppercase tracking-widest mb-4";
+            badge.innerHTML = `<i class="fa-solid fa-circle-check"></i> Terverifikasi`;
         }
 
-        // Calculation Logic
-        function updatePreview() {
+        function updateCalc() {
             const select = document.getElementById('service-select');
             const opt = select.options[select.selectedIndex];
-            const guests = parseInt(document.getElementById('guest-count').value) || 0;
-
-            if (opt && opt.value) {
-                const price = parseInt(opt.dataset.price);
-                const comm = parseInt(opt.dataset.commission);
-
-                document.getElementById('display-bill').innerText = `Rp ${(price * guests).toLocaleString('id-ID')}`;
-                document.getElementById('display-commission').innerText = `Rp ${(comm * guests).toLocaleString('id-ID')}`;
-                document.getElementById('display-points').innerText = `${guests} Pts`;
+            const count = parseInt(document.getElementById('guest-count').value) || 0;
+            if (opt?.value) {
+                const totalComm = parseInt(opt.dataset.commission) * count;
+                document.getElementById('commission-display').innerText = `Rp ${totalComm.toLocaleString('id-ID')}`;
+                document.getElementById('points-display').innerText = `${count} Pts`;
             }
         }
 
-        document.getElementById('service-select').onchange = updatePreview;
-        document.getElementById('guest-count').oninput = updatePreview;
+        document.getElementById('service-select').onchange = updateCalc;
+        document.getElementById('guest-count').oninput = updateCalc;
 
-        // Submit Logic
         document.getElementById('form-transaksi').onsubmit = async (e) => {
             e.preventDefault();
             const btn = document.getElementById('btn-submit');
@@ -317,50 +312,31 @@
 
             const select = document.getElementById('service-select');
             const opt = select.options[select.selectedIndex];
-            const guests = parseInt(document.getElementById('guest-count').value);
+            const count = parseInt(document.getElementById('guest-count').value);
 
             const payload = {
-                driver_id: document.getElementById('driver-id').value,
-                driver_name: document.getElementById('driver-name').value,
+                driver_id: document.getElementById('selected-driver-id').value,
+                driver_name: document.getElementById('selected-driver-name').value,
                 service_id: select.value,
                 service_name: opt.text,
                 guest_category: document.getElementById('guest-category').value,
-                massage_guests: guests,
-                commission_amount: parseInt(opt.dataset.commission) * guests,
-                points_earned: guests,
-                total_massage_value: parseInt(opt.dataset.price) * guests,
+                massage_guests: count,
+                commission_amount: parseInt(opt.dataset.commission) * count,
+                points_earned: count,
+                total_massage_value: parseInt(opt.dataset.price) * count,
                 is_redeemed: false,
                 notes: document.getElementById('transaction-note').value,
                 created_at: new Date().toISOString()
             };
 
             const { error } = await supabaseClient.from('commissions').insert([payload]);
-
             if (!error) {
-                showSuccessModal(payload.driver_name, guests);
+                location.reload();
             } else {
-                alert("Gagal menyimpan: " + error.message);
+                alert("Gagal: " + error.message);
                 btn.disabled = false;
             }
         };
-
-        function showSuccessModal(name, points) {
-            const modal = document.createElement('div');
-            modal.className = "fixed inset-0 flex items-center justify-center bg-black/95 z-[100] p-6";
-            modal.innerHTML = `
-                <div class="bg-slate-900 border border-[#d4af37]/30 p-10 rounded-[3rem] text-center max-w-sm w-full shadow-2xl scale-in">
-                    <div class="w-24 h-24 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-8">
-                        <i class="fa-solid fa-check text-5xl text-green-500"></i>
-                    </div>
-                    <h3 class="text-2xl font-bold text-white mb-2">Transaksi Berhasil</h3>
-                    <p class="text-slate-400 text-sm mb-8">Data Bapak/Ibu <b>${name}</b> telah masuk ke sistem (+${points} Poin).</p>
-                    <button onclick="location.reload()" class="w-full bg-gradient-to-r from-[#d4af37] to-[#a67c00] text-white font-bold py-5 rounded-2xl">SELESAI</button>
-                </div>
-            `;
-            document.body.appendChild(modal);
-        }
-
-        window.onload = initApp;
     </script>
 </body>
 </html>
