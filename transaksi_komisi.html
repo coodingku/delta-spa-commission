@@ -20,16 +20,13 @@
         .gold-text { color: #d4af37; }
         .input-field { background: rgba(30, 41, 59, 0.5); border: 1px solid rgba(148, 163, 184, 0.1); color: white; width: 100%; padding: 12px 20px; border-radius: 12px; outline: none; transition: 0.3s; }
         .input-field:focus { border-color: #d4af37; box-shadow: 0 0 10px rgba(212, 175, 55, 0.1); }
-        select option { background: #0f172a; color: white; }
-
-        /* Camera UI Custom Styles */
-        #camera-container { display: none; position: relative; width: 100%; max-width: 320px; aspect-ratio: 4/5; margin: 20px auto; border-radius: 20px; overflow: hidden; border: 2px solid #d4af37; }
-        #video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
-        .scan-anim { position: absolute; width: 100%; height: 2px; background: #d4af37; box-shadow: 0 0 15px #d4af37; top: 0; animation: scan 2s linear infinite; }
-        @keyframes scan { 0% { top: 0% } 100% { top: 100% } }
         
-        /* Form Lock State */
-        .locked-area { opacity: 0.4; pointer-events: none; filter: grayscale(0.8); transition: 0.5s ease; }
+        #camera-container { display: none; position: relative; width: 100%; max-width: 320px; aspect-ratio: 4/5; margin: 20px auto; border-radius: 20px; overflow: hidden; border: 2px solid #d4af37; box-shadow: 0 0 30px rgba(212, 175, 55, 0.2); }
+        #video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+        .scan-anim { position: absolute; width: 100%; height: 3px; background: linear-gradient(to right, transparent, #d4af37, transparent); box-shadow: 0 0 15px #d4af37; top: 0; animation: scan 2.5s ease-in-out infinite; z-index: 10; }
+        @keyframes scan { 0% { top: 0% } 50% { top: 100% } 100% { top: 0% } }
+        
+        .locked-area { opacity: 0.3; pointer-events: none; filter: grayscale(1); transition: 0.5s ease; }
         .unlocked-area { opacity: 1; pointer-events: auto; filter: grayscale(0); }
     </style>
 </head>
@@ -55,7 +52,7 @@
                     <i class="fa-solid fa-lock"></i> Belum Terverifikasi
                 </div>
                 <h2 class="text-3xl font-bold">Input <span class="gold-text italic">Komisi Massage</span></h2>
-                <p class="text-slate-500 text-sm mt-1">Sistem Finex Pos - Manajemen Layanan & Komisi</p>
+                <p class="text-slate-500 text-sm mt-1">Sistem Finex Pos - Verifikasi Biometrik</p>
             </header>
 
             <form id="form-transaksi" class="card p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem] space-y-6">
@@ -69,7 +66,7 @@
                     </div>
                 </div>
 
-                <!-- Info Driver Terpilih + Tombol Scan -->
+                <!-- Info Driver Terpilih -->
                 <div id="selected-driver-info" class="hidden animate-in fade-in duration-500">
                     <div class="p-4 rounded-xl bg-[#d4af37]/10 border border-[#d4af37]/20 flex items-center gap-4 mb-4">
                         <img id="driver-photo-ref" src="" class="w-14 h-14 rounded-lg object-cover border-2 border-[#d4af37]" crossorigin="anonymous">
@@ -78,21 +75,21 @@
                             <h4 id="display-name" class="font-bold text-white text-lg truncate">-</h4>
                             <p id="display-id" class="text-xs gold-text truncate">-</p>
                         </div>
-                        <button type="button" onclick="resetDriver()" class="text-xs text-red-400 hover:underline shrink-0">Ganti</button>
+                        <button type="button" onclick="location.reload()" class="text-xs text-red-400 hover:underline shrink-0">Batal</button>
                     </div>
 
                     <!-- Tombol Pemicu Kamera -->
                     <button type="button" id="btn-start-verify" class="w-full bg-white/5 border border-white/10 hover:bg-white/10 text-white font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-3">
                         <i class="fa-solid fa-face-viewfinder text-[#d4af37]"></i>
-                        <span>VERIFIKASI WAJAH DRIVER</span>
+                        <span>MULAI SCAN WAJAH</span>
                     </button>
 
                     <!-- Camera Viewer -->
                     <div id="camera-container">
                         <video id="video" autoplay muted playsinline></video>
                         <div class="scan-anim"></div>
-                        <div class="absolute bottom-0 inset-x-0 bg-black/60 p-2 text-center">
-                            <span id="ai-status" class="text-[10px] font-bold tracking-tighter uppercase">Menginisialisasi Kamera...</span>
+                        <div class="absolute bottom-0 inset-x-0 bg-black/80 p-3 text-center">
+                            <span id="ai-status" class="text-[10px] font-bold tracking-widest text-white uppercase">Menyiapkan AI...</span>
                         </div>
                     </div>
                 </div>
@@ -163,18 +160,24 @@
         let currentCommRate = 0;
         let currentServicePrice = 0;
         let selectedServiceName = "";
+        let faceMatcher = null;
 
-        // Initialize Face-API Models
+        // Initialize Face-API Models dengan optimasi model ringan
         async function loadModels() {
             const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
             try {
-                await faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL);
-                await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
-                await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+                // Gunakan TinyFaceDetector untuk performa lebih cepat jika diperlukan, 
+                // tapi SSDMobilenetv1 lebih akurat untuk matching.
+                await Promise.all([
+                    faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
+                    faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+                    faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
+                ]);
                 isAiReady = true;
                 console.log("Face AI Ready");
             } catch (e) {
                 console.error("Gagal load AI:", e);
+                alert("Gagal memuat sistem kecerdasan wajah. Periksa koneksi internet.");
             }
         }
 
@@ -211,13 +214,10 @@
                         <img src="${d.photo_url}" class="w-10 h-10 rounded-full object-cover border border-slate-700">
                         <div>
                             <p class="font-bold text-sm text-white">${d.name}</p>
-                            <p class="text-[10px] text-slate-500 uppercase">ID: ${d.driver_id}</p>
+                            <p class="text-[10px] text-slate-500 uppercase">NIK: ${d.driver_id}</p>
                         </div>
                     </div>
                 `).join('');
-                resultsDiv.classList.remove('hidden');
-            } else {
-                resultsDiv.innerHTML = `<div class="p-4 text-center text-slate-500 text-xs italic">Driver tidak ditemukan</div>`;
                 resultsDiv.classList.remove('hidden');
             }
         });
@@ -227,71 +227,87 @@
             document.getElementById('selected-driver-name').value = name;
             document.getElementById('display-name').innerText = name;
             document.getElementById('display-id').innerText = "NIK: " + id;
-            document.getElementById('driver-photo-ref').src = photo;
+            
+            // Tambahkan cache busting agar gambar terbaru yang diambil
+            const photoUrl = `${photo}?t=${new Date().getTime()}`;
+            document.getElementById('driver-photo-ref').src = photoUrl;
             
             document.getElementById('selected-driver-info').classList.remove('hidden');
             document.getElementById('search-section').classList.add('hidden');
             resultsDiv.classList.add('hidden');
         }
 
-        function resetDriver() {
-            if (videoStream) videoStream.getTracks().forEach(t => t.stop());
-            location.reload();
-        }
-
         document.getElementById('btn-start-verify').onclick = async () => {
-            if (!isAiReady) return alert("Sistem AI belum siap, tunggu sebentar...");
+            if (!isAiReady) return alert("Sistem AI sedang bersiap...");
             
             const video = document.getElementById('video');
             const container = document.getElementById('camera-container');
             const statusLabel = document.getElementById('ai-status');
+            const btn = document.getElementById('btn-start-verify');
 
-            container.style.display = 'block';
-            
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> MEMPROSES...`;
+            statusLabel.innerText = "MENGANALISA FOTO PROFIL...";
+
+            // 1. Ambil Descriptor dari Foto Referensi terlebih dahulu
+            const refImg = document.getElementById('driver-photo-ref');
             try {
+                // Penting: Deteksi wajah pada foto referensi
+                const refDetection = await faceapi.detectSingleFace(refImg).withFaceLandmarks().withFaceDescriptor();
+                
+                if (!refDetection) {
+                    btn.disabled = false;
+                    btn.innerHTML = `<i class="fa-solid fa-face-viewfinder text-[#d4af37]"></i><span>MULAI SCAN WAJAH</span>`;
+                    return alert("Wajah pada foto profil tidak jelas / tidak terdeteksi. Silakan update foto driver.");
+                }
+
+                faceMatcher = new faceapi.FaceMatcher(refDetection, 0.55); // Threshold 0.55 (lebih toleran dari 0.4, lebih ketat dari 0.6)
+                
+                // 2. Jika referensi OK, buka kamera
+                container.style.display = 'block';
                 videoStream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: "user" } 
+                    video: { facingMode: "user", width: 640, height: 480 } 
                 });
                 video.srcObject = videoStream;
                 
-                statusLabel.innerText = "MENCARI WAJAH...";
-                startVerification();
+                statusLabel.innerText = "HADAPKAN WAJAH KE KAMERA";
+                startLiveMatching();
             } catch (err) {
-                alert("Gagal akses kamera. Pastikan izin kamera aktif.");
+                console.error(err);
+                btn.disabled = false;
+                btn.innerHTML = `<i class="fa-solid fa-face-viewfinder text-[#d4af37]"></i><span>MULAI SCAN WAJAH</span>`;
+                alert("Gagal mengakses kamera atau memproses foto.");
             }
         };
 
-        async function startVerification() {
+        async function startLiveMatching() {
             const video = document.getElementById('video');
             const statusLabel = document.getElementById('ai-status');
-            const refImg = document.getElementById('driver-photo-ref');
 
-            const refDetection = await faceapi.detectSingleFace(refImg).withFaceLandmarks().withFaceDescriptor();
-            
-            if (!refDetection) {
-                statusLabel.innerHTML = "<span class='text-red-400'>FOTO PROFIL TIDAK VALID</span>";
-                return;
-            }
+            const matchTimer = setInterval(async () => {
+                if (!videoStream) {
+                    clearInterval(matchTimer);
+                    return;
+                }
 
-            const faceMatcher = new faceapi.FaceMatcher(refDetection);
-
-            const timer = setInterval(async () => {
-                const detection = await faceapi.detectSingleFace(video).withFaceLandmarks().withFaceDescriptor();
+                const detections = await faceapi.detectSingleFace(video).withFaceLandmarks().withFaceDescriptor();
                 
-                if (detection) {
-                    const match = faceMatcher.findBestMatch(detection.descriptor);
+                if (detections) {
+                    const match = faceMatcher.findBestMatch(detections.descriptor);
                     
-                    if (match.distance < 0.5) { 
-                        clearInterval(timer);
-                        statusLabel.innerHTML = "<span class='text-green-400'>VERIFIKASI BERHASIL</span>";
-                        setTimeout(unlockTransaction, 500);
+                    // Match.distance: semakin rendah semakin mirip. 
+                    // 0.0 = identik, 1.0 = sangat berbeda.
+                    if (match.distance < 0.55) { 
+                        clearInterval(matchTimer);
+                        statusLabel.innerHTML = "<span class='text-green-400'>COCOK! VERIFIKASI BERHASIL</span>";
+                        setTimeout(unlockTransaction, 800);
                     } else {
-                        statusLabel.innerHTML = "<span class='text-orange-400'>WAJAH TIDAK COCOK</span>";
+                        statusLabel.innerHTML = `<span class='text-orange-400'>TIDAK COCOK (${Math.round((1 - match.distance) * 100)}%)</span>`;
                     }
                 } else {
-                    statusLabel.innerText = "WAJAH TIDAK TERDETEKSI...";
+                    statusLabel.innerText = "POSISIKAN WAJAH DI TENGAH...";
                 }
-            }, 800);
+            }, 600);
         }
 
         function unlockTransaction() {
@@ -332,7 +348,6 @@
         document.getElementById('form-transaksi').onsubmit = async (e) => {
             e.preventDefault();
             const btn = document.getElementById('btn-submit');
-            
             btn.disabled = true;
             btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> MENYIMPAN...`;
 
@@ -353,17 +368,19 @@
             const { error } = await supabaseClient.from('commissions').insert([payload]);
 
             if (!error) {
-                const messageBox = document.createElement('div');
-                messageBox.className = "fixed inset-0 flex items-center justify-center bg-black/80 z-[100] p-6";
-                messageBox.innerHTML = `
-                    <div class="bg-slate-900 border border-green-500/50 p-8 rounded-3xl text-center max-w-sm w-full">
-                        <i class="fa-solid fa-circle-check text-5xl text-green-500 mb-4"></i>
-                        <h3 class="text-xl font-bold text-white mb-2">Transaksi Berhasil!</h3>
-                        <p class="text-slate-400 text-sm mb-6">Data komisi driver telah diperbarui di sistem Finex Pos.</p>
-                        <button onclick="location.reload()" class="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-xl transition-all">OK</button>
+                const modal = document.createElement('div');
+                modal.className = "fixed inset-0 flex items-center justify-center bg-black/90 z-[100] p-6 animate-in fade-in duration-300";
+                modal.innerHTML = `
+                    <div class="bg-slate-900 border border-[#d4af37]/30 p-8 rounded-[2rem] text-center max-w-sm w-full shadow-2xl">
+                        <div class="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <i class="fa-solid fa-check text-4xl text-green-500"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-white mb-2">Berhasil!</h3>
+                        <p class="text-slate-400 text-sm mb-8">Transaksi komisi driver telah tercatat di database.</p>
+                        <button onclick="location.reload()" class="w-full bg-gradient-to-r from-[#d4af37] to-[#a67c00] text-white font-bold py-4 rounded-2xl">SELESAI</button>
                     </div>
                 `;
-                document.body.appendChild(messageBox);
+                document.body.appendChild(modal);
             } else {
                 alert("Gagal: " + error.message);
                 btn.disabled = false;
