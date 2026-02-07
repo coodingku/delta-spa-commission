@@ -6,6 +6,8 @@
     <title>Input Transaksi - Delta Spa</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Load Face-API.js library -->
+    <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
@@ -19,6 +21,16 @@
         .input-field { background: rgba(30, 41, 59, 0.5); border: 1px solid rgba(148, 163, 184, 0.1); color: white; width: 100%; padding: 12px 20px; border-radius: 12px; outline: none; transition: 0.3s; }
         .input-field:focus { border-color: #d4af37; box-shadow: 0 0 10px rgba(212, 175, 55, 0.1); }
         select option { background: #0f172a; color: white; }
+
+        /* Camera UI Custom Styles */
+        #camera-container { display: none; position: relative; width: 100%; max-width: 320px; aspect-ratio: 4/5; margin: 20px auto; border-radius: 20px; overflow: hidden; border: 2px solid #d4af37; }
+        #video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+        .scan-anim { position: absolute; width: 100%; height: 2px; background: #d4af37; box-shadow: 0 0 15px #d4af37; top: 0; animation: scan 2s linear infinite; }
+        @keyframes scan { 0% { top: 0% } 100% { top: 100% } }
+        
+        /* Form Lock State */
+        .locked-area { opacity: 0.4; pointer-events: none; filter: grayscale(0.8); transition: 0.5s ease; }
+        .unlocked-area { opacity: 1; pointer-events: auto; filter: grayscale(0); }
     </style>
 </head>
 <body class="min-h-screen flex">
@@ -39,6 +51,9 @@
     <main class="flex-1 p-10 overflow-y-auto">
         <div class="max-w-3xl mx-auto">
             <header class="mb-10 text-center">
+                <div id="auth-status-badge" class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-500/10 border border-red-500/20 text-red-500 text-[10px] font-bold uppercase tracking-widest mb-4">
+                    <i class="fa-solid fa-lock"></i> Belum Terverifikasi
+                </div>
                 <h2 class="text-3xl font-bold">Input <span class="gold-text italic">Komisi Massage</span></h2>
                 <p class="text-slate-500 text-sm mt-1">Sistem Finex Pos - Manajemen Komisi Driver</p>
             </header>
@@ -54,73 +69,86 @@
                     </div>
                 </div>
 
-                <!-- Info Driver Terpilih -->
-                <div id="selected-driver-info" class="hidden p-4 rounded-xl bg-[#d4af37]/10 border border-[#d4af37]/20 flex items-center gap-4">
-                    <div class="w-10 h-10 rounded-full bg-[#d4af37] flex items-center justify-center text-white">
-                        <i class="fa-solid fa-check"></i>
+                <!-- Info Driver Terpilih + Tombol Scan -->
+                <div id="selected-driver-info" class="hidden animate-in fade-in duration-500">
+                    <div class="p-4 rounded-xl bg-[#d4af37]/10 border border-[#d4af37]/20 flex items-center gap-4 mb-4">
+                        <img id="driver-photo-ref" src="" class="w-14 h-14 rounded-lg object-cover border-2 border-[#d4af37]" crossorigin="anonymous">
+                        <div>
+                            <p class="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Driver Terpilih</p>
+                            <h4 id="display-name" class="font-bold text-white text-lg">-</h4>
+                            <p id="display-id" class="text-xs gold-text">-</p>
+                        </div>
+                        <button type="button" onclick="resetDriver()" class="ml-auto text-xs text-red-400 hover:underline">Ganti</button>
                     </div>
-                    <div>
-                        <p class="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Driver Terpilih</p>
-                        <h4 id="display-name" class="font-bold text-white text-lg">-</h4>
-                        <p id="display-id" class="text-xs gold-text">-</p>
-                    </div>
-                    <button type="button" onclick="resetDriver()" class="ml-auto text-xs text-red-400 hover:underline">Ganti</button>
-                </div>
 
-                <input type="hidden" id="selected-driver-id">
-                <input type="hidden" id="selected-driver-name">
+                    <!-- Tombol Pemicu Kamera -->
+                    <button type="button" id="btn-start-verify" class="w-full bg-white/5 border border-white/10 hover:bg-white/10 text-white font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-3">
+                        <i class="fa-solid fa-face-viewfinder text-[#d4af37]"></i>
+                        <span>VERIFIKASI WAJAH DRIVER</span>
+                    </button>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- Kategori Tamu -->
-                    <div>
-                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 ml-1">Kategori Tamu</label>
-                        <select id="guest-category" class="input-field" required>
-                            <option value="Lokal">Tamu Lokal</option>
-                            <option value="Asing">Tamu Asing</option>
-                        </select>
-                    </div>
-                    <!-- Pilihan Layanan -->
-                    <div>
-                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 ml-1">Pilih Layanan</label>
-                        <select id="service-select" class="input-field" required>
-                            <option value="">-- Pilih Paket --</option>
-                        </select>
+                    <!-- Camera Viewer -->
+                    <div id="camera-container">
+                        <video id="video" autoplay muted playsinline></video>
+                        <div class="scan-anim"></div>
+                        <div class="absolute bottom-0 inset-x-0 bg-black/60 p-2 text-center">
+                            <span id="ai-status" class="text-[10px] font-bold tracking-tighter">MENGINISIALISASI KAMERA...</span>
+                        </div>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- Jumlah Tamu -->
-                    <div>
-                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 ml-1">Jumlah Tamu (Pax)</label>
-                        <input type="number" id="guest-count" min="1" value="1" class="input-field" required>
-                    </div>
-                    <!-- Catatan Opsional -->
-                    <div>
-                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 ml-1">No. Kamar / Catatan</label>
-                        <input type="text" id="transaction-note" placeholder="Contoh: Room 201" class="input-field">
-                    </div>
-                </div>
+                <div id="transaction-fields" class="locked-area space-y-6">
+                    <input type="hidden" id="selected-driver-id">
+                    <input type="hidden" id="selected-driver-name">
 
-                <!-- Preview Perhitungan & Poin -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div class="bg-slate-900/50 p-5 rounded-2xl border border-slate-800">
-                        <p class="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Total Transaksi</p>
-                        <h3 id="total-massage-display" class="text-xl font-black text-white italic">Rp 0</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 ml-1">Kategori Tamu</label>
+                            <select id="guest-category" class="input-field" required>
+                                <option value="Lokal">Tamu Lokal</option>
+                                <option value="Asing">Tamu Asing</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 ml-1">Pilih Layanan</label>
+                            <select id="service-select" class="input-field" required>
+                                <option value="">-- Pilih Paket --</option>
+                            </select>
+                        </div>
                     </div>
-                    <div class="bg-[#d4af37]/5 p-5 rounded-2xl border border-[#d4af37]/20">
-                        <p class="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Komisi Driver</p>
-                        <h3 id="commission-display" class="text-xl font-black gold-text italic">Rp 0</h3>
-                    </div>
-                    <div class="bg-blue-500/5 p-5 rounded-2xl border border-blue-500/20">
-                        <p class="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Poin Diperoleh</p>
-                        <h3 id="points-display" class="text-xl font-black text-blue-400 italic">0 Pts</h3>
-                    </div>
-                </div>
 
-                <button type="submit" id="btn-submit" class="w-full bg-gradient-to-r from-[#d4af37] to-[#a67c00] text-white font-bold py-4 rounded-xl shadow-lg transition-all active:scale-[0.98] flex items-center justify-center gap-3">
-                    <i class="fa-solid fa-save"></i>
-                    <span>SIMPAN TRANSAKSI</span>
-                </button>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 ml-1">Jumlah Tamu (Pax)</label>
+                            <input type="number" id="guest-count" min="1" value="1" class="input-field" required>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 ml-1">No. Kamar / Catatan</label>
+                            <input type="text" id="transaction-note" placeholder="Contoh: Room 201" class="input-field">
+                        </div>
+                    </div>
+
+                    <!-- Preview Perhitungan -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="bg-slate-900/50 p-5 rounded-2xl border border-slate-800 text-center">
+                            <p class="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Total Transaksi</p>
+                            <h3 id="total-massage-display" class="text-xl font-black text-white italic">Rp 0</h3>
+                        </div>
+                        <div class="bg-[#d4af37]/5 p-5 rounded-2xl border border-[#d4af37]/20 text-center">
+                            <p class="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Komisi Driver</p>
+                            <h3 id="commission-display" class="text-xl font-black gold-text italic">Rp 0</h3>
+                        </div>
+                        <div class="bg-blue-500/5 p-5 rounded-2xl border border-blue-500/20 text-center">
+                            <p class="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Poin Diperoleh</p>
+                            <h3 id="points-display" class="text-xl font-black text-blue-400 italic">0 Pts</h3>
+                        </div>
+                    </div>
+
+                    <button type="submit" id="btn-submit" class="w-full bg-gradient-to-r from-[#d4af37] to-[#a67c00] text-white font-bold py-4 rounded-xl shadow-lg transition-all active:scale-[0.98] flex items-center justify-center gap-3">
+                        <i class="fa-solid fa-save"></i>
+                        <span>SIMPAN TRANSAKSI</span>
+                    </button>
+                </div>
             </form>
         </div>
     </main>
@@ -130,12 +158,28 @@
         const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkeGNodm9nYXhpaWJ6cXZ1dXBmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAxODE5NTIsImV4cCI6MjA4NTc1Nzk1Mn0.8U_zk81b6wFfdZdPRupk5KSk3g39nOPs8SpZVkWbqkc";
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+        let isAiReady = false;
+        let videoStream = null;
         let currentCommRate = 0;
         let currentServicePrice = 0;
         let selectedServiceName = "";
 
-        // Load Services
+        // Initialize Face-API Models
+        async function loadModels() {
+            const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
+            try {
+                await faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL);
+                await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+                await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+                isAiReady = true;
+                console.log("Face AI Ready");
+            } catch (e) {
+                console.error("Gagal load AI:", e);
+            }
+        }
+
         window.onload = async () => {
+            loadModels();
             const { data: services } = await supabaseClient.from('services').select('*').order('name');
             const select = document.getElementById('service-select');
             services?.forEach(s => {
@@ -148,54 +192,122 @@
             });
         };
 
+        // Driver Search Logic
         const searchInput = document.getElementById('search-driver');
         const resultsDiv = document.getElementById('driver-results');
 
-        // Driver Search logic
         searchInput.addEventListener('input', async (e) => {
             const val = e.target.value.trim();
             if (val.length < 2) { resultsDiv.classList.add('hidden'); return; }
 
             const { data } = await supabaseClient.from('drivers')
-                .select('driver_id, name')
+                .select('*')
                 .or(`driver_id.ilike.%${val}%,name.ilike.%${val}%`)
                 .limit(5);
 
             if (data && data.length > 0) {
                 resultsDiv.innerHTML = data.map(d => `
-                    <div class="p-4 hover:bg-slate-800 cursor-pointer border-b border-slate-800 last:border-0" 
-                         onclick="selectDriver('${d.driver_id}', '${d.name}')">
-                        <p class="font-bold text-sm text-white">${d.name}</p>
-                        <p class="text-[10px] text-slate-500 uppercase tracking-tighter">ID: ${d.driver_id}</p>
+                    <div class="p-4 hover:bg-slate-800 cursor-pointer border-b border-slate-800 last:border-0 flex items-center gap-3" 
+                         onclick="selectDriver('${d.driver_id}', '${d.name}', '${d.photo_url}')">
+                        <img src="${d.photo_url}" class="w-8 h-8 rounded-full object-cover">
+                        <div>
+                            <p class="font-bold text-sm text-white">${d.name}</p>
+                            <p class="text-[10px] text-slate-500">ID: ${d.driver_id}</p>
+                        </div>
                     </div>
                 `).join('');
-                resultsDiv.classList.remove('hidden');
-            } else {
-                resultsDiv.innerHTML = `<div class="p-4 text-slate-500 text-xs italic">Driver tidak ditemukan.</div>`;
                 resultsDiv.classList.remove('hidden');
             }
         });
 
-        function selectDriver(id, name) {
+        function selectDriver(id, name, photo) {
             document.getElementById('selected-driver-id').value = id;
             document.getElementById('selected-driver-name').value = name;
             document.getElementById('display-name').innerText = name;
             document.getElementById('display-id').innerText = "NIK: " + id;
+            document.getElementById('driver-photo-ref').src = photo;
+            
             document.getElementById('selected-driver-info').classList.remove('hidden');
             document.getElementById('search-section').classList.add('hidden');
             resultsDiv.classList.add('hidden');
         }
 
         function resetDriver() {
-            document.getElementById('selected-driver-id').value = "";
-            document.getElementById('selected-driver-name').value = "";
-            document.getElementById('selected-driver-info').classList.add('hidden');
-            document.getElementById('search-section').classList.remove('hidden');
-            searchInput.value = "";
-            searchInput.focus();
+            if (videoStream) videoStream.getTracks().forEach(t => t.stop());
+            location.reload();
         }
 
-        // Calculation logic for Commission and Points
+        // Camera & Face Match Logic
+        document.getElementById('btn-start-verify').onclick = async () => {
+            if (!isAiReady) return alert("Sistem AI belum siap, tunggu sebentar...");
+            
+            const video = document.getElementById('video');
+            const container = document.getElementById('camera-container');
+            const statusLabel = document.getElementById('ai-status');
+
+            container.style.display = 'block';
+            
+            try {
+                videoStream = await navigator.mediaDevices.getUserMedia({ video: true });
+                video.srcObject = videoStream;
+                
+                statusLabel.innerText = "MENCARI WAJAH...";
+                startVerification();
+            } catch (err) {
+                alert("Gagal akses kamera.");
+            }
+        };
+
+        async function startVerification() {
+            const video = document.getElementById('video');
+            const statusLabel = document.getElementById('ai-status');
+            const refImg = document.getElementById('driver-photo-ref');
+
+            // Ambil data wajah dari foto profil (Referensi)
+            const refDetection = await faceapi.detectSingleFace(refImg).withFaceLandmarks().withFaceDescriptor();
+            
+            if (!refDetection) {
+                statusLabel.innerHTML = "<span class='text-red-400'>FOTO PROFIL TIDAK VALID</span>";
+                return;
+            }
+
+            const faceMatcher = new faceapi.FaceMatcher(refDetection);
+
+            const timer = setInterval(async () => {
+                const detection = await faceapi.detectSingleFace(video).withFaceLandmarks().withFaceDescriptor();
+                
+                if (detection) {
+                    const match = faceMatcher.findBestMatch(detection.descriptor);
+                    
+                    if (match.distance < 0.5) { // Match found
+                        clearInterval(timer);
+                        statusLabel.innerHTML = "<span class='text-green-400'>VERIFIKASI BERHASIL</span>";
+                        unlockTransaction();
+                    } else {
+                        statusLabel.innerHTML = "<span class='text-orange-400'>WAJAH TIDAK COCOK</span>";
+                    }
+                } else {
+                    statusLabel.innerText = "WAJAH TIDAK TERDETEKSI...";
+                }
+            }, 800);
+        }
+
+        function unlockTransaction() {
+            // Stop Camera
+            if (videoStream) videoStream.getTracks().forEach(t => t.stop());
+            document.getElementById('camera-container').style.display = 'none';
+            document.getElementById('btn-start-verify').style.display = 'none';
+
+            // Unlock Form
+            document.getElementById('transaction-fields').className = "unlocked-area space-y-6";
+            
+            // Badge Update
+            const badge = document.getElementById('auth-status-badge');
+            badge.className = "inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-500/10 border border-green-500/20 text-green-500 text-[10px] font-bold uppercase tracking-widest mb-4";
+            badge.innerHTML = `<i class="fa-solid fa-circle-check"></i> Driver Terverifikasi`;
+        }
+
+        // Calculation logic
         function updateCalc() {
             const select = document.getElementById('service-select');
             const selectedOpt = select.options[select.selectedIndex];
@@ -208,67 +320,48 @@
 
                 const totalComm = currentCommRate * count;
                 const totalMassage = currentServicePrice * count;
-                
-                // RUMUS POIN: 1 Poin per Rp 10.000 komisi (Bisa Anda ubah sesuai kebijakan BeautyBloom)
                 const points = Math.floor(totalComm / 10000);
 
                 document.getElementById('commission-display').innerText = `Rp ${totalComm.toLocaleString('id-ID')}`;
                 document.getElementById('total-massage-display').innerText = `Rp ${totalMassage.toLocaleString('id-ID')}`;
                 document.getElementById('points-display').innerText = `${points} Pts`;
-            } else {
-                document.getElementById('commission-display').innerText = `Rp 0`;
-                document.getElementById('total-massage-display').innerText = `Rp 0`;
-                document.getElementById('points-display').innerText = `0 Pts`;
             }
         }
 
         document.getElementById('service-select').onchange = updateCalc;
         document.getElementById('guest-count').oninput = updateCalc;
-        document.getElementById('guest-category').onchange = updateCalc;
 
-        // Form Submit
+        // Submit form
         document.getElementById('form-transaksi').onsubmit = async (e) => {
             e.preventDefault();
             const btn = document.getElementById('btn-submit');
-            const driverId = document.getElementById('selected-driver-id').value;
-            const driverName = document.getElementById('selected-driver-name').value;
-            const serviceId = document.getElementById('service-select').value;
-            const count = parseInt(document.getElementById('guest-count').value);
-            const guestCat = document.getElementById('guest-category').value;
-            const note = document.getElementById('transaction-note').value;
-
-            if (!driverId) { alert("Pilih driver terlebih dahulu."); return; }
-
+            
             btn.disabled = true;
-            btn.innerHTML = `<i class="fa-solid fa-circle-notch animate-spin"></i> Memproses...`;
-
-            const totalCommission = currentCommRate * count;
-            const totalMassageValue = currentServicePrice * count;
-            const pointsEarned = Math.floor(totalCommission / 10000);
+            btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> MENYIMPAN...`;
 
             const payload = {
-                driver_id: driverId,
-                driver_name: driverName,
-                service_id: serviceId,
+                driver_id: document.getElementById('selected-driver-id').value,
+                driver_name: document.getElementById('selected-driver-name').value,
+                service_id: document.getElementById('service-select').value,
                 service_name: selectedServiceName,
-                guest_category: guestCat, // KOLOM BARU
-                massage_guests: count,
-                commission_amount: totalCommission,
-                points_earned: pointsEarned, // KOLOM BARU
-                total_massage_value: totalMassageValue,
-                notes: note,
+                guest_category: document.getElementById('guest-category').value,
+                massage_guests: parseInt(document.getElementById('guest-count').value),
+                commission_amount: currentCommRate * parseInt(document.getElementById('guest-count').value),
+                points_earned: Math.floor((currentCommRate * parseInt(document.getElementById('guest-count').value)) / 10000),
+                total_massage_value: currentServicePrice * parseInt(document.getElementById('guest-count').value),
+                notes: document.getElementById('transaction-note').value,
                 created_at: new Date().toISOString()
             };
 
             const { error } = await supabaseClient.from('commissions').insert([payload]);
 
             if (!error) {
-                alert(`Transaksi ${guestCat} Berhasil! ${driverName} mendapatkan ${pointsEarned} poin.`);
-                window.location.reload();
+                alert("Transaksi Berhasil Disimpan!");
+                location.reload();
             } else {
-                alert("Error: " + error.message);
+                alert("Gagal: " + error.message);
                 btn.disabled = false;
-                btn.innerHTML = `<span>SIMPAN TRANSAKSI</span>`;
+                btn.innerHTML = `<i class="fa-solid fa-save"></i> <span>SIMPAN TRANSAKSI</span>`;
             }
         };
     </script>
