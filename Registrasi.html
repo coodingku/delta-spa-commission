@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delta Spa - Registry Driver Face ID</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        body { font-family: 'Urbanist', sans-serif; background-color: #020617; color: #f8fafc; }
+        .card { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(197, 160, 89, 0.1); }
+        .sidebar { background: #0f172a; border-right: 1px solid rgba(197, 160, 89, 0.1); }
+        .nav-link { display: flex; align-items: center; gap: 12px; padding: 14px 20px; border-radius: 16px; color: #94a3b8; transition: 0.3s; margin-bottom: 8px; font-weight: 500; }
+        .nav-link:hover { background: rgba(197, 160, 89, 0.05); color: #c5a059; }
+        .nav-link.active { background: linear-gradient(135deg, #c5a059 0%, #926d27 100%); color: white; }
+        .gold-gradient { background: linear-gradient(135deg, #c5a059 0%, #926d27 100%); }
+        .gold-text { color: #c5a059; }
+        input, textarea { background: #0f172a !important; border: 1px solid #1e293b !important; color: white !important; }
+        input:focus { border-color: #c5a059 !important; outline: none; }
+        
+        /* Camera UI */
+        #camera-container { width: 100%; max-width: 280px; aspect-ratio: 1/1; position: relative; border-radius: 2.5rem; overflow: hidden; border: 2px solid rgba(197, 160, 89, 0.3); background: #000; }
+        #video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+        #captured-image { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); display: none; }
+        .face-overlay { position: absolute; inset: 0; border: 2px dashed rgba(197, 160, 89, 0.4); border-radius: 50%; margin: 20px; pointer-events: none; }
+        
+        /* Tablet Specific Grid */
+        @media (min-width: 768px) and (max-width: 1024px) {
+            .tablet-layout { grid-template-columns: 1fr !important; }
+            .sidebar { width: 80px; }
+            .sidebar span, .sidebar p, .sidebar h1 { display: none; }
+            .nav-link { justify-content: center; padding: 14px; }
+            .nav-link i { font-size: 1.25rem; margin: 0; }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex">
+    <!-- Sidebar -->
+    <aside class="w-20 lg:w-72 shrink-0 flex flex-col sidebar">
+        <div class="p-4 lg:p-8 text-center">
+            <h1 class="text-xl lg:text-2xl font-black italic gold-text tracking-tighter hidden lg:block">DELTA <span class="text-white">SPA</span></h1>
+            <p class="text-[8px] text-slate-500 font-bold uppercase tracking-[0.2em] mt-1 hidden lg:block">Finex Pos System</p>
+            <div class="lg:hidden gold-text text-xl"><i class="fa-solid fa-crown"></i></div>
+        </div>
+        <nav class="flex-1 px-3">
+            <a href="dashboard.html" class="nav-link" title="Dashboard"><i class="fa-solid fa-chart-pie w-5"></i> <span class="hidden lg:block">Dashboard</span></a>
+            <a href="registrasi_driver.html" class="nav-link active" title="Registrasi"><i class="fa-solid fa-id-card w-5"></i> <span class="hidden lg:block">Registrasi Driver</span></a>
+            <a href="transaksi_komisi.html" class="nav-link" title="Komisi"><i class="fa-solid fa-money-bill-transfer w-5"></i> <span class="hidden lg:block">Input Komisi</span></a>
+            <a href="riwayat_komisi.html" class="nav-link" title="Riwayat"><i class="fa-solid fa-clock-rotate-left w-5"></i> <span class="hidden lg:block">Riwayat</span></a>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 p-4 md:p-8 overflow-y-auto">
+        <header class="flex justify-between items-center mb-8">
+            <div>
+                <h2 class="text-2xl md:text-3xl font-bold uppercase tracking-tight">Registry <span class="gold-text">Driver</span></h2>
+                <p class="text-slate-500 text-xs mt-1">Sistem Pendaftaran Face ID & Pencarian Mitra.</p>
+            </div>
+            <div class="hidden md:flex gap-3">
+                <button onclick="exportToExcel()" class="p-3 bg-slate-800 rounded-xl text-white hover:bg-slate-700 transition-all"><i class="fa-solid fa-file-excel"></i></button>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 tablet-layout">
+            <!-- Left: Search & Information -->
+            <div class="lg:col-span-5 space-y-6">
+                <!-- Search Box -->
+                <div class="card p-6 md:p-8 rounded-[2.5rem]">
+                    <h3 class="text-xs font-bold gold-text uppercase tracking-widest mb-4">Cek Status Driver</h3>
+                    <div class="relative">
+                        <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"></i>
+                        <input type="text" id="search-input" onkeyup="searchDriver()" placeholder="Cari NIK atau Nama Driver..." 
+                            class="w-full pl-12 pr-4 py-4 rounded-2xl text-sm font-medium">
+                    </div>
+                    
+                    <div id="search-result" class="mt-6 space-y-4 hidden">
+                        <!-- Result Placeholder -->
+                        <div class="p-4 rounded-2xl bg-white/5 border border-white/10 flex items-center gap-4">
+                            <div class="w-16 h-16 rounded-xl bg-slate-800 overflow-hidden shrink-0 border border-slate-700">
+                                <img id="res-photo" src="" class="w-full h-full object-cover">
+                            </div>
+                            <div class="overflow-hidden">
+                                <p id="res-name" class="font-bold text-white truncate"></p>
+                                <p id="res-id" class="text-[10px] text-slate-500 font-mono uppercase"></p>
+                                <div class="flex gap-2 mt-2">
+                                    <button id="res-edit-btn" class="px-3 py-1 bg-blue-500/20 text-blue-400 text-[9px] font-bold rounded-lg uppercase">Edit</button>
+                                    <button id="res-del-btn" class="px-3 py-1 bg-red-500/20 text-red-400 text-[9px] font-bold rounded-lg uppercase">Hapus</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="no-result" class="mt-6 text-center py-8 text-slate-600 italic text-sm border-2 border-dashed border-slate-800 rounded-2xl">
+                        Ketik nama atau NIK untuk mencari...
+                    </div>
+                </div>
+
+                <!-- Info Tablet -->
+                <div class="bg-blue-500/5 border border-blue-500/10 p-6 rounded-[2rem] hidden md:flex gap-4">
+                    <i class="fa-solid fa-circle-info text-blue-400 text-xl"></i>
+                    <p class="text-xs text-blue-200/60 leading-relaxed">
+                        <strong class="text-blue-300 block mb-1 uppercase">Panduan Tablet:</strong>
+                        Gunakan tombol capture untuk mengambil foto wajah. Pastikan pencahayaan cukup agar Face ID terbaca jelas oleh sistem Finex POS.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Right: Registration Form -->
+            <div class="lg:col-span-7">
+                <div class="card p-6 md:p-8 rounded-[3rem]">
+                    <form id="driver-form" class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <!-- Camera Part -->
+                        <div class="flex flex-col items-center justify-center space-y-4">
+                            <div id="camera-container">
+                                <video id="video" autoplay muted playsinline></video>
+                                <img id="captured-image" alt="Face Capture">
+                                <div class="face-overlay"></div>
+                            </div>
+                            <div class="flex gap-2">
+                                <button type="button" id="btn-capture" onclick="takeSnapshot()" class="px-6 py-3 bg-slate-800 text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-slate-700 transition-all">
+                                    <i class="fa-solid fa-camera mr-2"></i> Ambil Foto
+                                </button>
+                                <button type="button" id="btn-reset-cam" onclick="resetCamera()" class="hidden px-6 py-3 bg-red-900/30 text-red-400 text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-red-900/50">
+                                    <i class="fa-solid fa-rotate mr-2"></i> Ulang
+                                </button>
+                            </div>
+                            <p class="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Wajib: Foto Wajah (Face ID)</p>
+                        </div>
+
+                        <!-- Fields Part -->
+                        <div class="space-y-4">
+                            <input type="hidden" id="edit-mode-id">
+                            <div>
+                                <label class="text-[10px] font-bold text-slate-500 uppercase ml-1">NIK / ID Driver</label>
+                                <input type="text" id="reg-id" required class="w-full p-4 rounded-2xl mt-1 text-sm font-medium">
+                            </div>
+                            <div>
+                                <label class="text-[10px] font-bold text-slate-500 uppercase ml-1">Nama Lengkap</label>
+                                <input type="text" id="reg-name" required class="w-full p-4 rounded-2xl mt-1 text-sm font-medium">
+                            </div>
+                            <div>
+                                <label class="text-[10px] font-bold text-slate-500 uppercase ml-1">Nomor WhatsApp</label>
+                                <input type="tel" id="reg-phone" placeholder="08..." required class="w-full p-4 rounded-2xl mt-1 text-sm font-medium">
+                            </div>
+                            <div>
+                                <label class="text-[10px] font-bold text-slate-500 uppercase ml-1">Alamat</label>
+                                <textarea id="reg-address" class="w-full p-4 rounded-2xl mt-1 h-24 text-sm font-medium resize-none"></textarea>
+                            </div>
+                            
+                            <div class="pt-4 flex flex-col gap-2">
+                                <button type="submit" id="btn-submit" class="w-full gold-gradient py-4 rounded-2xl font-bold text-white uppercase tracking-widest shadow-xl active:scale-95 transition-all">Simpan Data</button>
+                                <button type="button" id="btn-cancel" onclick="resetForm()" class="hidden w-full bg-slate-800 py-4 rounded-2xl font-bold text-white uppercase text-xs">Batal Edit</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <canvas id="canvas" class="hidden" width="400" height="400"></canvas>
+
+    <script>
+        const SUPABASE_URL = "https://qdxchvogaxiibzqvuupf.supabase.co"; 
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkeGNodm9nYXhpaWJ6cXZ1dXBmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAxODE5NTIsImV4cCI6MjA4NTc1Nzk1Mn0.8U_zk81b6wFfdZdPRupk5KSk3g39nOPs8SpZVkWbqkc";
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let currentDrivers = [];
+        let existingPhotoUrl = "";
+        let capturedBlob = null;
+
+        const video = document.getElementById('video');
+        const capturedImg = document.getElementById('captured-image');
+        const canvas = document.getElementById('canvas');
+
+        // Initialize
+        window.onload = () => {
+            fetchDrivers();
+            initCamera();
+        };
+
+        async function initCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: "user", width: 400, height: 400 } 
+                });
+                video.srcObject = stream;
+            } catch (err) { console.error("Camera error:", err); }
+        }
+
+        function takeSnapshot() {
+            const context = canvas.getContext('2d');
+            context.translate(canvas.width, 0);
+            context.scale(-1, 1);
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            canvas.toBlob((blob) => {
+                capturedBlob = blob;
+                capturedImg.src = URL.createObjectURL(blob);
+                capturedImg.style.display = 'block';
+                video.style.display = 'none';
+                document.getElementById('btn-capture').classList.add('hidden');
+                document.getElementById('btn-reset-cam').classList.remove('hidden');
+            }, 'image/jpeg', 0.9);
+        }
+
+        function resetCamera() {
+            capturedBlob = null;
+            capturedImg.style.display = 'none';
+            video.style.display = 'block';
+            document.getElementById('btn-capture').classList.remove('hidden');
+            document.getElementById('btn-reset-cam').classList.add('hidden');
+        }
+
+        async function fetchDrivers() {
+            const { data, error } = await supabaseClient.from('drivers').select('*').order('name');
+            if (!error) currentDrivers = data || [];
+        }
+
+        function searchDriver() {
+            const val = document.getElementById('search-input').value.toLowerCase();
+            const resBox = document.getElementById('search-result');
+            const noRes = document.getElementById('no-result');
+
+            if (val.length < 2) {
+                resBox.classList.add('hidden');
+                noRes.classList.remove('hidden');
+                return;
+            }
+
+            const found = currentDrivers.find(d => d.name.toLowerCase().includes(val) || d.driver_id.toLowerCase().includes(val));
+
+            if (found) {
+                resBox.classList.remove('hidden');
+                noRes.classList.add('hidden');
+                document.getElementById('res-photo').src = found.photo_url || `https://ui-avatars.com/api/?name=${found.name}&background=0f172a&color=c5a059`;
+                document.getElementById('res-name').innerText = found.name;
+                document.getElementById('res-id').innerText = found.driver_id;
+                document.getElementById('res-edit-btn').onclick = () => edit(found.driver_id);
+                document.getElementById('res-del-btn').onclick = () => del(found.driver_id);
+            } else {
+                resBox.classList.add('hidden');
+                noRes.classList.remove('hidden');
+                noRes.innerText = "Driver tidak ditemukan";
+            }
+        }
+
+        document.getElementById('driver-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btn-submit');
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-circle-notch animate-spin"></i>`;
+
+            const editId = document.getElementById('edit-mode-id').value;
+            const driverId = document.getElementById('reg-id').value;
+            let photoUrl = existingPhotoUrl;
+
+            try {
+                if (capturedBlob) {
+                    const fileName = `face_${driverId}_${Date.now()}.jpg`;
+                    const { error: upErr } = await supabaseClient.storage.from('assets').upload(`drivers/${fileName}`, capturedBlob);
+                    if (upErr) throw upErr;
+                    photoUrl = supabaseClient.storage.from('assets').getPublicUrl(`drivers/${fileName}`).data.publicUrl;
+                }
+
+                const payload = {
+                    driver_id: driverId,
+                    name: document.getElementById('reg-name').value,
+                    phone: document.getElementById('reg-phone').value,
+                    address: document.getElementById('reg-address').value,
+                    photo_url: photoUrl,
+                    ktp_url: photoUrl
+                };
+
+                const { error } = editId 
+                    ? await supabaseClient.from('drivers').update(payload).eq('driver_id', editId)
+                    : await supabaseClient.from('drivers').insert([payload]);
+
+                if (error) throw error;
+                alert("Data Berhasil Disimpan!");
+                resetForm();
+                fetchDrivers();
+            } catch (err) { alert(err.message); }
+            finally { 
+                btn.disabled = false; 
+                btn.innerText = "Simpan Data"; 
+            }
+        });
+
+        async function edit(id) {
+            const data = currentDrivers.find(d => d.driver_id === id);
+            if(!data) return;
+
+            document.getElementById('edit-mode-id').value = data.driver_id;
+            document.getElementById('reg-id').value = data.driver_id;
+            document.getElementById('reg-id').readOnly = true;
+            document.getElementById('reg-name').value = data.name;
+            document.getElementById('reg-phone').value = data.phone;
+            document.getElementById('reg-address').value = data.address || "";
+            
+            existingPhotoUrl = data.photo_url || "";
+            if (existingPhotoUrl) {
+                capturedImg.src = existingPhotoUrl;
+                capturedImg.style.display = 'block';
+                video.style.display = 'none';
+                document.getElementById('btn-capture').classList.add('hidden');
+                document.getElementById('btn-reset-cam').classList.remove('hidden');
+            }
+
+            document.getElementById('btn-cancel').classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        async function del(id) {
+            if(confirm("Hapus data driver ini?")) {
+                await supabaseClient.from('drivers').delete().eq('driver_id', id);
+                fetchDrivers();
+                document.getElementById('search-result').classList.add('hidden');
+            }
+        }
+
+        function resetForm() {
+            document.getElementById('driver-form').reset();
+            document.getElementById('edit-mode-id').value = "";
+            document.getElementById('reg-id').readOnly = false;
+            document.getElementById('btn-cancel').classList.add('hidden');
+            resetCamera();
+            existingPhotoUrl = "";
+        }
+
+        function exportToExcel() {
+            const ws = XLSX.utils.json_to_sheet(currentDrivers);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Drivers");
+            XLSX.writeFile(wb, "Drivers_DeltaSpa.xlsx");
+        }
+    </script>
+</body>
+</html>
