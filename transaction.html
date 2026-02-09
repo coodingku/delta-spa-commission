@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Finex POS - Transaksi Terfokus</title>
+    <title>Finex POS - BeautyBloom Transaction</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
@@ -36,6 +36,10 @@
             background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
         }
 
+        .gold-glow:hover {
+            box-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
+        }
+
         .input-elegant {
             background: #0D1117;
             border: 1px solid #30363D;
@@ -63,12 +67,12 @@
 
         #camera-wrapper {
             position: relative;
-            width: 260px;
-            height: 260px;
+            width: 280px;
+            height: 280px;
             border-radius: 50%;
             overflow: hidden;
             border: 4px solid #30363D;
-            box-shadow: 0 0 40px rgba(0,0,0,0.5);
+            box-shadow: 0 0 50px rgba(0,0,0,0.5);
             background: #000;
         }
 
@@ -90,11 +94,10 @@
 
         @keyframes pulse-ring {
             0% { transform: scale(0.98); opacity: 0.8; }
-            50% { transform: scale(1.05); opacity: 0.3; }
+            50% { transform: scale(1.08); opacity: 0.2; }
             100% { transform: scale(0.98); opacity: 0.8; }
         }
 
-        /* Modal Custom */
         #custom-modal {
             display: none;
             position: fixed;
@@ -112,12 +115,12 @@
     <!-- Modal Notifikasi Manual -->
     <div id="custom-modal">
         <div class="bg-[#161B22] border border-[#30363D] p-8 rounded-[32px] max-w-sm w-full text-center">
-            <div class="w-16 h-16 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
+            <div id="modal-icon" class="w-16 h-16 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
                 <i class="fa-solid fa-camera-slash text-2xl"></i>
             </div>
-            <h3 class="text-xl font-bold text-white mb-2">Kamera Diblokir</h3>
-            <p id="modal-msg" class="text-slate-400 text-sm mb-8 leading-relaxed">Browser Anda memblokir akses kamera. Silakan klik ikon gembok di bar alamat (URL) dan aktifkan Kamera.</p>
-            <button onclick="closeModal()" class="w-full py-4 rounded-2xl gold-gradient text-white font-bold uppercase text-xs tracking-widest">Saya Mengerti</button>
+            <h3 id="modal-title" class="text-xl font-bold text-white mb-2">Akses Ditolak</h3>
+            <p id="modal-msg" class="text-slate-400 text-sm mb-8 leading-relaxed">Pesan error di sini...</p>
+            <button onclick="closeModal()" class="w-full py-4 rounded-2xl gold-gradient text-white font-bold uppercase text-xs tracking-widest">Tutup</button>
         </div>
     </div>
 
@@ -125,17 +128,22 @@
     <aside class="w-20 lg:w-64 border-r border-[#30363D] flex flex-col items-center lg:items-stretch py-8 px-4 z-50 bg-[#0D1117]">
         <div class="mb-12 px-4">
             <h1 class="text-xl font-extrabold italic text-white tracking-tighter">FINEX<span class="text-[var(--gold)]">POS</span></h1>
+            <p class="hidden lg:block text-[9px] font-bold text-slate-600 tracking-[0.3em] mt-1 uppercase">BeautyBloom Management</p>
         </div>
         <nav class="space-y-2 flex-1">
             <button class="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-slate-500 hover:text-white transition-all">
-                <i class="fa-solid fa-grid-2 text-lg"></i> <span class="hidden lg:block font-semibold text-sm uppercase tracking-wider">Dashboard</span>
+                <i class="fa-solid fa-house text-lg"></i> <span class="hidden lg:block font-semibold text-sm uppercase tracking-wider">Beranda</span>
             </button>
             <button class="w-full flex items-center gap-4 px-4 py-3 rounded-xl gold-gradient text-white shadow-lg">
                 <i class="fa-solid fa-receipt text-lg"></i> <span class="hidden lg:block font-bold text-sm uppercase tracking-wider">Transaksi</span>
             </button>
         </nav>
-        <div class="px-4 border-t border-[#30363D] pt-6">
+        <div class="px-4 border-t border-[#30363D] pt-6 flex items-center gap-3">
             <div class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-xs font-bold text-slate-400">ADM</div>
+            <div class="hidden lg:block">
+                <p class="text-[10px] font-bold text-white leading-none">Administrator</p>
+                <p class="text-[9px] text-slate-500 mt-1">Sesi Aktif</p>
+            </div>
         </div>
     </aside>
 
@@ -157,25 +165,41 @@
 
         <div class="flex-1 flex flex-col items-center justify-center p-6 bg-[radial-gradient(circle_at_50%_50%,_#161B22_0%,_#0A0C10_100%)]">
             
-            <!-- STEP 1: SEARCH -->
-            <section id="step-search" class="step-content active w-full max-w-xl flex flex-col">
+            <!-- STEP 1: SEARCH & SCAN BUTTON -->
+            <section id="step-search" class="step-content active w-full max-w-xl flex flex-col items-center">
                 <div class="text-center mb-10">
-                    <h3 class="text-4xl font-bold mb-3 tracking-tight">Siapa yang <span class="text-[var(--gold)]">Melayani?</span></h3>
-                    <p class="text-slate-500 font-medium">Ketik nama mitra atau scan untuk memulai</p>
+                    <h3 class="text-4xl font-extrabold mb-3 tracking-tight">Siapa yang <span class="text-[var(--gold)]">Melayani?</span></h3>
+                    <p class="text-slate-500 font-medium">Lakukan pencarian atau gunakan scan wajah langsung</p>
                 </div>
                 
-                <div class="relative">
-                    <div class="absolute inset-y-0 left-6 flex items-center text-slate-500">
+                <div class="w-full relative group mb-6">
+                    <div class="absolute inset-y-0 left-6 flex items-center text-slate-500 group-focus-within:text-[var(--gold)] transition-colors">
                         <i class="fa-solid fa-magnifying-glass text-xl"></i>
                     </div>
                     <input type="text" id="driver-search-input" autocomplete="off"
                         class="w-full h-20 pl-16 pr-6 rounded-3xl bg-[#161B22] border border-[#30363D] text-xl font-semibold focus:outline-none focus:border-[var(--gold)] transition-all placeholder:text-slate-600 shadow-2xl"
-                        placeholder="Nama atau ID Mitra...">
+                        placeholder="Ketik Nama Mitra...">
                     
                     <div id="results-container" class="absolute top-full left-0 right-0 mt-3 bg-[#161B22] border border-[#30363D] rounded-2xl overflow-hidden hidden z-50 shadow-2xl">
                         <div id="results-list" class="max-h-[300px] overflow-y-auto"></div>
                     </div>
                 </div>
+
+                <div class="flex items-center gap-4 w-full">
+                    <div class="h-px bg-[#30363D] flex-1"></div>
+                    <span class="text-[10px] font-black text-slate-600 uppercase tracking-widest">Atau</span>
+                    <div class="h-px bg-[#30363D] flex-1"></div>
+                </div>
+
+                <button onclick="startInstantScan()" class="mt-8 group relative flex flex-col items-center gap-4 p-8 rounded-[40px] bg-white/5 border border-white/10 hover:border-[var(--gold)] transition-all gold-glow">
+                    <div class="w-20 h-20 rounded-full gold-gradient flex items-center justify-center text-white shadow-2xl group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-expand text-3xl"></i>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-sm font-black uppercase tracking-[0.2em] text-white">Scan Sekarang</p>
+                        <p class="text-[10px] text-slate-500 mt-1 uppercase font-bold">Verifikasi wajah otomatis</p>
+                    </div>
+                </button>
             </section>
 
             <!-- STEP 2: VERIFICATION -->
@@ -188,9 +212,9 @@
                     <div class="scanning-ring"></div>
                 </div>
                 
-                <div class="text-center space-y-2 mb-8">
+                <div class="text-center space-y-2 mb-8 h-20">
                     <h4 id="verify-name" class="text-2xl font-black uppercase text-white tracking-tight">---</h4>
-                    <div class="inline-flex items-center gap-2 px-3 py-1 bg-white/5 rounded-full border border-white/10 text-slate-400 text-xs font-mono">
+                    <div id="verify-badge" class="inline-flex items-center gap-2 px-3 py-1 bg-white/5 rounded-full border border-white/10 text-slate-400 text-xs font-mono">
                         <i class="fa-solid fa-fingerprint"></i> <span id="verify-id">---</span>
                     </div>
                 </div>
@@ -201,11 +225,11 @@
                 </div>
 
                 <button onclick="stopCameraAndReturn()" class="mt-8 text-slate-500 hover:text-white text-xs font-bold uppercase tracking-widest transition-all group">
-                    <i class="fa-solid fa-arrow-left mr-2 group-hover:-translate-x-1 transition-transform"></i> Kembali ke Pencarian
+                    <i class="fa-solid fa-arrow-left mr-2 group-hover:-translate-x-1 transition-transform"></i> Batal & Kembali
                 </button>
             </section>
 
-            <!-- STEP 3: TRANSACTION FORM (BeautyBloom) -->
+            <!-- STEP 3: TRANSACTION FORM -->
             <section id="step-form" class="step-content w-full max-w-4xl flex flex-col">
                 <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
                     <div class="lg:col-span-4 space-y-4">
@@ -232,7 +256,7 @@
                     <div class="lg:col-span-8 glass-panel p-8 rounded-[32px] space-y-6">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div class="space-y-2">
-                                <label class="text-[10px] font-black uppercase text-slate-500 ml-2 tracking-widest">Layanan</label>
+                                <label class="text-[10px] font-black uppercase text-slate-500 ml-2 tracking-widest">Layanan BeautyBloom</label>
                                 <select id="service-select" class="w-full h-14 px-4 rounded-2xl input-elegant text-sm font-bold uppercase cursor-pointer">
                                     <option value="">-- Pilih Layanan --</option>
                                 </select>
@@ -257,7 +281,7 @@
                             </div>
                             <div class="space-y-2">
                                 <label class="text-[10px] font-black uppercase text-slate-500 ml-2 tracking-widest">Kamar / Meja</label>
-                                <input type="text" id="room-no" placeholder="Contoh: 102" class="w-full h-14 px-6 rounded-2xl input-elegant font-bold">
+                                <input type="text" id="room-no" placeholder="Nomor..." class="w-full h-14 px-6 rounded-2xl input-elegant font-bold">
                             </div>
                         </div>
 
@@ -281,12 +305,15 @@
         let currentStep = 'step-search';
         let selectedMitra = null;
         let videoStream = null;
-        let matcher = null;
+        let allDrivers = []; // Untuk Scan Now
+        let faceMatchers = []; // Array of {id, name, photo, matcher}
         let analysisInterval = null;
+        let isInstantScan = false;
 
         window.onload = () => {
             initAI();
             fetchServices();
+            fetchAllDrivers(); // Load data awal untuk Scan Now
             updateClock();
             setInterval(updateClock, 1000);
             checkSecurity();
@@ -294,11 +321,12 @@
 
         function checkSecurity() {
             if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
-                showModal("Kamera hanya dapat diaktifkan pada koneksi aman (HTTPS). Pastikan URL diawali dengan https://");
+                showModal("Koneksi Tidak Aman", "Kamera hanya aktif pada HTTPS. Harap gunakan https:// atau localhost.");
             }
         }
 
-        function showModal(msg) {
+        function showModal(title, msg) {
+            document.getElementById('modal-title').innerText = title;
             document.getElementById('modal-msg').innerText = msg;
             document.getElementById('custom-modal').style.display = 'flex';
         }
@@ -315,9 +343,7 @@
                     faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
                     faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
                 ]);
-            } catch (e) {
-                console.error("AI Models failed", e);
-            }
+            } catch (e) { console.error("Models error", e); }
         }
 
         async function fetchServices() {
@@ -330,6 +356,11 @@
                 opt.dataset.name = s.name;
                 sel.add(opt);
             });
+        }
+
+        async function fetchAllDrivers() {
+            const { data } = await sb.from('drivers').select('*');
+            allDrivers = data || [];
         }
 
         function changeStep(stepId) {
@@ -371,95 +402,135 @@
         };
 
         function selectDriver(id, name, photo) {
+            isInstantScan = false;
             selectedMitra = { id, name, photo };
             resultsContainer.classList.add('hidden');
             searchInput.value = "";
             startVerification();
         }
 
+        // --- Scan Now Logic ---
+        async function startInstantScan() {
+            isInstantScan = true;
+            selectedMitra = null;
+            document.getElementById('verify-name').innerText = "MENUNGGU SCAN...";
+            document.getElementById('verify-id').innerText = "OTOMATIS";
+            startVerification();
+        }
+
         // --- Camera Logic ---
         async function startVerification() {
             changeStep('step-verify');
-            document.getElementById('verify-name').innerText = selectedMitra.name;
-            document.getElementById('verify-id').innerText = selectedMitra.id;
             document.getElementById('camera-placeholder').style.display = 'flex';
             document.getElementById('ai-status').innerText = "Membuka Kamera...";
 
             try {
-                // Cek apakah browser mendukung kamera
-                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                    throw new Error("Browser ini tidak mendukung akses kamera.");
-                }
-
-                const stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: "user" } 
-                });
-                
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
                 videoStream = stream;
                 const video = document.getElementById('camera-view');
                 video.srcObject = stream;
                 video.onloadedmetadata = () => {
                     video.play();
                     document.getElementById('camera-placeholder').style.display = 'none';
-                    initFaceMatcher();
+                    if (isInstantScan) {
+                        loadMultiFaceMatchers();
+                    } else {
+                        document.getElementById('verify-name').innerText = selectedMitra.name;
+                        document.getElementById('verify-id').innerText = selectedMitra.id;
+                        initSingleFaceMatcher();
+                    }
                 };
             } catch (err) {
-                console.error("Camera error:", err);
-                if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-                    showModal("Akses kamera ditolak. Harap izinkan kamera melalui pengaturan browser (klik ikon gembok di sebelah URL).");
-                } else {
-                    showModal("Gagal mengakses kamera: " + err.message);
-                }
+                showModal("Izin Kamera", "Gagal membuka kamera. Pastikan browser memberikan izin akses.");
                 changeStep('step-search');
             }
         }
 
-        async function initFaceMatcher() {
+        async function initSingleFaceMatcher() {
             const status = document.getElementById('ai-status');
-            status.innerText = "Memuat Data Wajah...";
-            try {
-                const img = new Image();
-                img.crossOrigin = "anonymous";
-                img.src = selectedMitra.photo;
-                img.onload = async () => {
-                    const detect = await faceapi.detectSingleFace(img, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
-                    if (detect) {
-                        matcher = new faceapi.FaceMatcher(detect, 0.55);
-                        status.innerText = "Scan Wajah Mitra...";
-                        document.getElementById('status-dot').className = "w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse";
-                        startAnalysisLoop();
-                    } else {
-                        status.innerText = "Foto Profil Tidak Valid";
-                    }
-                };
-            } catch (e) { status.innerText = "Gagal Memvalidasi Wajah"; }
+            status.innerText = "Memproses Wajah Mitra...";
+            const img = new Image();
+            img.crossOrigin = "anonymous";
+            img.src = selectedMitra.photo;
+            img.onload = async () => {
+                const detect = await faceapi.detectSingleFace(img, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
+                if (detect) {
+                    const matcher = new faceapi.FaceMatcher(detect, 0.55);
+                    status.innerText = "Scanning... Mohon Hadap Kamera";
+                    startAnalysisLoop(matcher);
+                } else { status.innerText = "Data Foto Tidak Valid"; }
+            };
         }
 
-        function startAnalysisLoop() {
+        async function loadMultiFaceMatchers() {
+            const status = document.getElementById('ai-status');
+            status.innerText = "Mempersiapkan Scan Cepat...";
+            
+            faceMatchers = [];
+            // Ambil 10 driver terbaru/aktif saja untuk performa (opsional)
+            const subset = allDrivers.slice(0, 15); 
+
+            for (let d of subset) {
+                const img = new Image();
+                img.crossOrigin = "anonymous";
+                img.src = d.photo_url;
+                await new Promise(r => img.onload = r);
+                const detect = await faceapi.detectSingleFace(img, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
+                if (detect) {
+                    faceMatchers.push({
+                        id: d.driver_id,
+                        name: d.name,
+                        photo: d.photo_url,
+                        matcher: new faceapi.FaceMatcher(detect, 0.55)
+                    });
+                }
+            }
+            status.innerText = "Scan Cepat Aktif - Silakan Tampil";
+            startMultiAnalysisLoop();
+        }
+
+        function startAnalysisLoop(matcher) {
             const video = document.getElementById('camera-view');
             analysisInterval = setInterval(async () => {
-                if (currentStep !== 'step-verify') { clearInterval(analysisInterval); return; }
                 const detect = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
                 if (detect) {
                     const match = matcher.findBestMatch(detect.descriptor);
                     if (match.distance < 0.5) {
-                        document.getElementById('ai-status').innerText = "Terverifikasi!";
-                        document.getElementById('status-dot').className = "w-2.5 h-2.5 rounded-full bg-emerald-500";
-                        clearInterval(analysisInterval);
-                        setTimeout(onVerified, 800);
-                    } else {
-                        document.getElementById('ai-status').innerText = "Wajah Tidak Cocok";
+                        onVerified();
                     }
                 }
-            }, 500);
+            }, 600);
+        }
+
+        function startMultiAnalysisLoop() {
+            const video = document.getElementById('camera-view');
+            analysisInterval = setInterval(async () => {
+                const detect = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
+                if (detect) {
+                    for (let m of faceMatchers) {
+                        const match = m.matcher.findBestMatch(detect.descriptor);
+                        if (match.distance < 0.5) {
+                            selectedMitra = { id: m.id, name: m.name, photo: m.photo };
+                            onVerified();
+                            return;
+                        }
+                    }
+                }
+            }, 800);
         }
 
         function onVerified() {
-            stopCamera();
-            document.getElementById('final-photo').src = selectedMitra.photo;
-            document.getElementById('final-name').innerText = selectedMitra.name;
-            document.getElementById('final-id').innerText = selectedMitra.id;
-            changeStep('step-form');
+            clearInterval(analysisInterval);
+            document.getElementById('ai-status').innerText = "TERVERIFIKASI!";
+            document.getElementById('status-dot').className = "w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping";
+            
+            setTimeout(() => {
+                stopCamera();
+                document.getElementById('final-photo').src = selectedMitra.photo;
+                document.getElementById('final-name').innerText = selectedMitra.name;
+                document.getElementById('final-id').innerText = selectedMitra.id;
+                changeStep('step-form');
+            }, 1000);
         }
 
         function stopCamera() {
@@ -519,7 +590,7 @@
             }]);
 
             if (!error) {
-                alert("✅ Transaksi " + selectedMitra.name + " Berhasil Disimpan.");
+                alert("✅ Transaksi " + selectedMitra.name + " Berhasil.");
                 stopCameraAndReturn();
             } else {
                 alert("Error: " + error.message);
