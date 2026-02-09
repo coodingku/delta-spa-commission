@@ -3,403 +3,539 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Input Transaksi - Finex POS</title>
+    <title>Finex POS - Transaksi Terfokus</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        body { font-family: 'Urbanist', sans-serif; background-color: #020617; color: #f8fafc; overflow: hidden; }
-        .card { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(212, 175, 55, 0.1); }
-        .sidebar { background: #0f172a; border-right: 1px solid rgba(212, 175, 55, 0.1); }
-        
-        .nav-link { 
-            display: flex; align-items: center; gap: 12px; padding: 12px 16px; 
-            border-radius: 14px; color: #94a3b8; transition: 0.3s; margin-bottom: 4px; font-weight: 600; 
+        :root {
+            --gold: #D4AF37;
+            --gold-dark: #AA8A2E;
+            --bg-dark: #0A0C10;
+            --card-dark: #161B22;
         }
-        .nav-link:hover { background: rgba(212, 175, 55, 0.05); color: #d4af37; }
-        .nav-link.active { background: linear-gradient(135deg, #d4af37 0%, #a67c00 100%); color: white; }
-        
-        .gold-text { color: #d4af37; }
-        .gold-bg { background: linear-gradient(135deg, #d4af37 0%, #a67c00 100%); }
-        
-        .input-field { 
-            background: #0f172a; border: 1px solid rgba(212, 175, 55, 0.2); 
-            color: white; width: 100%; padding: 14px 18px; border-radius: 16px; 
-            outline: none; transition: 0.3s; font-weight: 600; font-size: 16px;
+
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background-color: var(--bg-dark); 
+            color: #E6EDF3;
+            height: 100vh;
+            overflow: hidden;
+            margin: 0;
         }
-        .input-field:focus { border-color: #d4af37; box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.1); }
-        
-        #camera-view { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); border-radius: 24px; }
-        .scan-line { position: absolute; width: 100%; height: 3px; background: #d4af37; box-shadow: 0 0 20px #d4af37; top: 0; animation: scan 2s linear infinite; z-index: 10; }
-        @keyframes scan { 0% { top: 0% } 100% { top: 100% } }
 
-        .step-container { transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
-        .hidden-step { display: none; opacity: 0; transform: translateY(20px); }
-        .active-step { display: flex; opacity: 1; transform: translateY(0); }
+        .glass-panel {
+            background: rgba(22, 27, 34, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(212, 175, 55, 0.1);
+        }
 
-        .search-item:hover { background: rgba(212, 175, 55, 0.1); }
+        .gold-gradient {
+            background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
+        }
+
+        .input-elegant {
+            background: #0D1117;
+            border: 1px solid #30363D;
+            transition: all 0.3s ease;
+            color: white;
+        }
+
+        .input-elegant:focus {
+            border-color: var(--gold);
+            box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.15);
+        }
+
+        /* Transitions */
+        .step-content {
+            display: none;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.4s ease;
+        }
+
+        .step-content.active {
+            display: flex;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Camera Aesthetics */
+        #camera-wrapper {
+            position: relative;
+            width: 260px;
+            height: 260px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 4px solid #30363D;
+            box-shadow: 0 0 40px rgba(0,0,0,0.5);
+            background: #000;
+        }
+
+        #camera-view {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1);
+        }
+
+        .scanning-ring {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            border: 4px solid var(--gold);
+            border-radius: 50%;
+            animation: pulse-ring 2s infinite;
+            pointer-events: none;
+        }
+
+        @keyframes pulse-ring {
+            0% { transform: scale(0.98); opacity: 0.8; }
+            50% { transform: scale(1.05); opacity: 0.3; }
+            100% { transform: scale(0.98); opacity: 0.8; }
+        }
+
+        .loading-shimmer {
+            background: linear-gradient(90deg, #161B22 25%, #1c2128 50%, #161B22 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
     </style>
 </head>
-<body class="h-screen flex overflow-hidden">
+<body class="flex">
+
     <!-- Sidebar -->
-    <aside class="w-20 lg:w-64 shrink-0 flex flex-col sidebar z-50">
-        <div class="p-6 text-center lg:text-left">
-            <h1 class="text-xl font-black italic gold-text tracking-tighter uppercase">Delta<span class="text-white">Spa</span></h1>
+    <aside class="w-20 lg:w-64 border-r border-[#30363D] flex flex-col items-center lg:items-stretch py-8 px-4 z-50 bg-[#0D1117]">
+        <div class="mb-12 px-4">
+            <h1 class="text-xl font-extrabold italic text-white tracking-tighter">FINEX<span class="text-[var(--gold)]">POS</span></h1>
         </div>
-        <nav class="flex-1 px-3">
-            <a href="#" class="nav-link"><i class="fa-solid fa-chart-pie"></i> <span>Dashboard</span></a>
-            <a href="#" class="nav-link"><i class="fa-solid fa-id-card"></i> <span>Registrasi</span></a>
-            <a href="#" class="nav-link active"><i class="fa-solid fa-money-bill-transfer"></i> <span>Transaksi</span></a>
+        <nav class="space-y-2 flex-1">
+            <button class="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-slate-500 hover:text-white transition-all">
+                <i class="fa-solid fa-grid-2 text-lg"></i> <span class="hidden lg:block font-semibold text-sm uppercase tracking-wider">Dashboard</span>
+            </button>
+            <button class="w-full flex items-center gap-4 px-4 py-3 rounded-xl gold-gradient text-white shadow-lg">
+                <i class="fa-solid fa-receipt text-lg"></i> <span class="hidden lg:block font-bold text-sm uppercase tracking-wider">Transaksi</span>
+            </button>
         </nav>
+        <div class="px-4 border-t border-[#30363D] pt-6">
+            <div class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-xs font-bold text-slate-400">ADM</div>
+        </div>
     </aside>
 
-    <!-- Main Content -->
-    <main class="flex-1 flex flex-col p-6 overflow-hidden relative">
-        <!-- Header Info -->
-        <div class="absolute top-6 right-8 text-right z-10">
-            <p id="time-now" class="text-xl font-black text-white leading-none">00:00:00</p>
-            <p class="text-[10px] text-slate-500 uppercase font-bold tracking-widest mt-1">Finex POS System</p>
-        </div>
+    <!-- Main Section -->
+    <main class="flex-1 relative flex flex-col overflow-hidden">
+        
+        <!-- Top Bar -->
+        <header class="h-20 flex items-center justify-between px-10 border-b border-[#30363D] bg-[#0A0C10]/80 backdrop-blur-md">
+            <div>
+                <h2 id="header-title" class="text-xs font-black uppercase tracking-[0.2em] text-slate-500">Pencarian Mitra</h2>
+            </div>
+            <div class="flex items-center gap-6">
+                <div class="text-right">
+                    <p id="clock" class="text-lg font-bold text-white tabular-nums">00:00:00</p>
+                    <p class="text-[10px] text-slate-500 uppercase font-bold tracking-widest">WITA Timezone</p>
+                </div>
+            </div>
+        </header>
 
-        <!-- STEP 1: PENCARIAN MITRA (Default) -->
-        <section id="step-search" class="step-container active-step flex-1 flex flex-col items-center justify-center">
-            <div class="w-full max-w-2xl text-center space-y-8">
-                <div>
-                    <h2 class="text-4xl font-black uppercase tracking-tighter mb-2">Cari <span class="gold-text">Mitra</span></h2>
-                    <p class="text-slate-500 font-medium">Masukkan Nama atau NIK Driver untuk memulai transaksi</p>
+        <div class="flex-1 flex flex-col items-center justify-center p-6 bg-[radial-gradient(circle_at_50%_50%,_#161B22_0%,_#0A0C10_100%)]">
+            
+            <!-- STEP 1: SEARCH -->
+            <section id="step-search" class="step-content active w-full max-w-xl flex flex-col">
+                <div class="text-center mb-10">
+                    <h3 class="text-4xl font-bold mb-3 tracking-tight">Siapa yang <span class="text-[var(--gold)]">Melayani?</span></h3>
+                    <p class="text-slate-500 font-medium">Ketik nama mitra atau scan untuk memulai</p>
                 </div>
                 
-                <div class="relative group">
-                    <i class="fa-solid fa-magnifying-glass absolute left-6 top-1/2 -translate-y-1/2 text-slate-500 text-xl group-focus-within:text-[#d4af37] transition-colors"></i>
-                    <input type="text" id="driver-search" placeholder="Ketik Nama atau NIK..." 
-                        class="input-field pl-16 py-6 text-xl bg-slate-900/80 border-slate-800 shadow-2xl">
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-6 flex items-center text-slate-500">
+                        <i class="fa-solid fa-magnifying-glass text-xl"></i>
+                    </div>
+                    <input type="text" id="driver-search-input" autocomplete="off"
+                        class="w-full h-20 pl-16 pr-6 rounded-3xl bg-[#161B22] border border-[#30363D] text-xl font-semibold focus:outline-none focus:border-[var(--gold)] transition-all placeholder:text-slate-600 shadow-2xl"
+                        placeholder="Nama atau ID Mitra...">
                     
-                    <!-- Dropdown Results -->
-                    <div id="search-results" class="absolute z-[60] w-full mt-3 bg-slate-900 border border-slate-700 rounded-2xl hidden max-h-80 overflow-y-auto shadow-[0_20px_50px_rgba(0,0,0,0.5)]"></div>
-                </div>
-            </div>
-        </section>
-
-        <!-- STEP 2: VERIFIKASI WAJAH -->
-        <section id="step-verify" class="step-container hidden-step flex-1 flex flex-col items-center justify-center">
-            <div class="card p-8 rounded-[40px] w-full max-w-md border-2 border-[#d4af37]/30 shadow-2xl space-y-6">
-                <div class="text-center">
-                    <h2 class="text-2xl font-black uppercase tracking-tight">Verifikasi <span class="gold-text">Wajah</span></h2>
-                    <p class="text-slate-500 text-sm">Pastikan wajah driver terlihat jelas di kamera</p>
-                </div>
-
-                <div class="flex items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/5">
-                    <img id="ref-photo" src="" class="w-16 h-16 rounded-xl object-cover border-2 border-[#d4af37]">
-                    <div class="flex-1">
-                        <h4 id="target-name" class="text-lg font-bold text-white uppercase">---</h4>
-                        <p id="target-id" class="text-xs text-slate-500 font-mono">---</p>
+                    <div id="results-container" class="absolute top-full left-0 right-0 mt-3 bg-[#161B22] border border-[#30363D] rounded-2xl overflow-hidden hidden z-50 shadow-2xl">
+                        <div id="results-list" class="max-h-[300px] overflow-y-auto"></div>
                     </div>
                 </div>
+            </section>
 
-                <div id="camera-container" class="relative w-full aspect-square rounded-3xl overflow-hidden border-4 border-slate-800 shadow-inner bg-black">
+            <!-- STEP 2: VERIFICATION -->
+            <section id="step-verify" class="step-content w-full max-w-md flex flex-col items-center">
+                <div id="camera-wrapper" class="mb-8">
+                    <!-- Placeholder loading saat kamera start -->
+                    <div id="camera-placeholder" class="absolute inset-0 flex items-center justify-center bg-[#0D1117] z-10">
+                        <i class="fa-solid fa-camera-rotate fa-spin text-slate-700 text-4xl"></i>
+                    </div>
                     <video id="camera-view" autoplay muted playsinline></video>
-                    <div class="scan-line"></div>
-                    <div class="absolute bottom-0 inset-x-0 bg-black/80 backdrop-blur-md py-3 text-center">
-                        <span id="ai-status" class="text-xs font-black text-white uppercase tracking-widest animate-pulse">Inisialisasi AI...</span>
+                    <div class="scanning-ring"></div>
+                </div>
+                
+                <div class="text-center space-y-2 mb-8">
+                    <h4 id="verify-name" class="text-2xl font-black uppercase text-white tracking-tight">---</h4>
+                    <div class="inline-flex items-center gap-2 px-3 py-1 bg-white/5 rounded-full border border-white/10 text-slate-400 text-xs font-mono">
+                        <i class="fa-solid fa-fingerprint"></i> <span id="verify-id">---</span>
                     </div>
                 </div>
 
-                <button onclick="resetToSearch()" class="w-full py-4 text-slate-400 font-bold uppercase text-xs tracking-widest hover:text-white transition-colors">
-                    <i class="fa-solid fa-arrow-left mr-2"></i> Batalkan & Cari Ulang
-                </button>
-            </div>
-        </section>
-
-        <!-- STEP 3: FORM INPUT TRANSAKSI -->
-        <section id="step-form" class="step-container hidden-step flex-1 flex flex-col items-center justify-center">
-            <div class="card p-10 rounded-[40px] w-full max-w-3xl border-2 border-emerald-500/30 shadow-2xl relative">
-                <!-- Success Badge -->
-                <div class="absolute -top-6 left-1/2 -translate-x-1/2 bg-emerald-500 text-white px-6 py-2 rounded-full font-black text-xs uppercase tracking-widest flex items-center gap-2 shadow-xl">
-                    <i class="fa-solid fa-circle-check"></i> Driver Terverifikasi
+                <div class="w-full bg-[#161B22] p-4 rounded-2xl border border-[#30363D] flex items-center justify-center gap-3 shadow-inner">
+                    <div id="status-dot" class="w-2.5 h-2.5 rounded-full bg-slate-600"></div>
+                    <span id="ai-status" class="text-xs font-bold uppercase tracking-widest text-slate-400">Menyiapkan Kamera...</span>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-10 mt-4">
-                    <!-- Data Driver Summary -->
-                    <div class="space-y-6">
-                        <div class="flex flex-col items-center p-6 bg-white/5 rounded-3xl border border-white/5">
-                            <img id="final-photo" src="" class="w-24 h-24 rounded-2xl object-cover mb-4 border-2 border-emerald-500">
-                            <h3 id="final-name" class="text-xl font-black text-white uppercase text-center">---</h3>
-                            <p id="final-id" class="text-xs text-slate-500 font-mono mt-1">---</p>
+                <button onclick="stopCameraAndReturn()" class="mt-8 text-slate-500 hover:text-white text-xs font-bold uppercase tracking-widest transition-all group">
+                    <i class="fa-solid fa-arrow-left mr-2 group-hover:-translate-x-1 transition-transform"></i> Kembali ke Pencarian
+                </button>
+            </section>
+
+            <!-- STEP 3: TRANSACTION FORM -->
+            <section id="step-form" class="step-content w-full max-w-4xl flex flex-col">
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                    <div class="lg:col-span-4 space-y-4">
+                        <div class="glass-panel p-6 rounded-[32px] text-center">
+                            <div class="w-24 h-24 rounded-3xl overflow-hidden mx-auto mb-4 border-2 border-[var(--gold)]">
+                                <img id="final-photo" src="" class="w-full h-full object-cover bg-[#0D1117]">
+                            </div>
+                            <h4 id="final-name" class="text-xl font-bold uppercase mb-1">---</h4>
+                            <p id="final-id" class="text-xs font-mono text-slate-500">---</p>
                         </div>
                         
-                        <div class="bg-emerald-500/10 p-6 rounded-3xl border border-emerald-500/20 space-y-4">
-                            <div class="flex justify-between items-center">
-                                <span class="text-xs text-slate-400 font-bold uppercase">Estimasi Komisi</span>
-                                <span id="comm-val" class="text-2xl font-black gold-text">Rp 0</span>
+                        <div class="bg-emerald-500/10 border border-emerald-500/20 p-6 rounded-[32px] flex justify-between items-center">
+                            <div>
+                                <p class="text-[10px] font-black uppercase text-emerald-500/60 mb-1">Estimasi Komisi</p>
+                                <p id="display-comm" class="text-2xl font-black text-emerald-400">Rp 0</p>
                             </div>
-                            <div class="flex justify-between items-center border-t border-white/5 pt-4">
-                                <span class="text-xs text-slate-400 font-bold uppercase">Poin Didapat</span>
-                                <span id="point-val" class="text-2xl font-black text-emerald-400">0</span>
+                            <div class="text-right">
+                                <p class="text-[10px] font-black uppercase text-emerald-500/60 mb-1">Poin</p>
+                                <p id="display-pax" class="text-2xl font-black text-white">0</p>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Input Fields -->
-                    <div class="space-y-5">
-                        <div>
-                            <label class="text-xs font-black text-slate-500 uppercase ml-1 mb-2 block">Pilih Layanan / Paket</label>
-                            <select id="service-id" class="input-field bg-slate-900 border-slate-700">
-                                <option value="">-- Pilih Layanan --</option>
-                            </select>
-                        </div>
-
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="text-xs font-black text-slate-500 uppercase ml-1 mb-2 block">Jumlah Tamu (Pax)</label>
-                                <input type="number" id="pax" value="1" min="1" class="input-field text-center font-black">
+                    <div class="lg:col-span-8 glass-panel p-8 rounded-[32px] space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="space-y-2">
+                                <label class="text-[10px] font-black uppercase text-slate-500 ml-2 tracking-widest">Layanan</label>
+                                <select id="service-select" class="w-full h-14 px-4 rounded-2xl input-elegant text-sm font-bold uppercase cursor-pointer">
+                                    <option value="">-- Pilih Layanan --</option>
+                                </select>
                             </div>
-                            <div>
-                                <label class="text-xs font-black text-slate-500 uppercase ml-1 mb-2 block">Kategori Tamu</label>
-                                <select id="guest-cat" class="input-field">
-                                    <option value="Lokal">LOKAL</option>
-                                    <option value="Asing">ASING</option>
+                            <div class="space-y-2">
+                                <label class="text-[10px] font-black uppercase text-slate-500 ml-2 tracking-widest">Kategori Tamu</label>
+                                <select id="guest-cat" class="w-full h-14 px-4 rounded-2xl input-elegant text-sm font-bold uppercase">
+                                    <option value="Lokal">TAMU LOKAL</option>
+                                    <option value="Asing">TAMU ASING</option>
                                 </select>
                             </div>
                         </div>
 
-                        <div>
-                            <label class="text-xs font-black text-slate-500 uppercase ml-1 mb-2 block">Nomor Kamar / Catatan</label>
-                            <input type="text" id="room" placeholder="Contoh: Room 302" class="input-field">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="space-y-2">
+                                <label class="text-[10px] font-black uppercase text-slate-500 ml-2 tracking-widest">Jumlah Pax</label>
+                                <div class="flex items-center gap-3">
+                                    <button onclick="adjPax(-1)" class="w-14 h-14 rounded-2xl bg-[#0D1117] border border-[#30363D] hover:border-[var(--gold)] text-xl transition-all">-</button>
+                                    <input type="number" id="pax-count" value="1" min="1" class="flex-1 h-14 rounded-2xl input-elegant text-center font-black text-xl">
+                                    <button onclick="adjPax(1)" class="w-14 h-14 rounded-2xl bg-[#0D1117] border border-[#30363D] hover:border-[var(--gold)] text-xl transition-all">+</button>
+                                </div>
+                            </div>
+                            <div class="space-y-2">
+                                <label class="text-[10px] font-black uppercase text-slate-500 ml-2 tracking-widest">Kamar / Meja</label>
+                                <input type="text" id="room-no" placeholder="Contoh: 102" class="w-full h-14 px-6 rounded-2xl input-elegant font-bold">
+                            </div>
                         </div>
 
-                        <div class="pt-4 flex gap-3">
-                            <button onclick="resetToSearch()" class="flex-1 py-4 rounded-2xl bg-slate-800 font-black text-xs uppercase tracking-widest hover:bg-slate-700 transition-all">Batal</button>
-                            <button id="btn-save" onclick="saveTransaction()" class="flex-[2] gold-bg py-4 rounded-2xl font-black text-white text-xs uppercase tracking-widest shadow-lg hover:brightness-110 active:scale-95 transition-all">
-                                Simpan Transaksi
+                        <div class="pt-4 flex gap-4">
+                            <button onclick="stopCameraAndReturn()" class="h-16 px-8 rounded-2xl bg-slate-800 text-slate-300 font-bold uppercase text-xs tracking-widest hover:bg-slate-700 transition-all">Batal</button>
+                            <button id="submit-btn" onclick="processSubmit()" class="flex-1 h-16 rounded-2xl gold-gradient text-white font-black uppercase text-sm tracking-[0.1em] shadow-xl hover:scale-[1.01] active:scale-95 transition-all">
+                                Simpan Transaksi <i class="fa-solid fa-paper-plane ml-2"></i>
                             </button>
                         </div>
                     </div>
                 </div>
-            </div>
-        </section>
+            </section>
+        </div>
     </main>
 
     <script>
         const SUPABASE_URL = "https://qdxchvogaxiibzqvuupf.supabase.co"; 
         const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkeGNodm9nYXhpaWJ6cXZ1dXBmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAxODE5NTIsImV4cCI6MjA4NTc1Nzk1Mn0.8U_zk81b6wFfdZdPRupk5KSk3g39nOPs8SpZVkWbqkc";
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        let isAiLoaded = false;
-        let selectedDriver = null;
-        let faceMatcher = null;
-        let stream = null;
+        let currentStep = 'step-search';
+        let selectedMitra = null;
+        let videoStream = null;
+        let matcher = null;
+        let analysisInterval = null;
 
         window.onload = () => {
             initAI();
-            loadServices();
-            updateTime();
-            setInterval(updateTime, 1000);
+            fetchServices();
+            updateClock();
+            setInterval(updateClock, 1000);
         };
 
         async function initAI() {
             const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
             try {
-                await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
-                await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
-                await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
-                isAiLoaded = true;
-            } catch (e) { console.error("AI Load Failed", e); }
+                await Promise.all([
+                    faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+                    faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+                    faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
+                ]);
+            } catch (e) {
+                console.error("AI Models failed to load", e);
+            }
         }
 
-        async function loadServices() {
-            const { data } = await supabaseClient.from('services').select('*').order('name');
-            const select = document.getElementById('service-id');
+        async function fetchServices() {
+            const { data } = await sb.from('services').select('*').order('name');
+            const sel = document.getElementById('service-select');
             data?.forEach(s => {
-                const opt = document.createElement('option');
-                opt.value = s.id;
-                opt.textContent = s.name.toUpperCase();
+                const opt = new Option(s.name.toUpperCase(), s.id);
                 opt.dataset.comm = s.commission;
-                opt.dataset.price = s.price || 0;
+                opt.dataset.price = s.price;
                 opt.dataset.name = s.name;
-                select.appendChild(opt);
+                sel.add(opt);
             });
         }
 
-        // Logic Step Management
-        function showStep(stepId) {
-            document.querySelectorAll('.step-container').forEach(s => {
-                s.classList.remove('active-step');
-                s.classList.add('hidden-step');
-            });
-            const active = document.getElementById(stepId);
-            active.classList.remove('hidden-step');
-            active.classList.add('active-step');
+        function changeStep(stepId) {
+            document.querySelectorAll('.step-content').forEach(s => s.classList.remove('active'));
+            document.getElementById(stepId).classList.add('active');
+            currentStep = stepId;
+
+            const titles = {
+                'step-search': 'Pencarian Mitra',
+                'step-verify': 'Verifikasi Identitas',
+                'step-form': 'Detail Transaksi'
+            };
+            document.getElementById('header-title').innerText = titles[stepId] || 'Finex POS';
         }
 
-        // Search Logic
-        const searchInput = document.getElementById('driver-search');
-        const resultsBox = document.getElementById('search-results');
+        // --- Search Logic ---
+        const searchInput = document.getElementById('driver-search-input');
+        const resultsContainer = document.getElementById('results-container');
+        const resultsList = document.getElementById('results-list');
 
         searchInput.oninput = async (e) => {
-            const val = e.target.value.trim();
-            if (val.length < 2) { resultsBox.classList.add('hidden'); return; }
+            const query = e.target.value.trim();
+            if (query.length < 2) { resultsContainer.classList.add('hidden'); return; }
 
-            const { data } = await supabaseClient.from('drivers')
+            const { data } = await sb.from('drivers')
                 .select('*')
-                .or(`driver_id.ilike.%${val}%,name.ilike.%${val}%`)
-                .limit(6);
+                .or(`name.ilike.%${query}%,driver_id.ilike.%${query}%`)
+                .limit(5);
 
             if (data?.length > 0) {
-                resultsBox.innerHTML = data.map(d => `
-                    <div onclick="startVerification('${d.driver_id}', '${d.name}', '${d.photo_url}')" 
-                         class="search-item p-4 cursor-pointer flex items-center gap-4 border-b border-white/5 last:border-0 transition-all">
-                        <img src="${d.photo_url}" class="w-12 h-12 rounded-xl object-cover border border-white/10">
-                        <div class="min-w-0 flex-1">
-                            <p class="font-black text-white uppercase text-sm truncate">${d.name}</p>
-                            <p class="text-[10px] text-slate-500 font-mono tracking-wider">${d.driver_id}</p>
+                resultsList.innerHTML = data.map(d => `
+                    <div onclick="selectDriver('${d.driver_id}', '${d.name}', '${d.photo_url}')" 
+                         class="p-4 flex items-center gap-4 hover:bg-white/5 cursor-pointer border-b border-white/5 transition-all">
+                        <img src="${d.photo_url}" class="w-12 h-12 rounded-xl object-cover bg-slate-800">
+                        <div class="flex-1">
+                            <p class="font-bold text-white uppercase text-sm">${d.name}</p>
+                            <p class="text-[10px] text-slate-500 font-mono">${d.driver_id}</p>
                         </div>
-                        <i class="fa-solid fa-chevron-right text-slate-700"></i>
                     </div>
                 `).join('');
-                resultsBox.classList.remove('hidden');
+                resultsContainer.classList.remove('hidden');
             } else {
-                resultsBox.innerHTML = `<div class="p-6 text-center text-slate-500 text-sm">Mitra tidak ditemukan</div>`;
-                resultsBox.classList.remove('hidden');
+                resultsList.innerHTML = `<div class="p-6 text-center text-slate-500 text-xs font-bold uppercase">Mitra Tidak Ditemukan</div>`;
+                resultsContainer.classList.remove('hidden');
             }
         };
 
-        // Verification Logic
-        async function startVerification(id, name, photo) {
-            resultsBox.classList.add('hidden');
+        function selectDriver(id, name, photo) {
+            selectedMitra = { id, name, photo };
+            resultsContainer.classList.add('hidden');
             searchInput.value = "";
-            selectedDriver = { id, name, photo };
-            
-            showStep('step-verify');
-            
-            document.getElementById('ref-photo').src = photo + "?t=" + Date.now();
-            document.getElementById('target-name').innerText = name;
-            document.getElementById('target-id').innerText = id;
+            startVerification();
+        }
+
+        // --- Verification & Camera Fix ---
+        async function startVerification() {
+            changeStep('step-verify');
+            document.getElementById('verify-name').innerText = selectedMitra.name;
+            document.getElementById('verify-id').innerText = selectedMitra.id;
+            document.getElementById('camera-placeholder').style.display = 'flex';
+            document.getElementById('ai-status').innerText = "Membuka Kamera...";
+            document.getElementById('status-dot').className = "w-2.5 h-2.5 rounded-full bg-yellow-500 animate-pulse";
 
             try {
-                stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { width: 480, height: 480, facingMode: "user" } 
-                });
+                // Gunakan constraints yang standar
+                const constraints = { 
+                    video: { 
+                        width: { ideal: 640 },
+                        height: { ideal: 480 },
+                        facingMode: 'user' 
+                    } 
+                };
+                
+                videoStream = await navigator.mediaDevices.getUserMedia(constraints);
                 const video = document.getElementById('camera-view');
-                video.srcObject = stream;
+                video.srcObject = videoStream;
                 
-                document.getElementById('ai-status').innerText = "MENGANALISA FOTO...";
-                const refImg = document.getElementById('ref-photo');
-                
-                // Detection on Reference Photo
-                const detection = await faceapi.detectSingleFace(refImg, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
-                
-                if (detection) {
-                    faceMatcher = new faceapi.FaceMatcher(detection, 0.55);
-                    document.getElementById('ai-status').innerText = "MENUNGGU WAJAH...";
-                    runMatchingLoop();
-                } else {
-                    document.getElementById('ai-status').innerText = "FOTO REFERENSI BERMASALAH";
-                }
-            } catch (err) { alert("Akses Kamera Ditolak"); resetToSearch(); }
-        }
+                // Tunggu video beneran play
+                video.onloadedmetadata = () => {
+                    video.play();
+                    document.getElementById('camera-placeholder').style.display = 'none';
+                    initFaceMatcher();
+                };
 
-        async function runMatchingLoop() {
-            const video = document.getElementById('camera-view');
-            const status = document.getElementById('ai-status');
-            
-            const matchInterval = setInterval(async () => {
-                if (document.getElementById('step-verify').classList.contains('hidden-step')) { 
-                    clearInterval(matchInterval); 
-                    return; 
-                }
-
-                const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
-                if (detection) {
-                    const match = faceMatcher.findBestMatch(detection.descriptor);
-                    if (match.distance < 0.55) {
-                        clearInterval(matchInterval);
-                        onVerificationSuccess();
-                    } else {
-                        status.innerText = "WAJAH TIDAK COCOK";
-                    }
-                } else {
-                    status.innerText = "POSISIKAN WAJAH DI KOTAK";
-                }
-            }, 600);
-        }
-
-        function onVerificationSuccess() {
-            if (stream) stream.getTracks().forEach(t => t.stop());
-            
-            // Populate Step 3 Data
-            document.getElementById('final-photo').src = selectedDriver.photo;
-            document.getElementById('final-name').innerText = selectedDriver.name;
-            document.getElementById('final-id').innerText = selectedDriver.id;
-            
-            showStep('step-form');
-        }
-
-        // Form Logic
-        const serviceSelect = document.getElementById('service-id');
-        const paxInput = document.getElementById('pax');
-
-        function updateCalc() {
-            const opt = serviceSelect.options[serviceSelect.selectedIndex];
-            const pax = parseInt(paxInput.value) || 0;
-            if (opt.value) {
-                const total = parseInt(opt.dataset.comm) * pax;
-                document.getElementById('comm-val').innerText = `Rp ${total.toLocaleString('id-ID')}`;
-                document.getElementById('point-val').innerText = pax.toString();
+            } catch (err) {
+                console.error("Camera error:", err);
+                alert("Kamera tidak dapat diakses. Pastikan izin kamera diberikan.");
+                changeStep('step-search');
             }
         }
 
-        serviceSelect.onchange = updateCalc;
-        paxInput.oninput = updateCalc;
+        async function initFaceMatcher() {
+            const status = document.getElementById('ai-status');
+            status.innerText = "Memuat Data Wajah...";
+            
+            try {
+                const img = new Image();
+                img.crossOrigin = "anonymous";
+                img.src = selectedMitra.photo;
+                
+                img.onload = async () => {
+                    const detect = await faceapi.detectSingleFace(img, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
+                    if (detect) {
+                        matcher = new faceapi.FaceMatcher(detect, 0.55);
+                        status.innerText = "Scan Wajah Mitra...";
+                        document.getElementById('status-dot').className = "w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse";
+                        startAnalysisLoop();
+                    } else {
+                        status.innerText = "Foto Profil Tidak Terdeteksi";
+                        document.getElementById('status-dot').className = "w-2.5 h-2.5 rounded-full bg-red-500";
+                    }
+                };
+            } catch (e) {
+                status.innerText = "Gagal Memvalidasi Foto";
+            }
+        }
 
-        async function saveTransaction() {
-            const btn = document.getElementById('btn-save');
-            const opt = serviceSelect.options[serviceSelect.selectedIndex];
+        function startAnalysisLoop() {
+            const video = document.getElementById('camera-view');
+            const status = document.getElementById('ai-status');
+
+            analysisInterval = setInterval(async () => {
+                if (currentStep !== 'step-verify') { clearInterval(analysisInterval); return; }
+
+                const detect = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
+                
+                if (detect) {
+                    const match = matcher.findBestMatch(detect.descriptor);
+                    if (match.distance < 0.5) {
+                        status.innerText = "Terverifikasi!";
+                        document.getElementById('status-dot').className = "w-2.5 h-2.5 rounded-full bg-emerald-500";
+                        clearInterval(analysisInterval);
+                        setTimeout(onVerified, 800);
+                    } else {
+                        status.innerText = "Wajah Tidak Cocok (" + Math.round((1 - match.distance) * 100) + "%)";
+                        document.getElementById('status-dot').className = "w-2.5 h-2.5 rounded-full bg-orange-500";
+                    }
+                } else {
+                    status.innerText = "Posisikan Wajah di Lingkaran";
+                }
+            }, 500);
+        }
+
+        function onVerified() {
+            stopCamera();
+            document.getElementById('final-photo').src = selectedMitra.photo;
+            document.getElementById('final-name').innerText = selectedMitra.name;
+            document.getElementById('final-id').innerText = selectedMitra.id;
+            changeStep('step-form');
+        }
+
+        function stopCamera() {
+            if (videoStream) {
+                videoStream.getTracks().forEach(track => track.stop());
+                videoStream = null;
+            }
+            if (analysisInterval) clearInterval(analysisInterval);
+        }
+
+        function stopCameraAndReturn() {
+            stopCamera();
+            changeStep('step-search');
+        }
+
+        // --- Transaction Logic ---
+        const svcSelect = document.getElementById('service-select');
+        const paxInput = document.getElementById('pax-count');
+
+        function adjPax(val) {
+            const current = parseInt(paxInput.value) || 1;
+            paxInput.value = Math.max(1, current + val);
+            updateSummary();
+        }
+
+        svcSelect.onchange = updateSummary;
+        paxInput.oninput = updateSummary;
+
+        function updateSummary() {
+            const opt = svcSelect.options[svcSelect.selectedIndex];
+            const pax = parseInt(paxInput.value) || 0;
+            if (opt.value) {
+                const totalComm = parseInt(opt.dataset.comm) * pax;
+                document.getElementById('display-comm').innerText = `Rp ${totalComm.toLocaleString('id-ID')}`;
+                document.getElementById('display-pax').innerText = pax;
+            } else {
+                document.getElementById('display-comm').innerText = `Rp 0`;
+                document.getElementById('display-pax').innerText = `0`;
+            }
+        }
+
+        async function processSubmit() {
+            const btn = document.getElementById('submit-btn');
+            const opt = svcSelect.options[svcSelect.selectedIndex];
+            
             if (!opt.value) { alert("Pilih layanan terlebih dahulu"); return; }
 
             btn.disabled = true;
-            btn.innerText = "MENYIMPAN...";
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i> Menyimpan...`;
 
             const payload = {
-                driver_id: selectedDriver.id,
-                driver_name: selectedDriver.name,
-                service_id: serviceSelect.value,
+                driver_id: selectedMitra.id,
+                driver_name: selectedMitra.name,
+                service_id: svcSelect.value,
                 service_name: opt.dataset.name,
                 guest_category: document.getElementById('guest-cat').value,
                 massage_guests: parseInt(paxInput.value),
                 commission_amount: parseInt(opt.dataset.comm) * parseInt(paxInput.value),
                 points_earned: parseInt(paxInput.value),
                 total_massage_value: parseInt(opt.dataset.price) * parseInt(paxInput.value),
-                notes: document.getElementById('room').value,
+                notes: document.getElementById('room-no').value,
                 created_at: new Date().toISOString()
             };
 
-            const { error } = await supabaseClient.from('commissions').insert([payload]);
+            const { error } = await sb.from('commissions').insert([payload]);
             if (!error) {
-                alert("Transaksi Berhasil Disimpan!");
-                resetToSearch();
+                alert("✅ Berhasil: Transaksi " + selectedMitra.name + " telah disimpan.");
+                stopCameraAndReturn();
+                // Reset form
+                svcSelect.value = "";
+                paxInput.value = 1;
+                document.getElementById('room-no').value = "";
+                updateSummary();
             } else {
-                alert("Error: " + error.message);
-                btn.disabled = false;
-                btn.innerText = "SIMPAN TRANSAKSI";
+                alert("Gagal menyimpan: " + error.message);
             }
+            btn.disabled = false;
+            btn.innerHTML = `Simpan Transaksi <i class="fa-solid fa-paper-plane ml-2"></i>`;
         }
 
-        function resetToSearch() {
-            if (stream) stream.getTracks().forEach(t => t.stop());
-            selectedDriver = null;
-            faceMatcher = null;
-            document.getElementById('service-id').value = "";
-            document.getElementById('pax').value = "1";
-            document.getElementById('room').value = "";
-            document.getElementById('comm-val').innerText = "Rp 0";
-            document.getElementById('point-val').innerText = "0";
-            showStep('step-search');
-        }
-
-        function updateTime() {
-            document.getElementById('time-now').innerText = new Date().toLocaleTimeString('id-ID', { hour12: false });
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('clock').innerText = now.toLocaleTimeString('id-ID', { hour12: false });
         }
     </script>
 </body>
