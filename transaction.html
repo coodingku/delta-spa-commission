@@ -26,167 +26,159 @@
         
         .input-field { 
             background: #0f172a; border: 1px solid rgba(212, 175, 55, 0.2); 
-            color: white; width: 100%; padding: 12px 16px; border-radius: 14px; 
-            outline: none; transition: 0.3s; font-weight: 600; font-size: 15px;
+            color: white; width: 100%; padding: 14px 18px; border-radius: 16px; 
+            outline: none; transition: 0.3s; font-weight: 600; font-size: 16px;
         }
-        .input-field:focus { border-color: #d4af37; box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1); }
+        .input-field:focus { border-color: #d4af37; box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.1); }
         
-        #camera-view { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); border-radius: 20px; }
-        .scan-line { position: absolute; width: 100%; height: 2px; background: #d4af37; box-shadow: 0 0 15px #d4af37; top: 0; animation: scan 2s linear infinite; z-index: 10; }
+        #camera-view { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); border-radius: 24px; }
+        .scan-line { position: absolute; width: 100%; height: 3px; background: #d4af37; box-shadow: 0 0 20px #d4af37; top: 0; animation: scan 2s linear infinite; z-index: 10; }
         @keyframes scan { 0% { top: 0% } 100% { top: 100% } }
-        
-        .locked { opacity: 0.4; pointer-events: none; filter: grayscale(0.5); }
-        .unlocked { opacity: 1; pointer-events: auto; filter: grayscale(0); }
 
-        @media (max-width: 1024px) {
-            .sidebar { width: 80px; }
-            .sidebar span { display: none; }
-            .nav-link { justify-content: center; padding: 16px; }
-            .logo-text { display: none; }
-        }
+        .step-container { transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+        .hidden-step { display: none; opacity: 0; transform: translateY(20px); }
+        .active-step { display: flex; opacity: 1; transform: translateY(0); }
 
-        .scroll-area { overflow-y: auto; scrollbar-width: none; }
-        .scroll-area::-webkit-scrollbar { display: none; }
+        .search-item:hover { background: rgba(212, 175, 55, 0.1); }
     </style>
 </head>
 <body class="h-screen flex overflow-hidden">
     <!-- Sidebar -->
     <aside class="w-20 lg:w-64 shrink-0 flex flex-col sidebar z-50">
         <div class="p-6 text-center lg:text-left">
-            <h1 class="logo-text text-xl font-black italic gold-text tracking-tighter uppercase">Delta<span class="text-white">Spa</span></h1>
-            <div class="lg:hidden gold-text text-xl"><i class="fa-solid fa-crown"></i></div>
+            <h1 class="text-xl font-black italic gold-text tracking-tighter uppercase">Delta<span class="text-white">Spa</span></h1>
         </div>
         <nav class="flex-1 px-3">
-            <a href="dashboard.html" class="nav-link"><i class="fa-solid fa-chart-pie text-lg"></i> <span>Dashboard</span></a>
-            <a href="Registrasi.html" class="nav-link"><i class="fa-solid fa-id-card text-lg"></i> <span>Registrasi Driver</span></a>
-            <a href="transaction.html" class="nav-link active"><i class="fa-solid fa-money-bill-transfer text-lg"></i> <span>Input Transaksi</span></a>
+            <a href="#" class="nav-link"><i class="fa-solid fa-chart-pie"></i> <span>Dashboard</span></a>
+            <a href="#" class="nav-link"><i class="fa-solid fa-id-card"></i> <span>Registrasi</span></a>
+            <a href="#" class="nav-link active"><i class="fa-solid fa-money-bill-transfer"></i> <span>Transaksi</span></a>
         </nav>
     </aside>
 
     <!-- Main Content -->
-    <main class="flex-1 flex flex-col p-4 lg:p-6 overflow-hidden">
-        <!-- Compact Header with Search -->
-        <header class="flex flex-col md:flex-row justify-between items-center gap-4 mb-4 shrink-0">
-            <div class="w-full md:w-auto">
-                <h2 class="text-xl font-black uppercase tracking-tight leading-none">Input <span class="gold-text">Transaksi</span></h2>
-                <div id="auth-badge" class="mt-1 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-red-500/10 border border-red-500/20 text-red-500 text-[9px] font-bold uppercase tracking-widest">
-                    <i class="fa-solid fa-lock text-[8px]"></i> Belum Terverifikasi
+    <main class="flex-1 flex flex-col p-6 overflow-hidden relative">
+        <!-- Header Info -->
+        <div class="absolute top-6 right-8 text-right z-10">
+            <p id="time-now" class="text-xl font-black text-white leading-none">00:00:00</p>
+            <p class="text-[10px] text-slate-500 uppercase font-bold tracking-widest mt-1">Finex POS System</p>
+        </div>
+
+        <!-- STEP 1: PENCARIAN MITRA (Default) -->
+        <section id="step-search" class="step-container active-step flex-1 flex flex-col items-center justify-center">
+            <div class="w-full max-w-2xl text-center space-y-8">
+                <div>
+                    <h2 class="text-4xl font-black uppercase tracking-tighter mb-2">Cari <span class="gold-text">Mitra</span></h2>
+                    <p class="text-slate-500 font-medium">Masukkan Nama atau NIK Driver untuk memulai transaksi</p>
                 </div>
-            </div>
-
-            <!-- Optimized Search Box -->
-            <div class="relative w-full md:w-80 lg:w-96">
-                <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-sm"></i>
-                <input type="text" id="driver-search" placeholder="Cari NIK atau Nama Mitra..." 
-                    class="input-field pl-10 py-3 bg-slate-900/50 border-slate-800">
-                <div id="search-results" class="absolute z-[60] w-full mt-1 bg-slate-900 border border-slate-700 rounded-xl hidden max-h-60 overflow-y-auto shadow-2xl"></div>
-            </div>
-
-            <div class="hidden lg:block text-right">
-                <p id="time-now" class="text-lg font-black text-white leading-none">00:00:00</p>
-                <p class="text-[9px] text-slate-500 uppercase font-bold tracking-widest">Finex POS</p>
-            </div>
-        </header>
-
-        <div class="flex-1 flex flex-col lg:flex-row gap-4 overflow-hidden">
-            <!-- Left: Interaction Area (Camera) -->
-            <div class="flex-1 card rounded-3xl flex flex-col overflow-hidden relative">
-                <div id="interaction-zone" class="flex-1 flex flex-col items-center justify-center p-6 text-center">
+                
+                <div class="relative group">
+                    <i class="fa-solid fa-magnifying-glass absolute left-6 top-1/2 -translate-y-1/2 text-slate-500 text-xl group-focus-within:text-[#d4af37] transition-colors"></i>
+                    <input type="text" id="driver-search" placeholder="Ketik Nama atau NIK..." 
+                        class="input-field pl-16 py-6 text-xl bg-slate-900/80 border-slate-800 shadow-2xl">
                     
-                    <!-- Default UI -->
-                    <div id="placeholder-ui" class="space-y-3">
-                        <div class="w-20 h-20 rounded-2xl bg-slate-800/40 flex items-center justify-center mx-auto mb-2 border border-slate-700">
-                            <i class="fa-solid fa-id-badge text-3xl text-slate-600"></i>
-                        </div>
-                        <h3 class="text-sm font-bold text-slate-500 uppercase tracking-widest">Pilih Mitra Untuk Memulai</h3>
-                    </div>
-
-                    <!-- Face Scan UI -->
-                    <div id="verification-ui" class="hidden w-full h-full flex flex-col items-center justify-between">
-                        <div class="flex items-center gap-4 text-left w-full max-w-md bg-white/5 p-3 rounded-2xl border border-white/5 mb-4">
-                            <img id="ref-photo" src="" class="w-14 h-14 rounded-lg object-cover border border-[#d4af37]" crossorigin="anonymous">
-                            <div class="flex-1 min-w-0">
-                                <h4 id="target-name" class="text-base font-bold text-white truncate">---</h4>
-                                <p id="target-id" class="text-[10px] text-slate-500 font-mono">---</p>
-                            </div>
-                            <button onclick="resetSelection()" class="p-2 text-red-400 hover:bg-red-400/10 rounded-lg transition-all">
-                                <i class="fa-solid fa-rotate-left"></i>
-                            </button>
-                        </div>
-
-                        <div id="camera-container" class="relative w-full max-w-[320px] aspect-square mx-auto rounded-2xl overflow-hidden border-2 border-[#d4af37] shadow-xl">
-                            <video id="camera-view" autoplay muted playsinline></video>
-                            <div class="scan-line"></div>
-                            <div class="absolute bottom-0 inset-x-0 bg-black/70 backdrop-blur-sm py-2">
-                                <span id="ai-status" class="text-[10px] font-bold text-white uppercase tracking-widest">Memuat AI...</span>
-                            </div>
-                        </div>
-                        <div class="h-4"></div>
-                    </div>
-
-                    <!-- Verified Success -->
-                    <div id="success-ui" class="hidden space-y-3 animate-pulse">
-                        <div class="w-20 h-20 rounded-full bg-emerald-500/20 text-emerald-500 flex items-center justify-center mx-auto text-3xl border-2 border-emerald-500">
-                            <i class="fa-solid fa-check"></i>
-                        </div>
-                        <h3 class="text-xl font-black text-white tracking-widest uppercase">Driver Terverifikasi</h3>
-                    </div>
-
+                    <!-- Dropdown Results -->
+                    <div id="search-results" class="absolute z-[60] w-full mt-3 bg-slate-900 border border-slate-700 rounded-2xl hidden max-h-80 overflow-y-auto shadow-[0_20px_50px_rgba(0,0,0,0.5)]"></div>
                 </div>
             </div>
+        </section>
 
-            <!-- Right: Form Area -->
-            <div id="form-container" class="w-full lg:w-[380px] card rounded-3xl p-5 flex flex-col gap-4 locked transition-all duration-500">
-                <div class="flex items-center gap-2 border-b border-white/5 pb-3">
-                    <i class="fa-solid fa-receipt gold-text"></i>
-                    <h3 class="text-xs font-black uppercase tracking-widest">Input Rincian</h3>
+        <!-- STEP 2: VERIFIKASI WAJAH -->
+        <section id="step-verify" class="step-container hidden-step flex-1 flex flex-col items-center justify-center">
+            <div class="card p-8 rounded-[40px] w-full max-w-md border-2 border-[#d4af37]/30 shadow-2xl space-y-6">
+                <div class="text-center">
+                    <h2 class="text-2xl font-black uppercase tracking-tight">Verifikasi <span class="gold-text">Wajah</span></h2>
+                    <p class="text-slate-500 text-sm">Pastikan wajah driver terlihat jelas di kamera</p>
                 </div>
 
-                <div class="scroll-area flex-1 space-y-4 pr-1">
-                    <div class="grid grid-cols-2 lg:grid-cols-1 gap-4">
-                        <div>
-                            <label class="text-[10px] font-bold text-slate-500 uppercase ml-1">Kategori</label>
-                            <select id="guest-cat" class="input-field mt-1">
-                                <option value="Lokal">TAMU LOKAL</option>
-                                <option value="Asing">TAMU ASING</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="text-[10px] font-bold text-slate-500 uppercase ml-1">Layanan</label>
-                            <select id="service-id" class="input-field mt-1">
-                                <option value="">Pilih Paket...</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="text-[10px] font-bold text-slate-500 uppercase ml-1">Pax</label>
-                            <input type="number" id="pax" value="1" min="1" class="input-field mt-1 text-center font-black">
-                        </div>
-                        <div>
-                            <label class="text-[10px] font-bold text-slate-500 uppercase ml-1">No. Kamar</label>
-                            <input type="text" id="room" placeholder="-" class="input-field mt-1 text-center font-black">
-                        </div>
-                    </div>
-
-                    <div class="bg-blue-500/5 p-4 rounded-2xl border border-blue-500/10 space-y-2">
-                        <div class="flex justify-between items-center">
-                            <span class="text-[10px] text-slate-500 font-bold uppercase">Estimasi Komisi</span>
-                            <span id="comm-val" class="text-lg font-black gold-text">Rp 0</span>
-                        </div>
-                        <div class="flex justify-between items-center border-t border-white/5 pt-2">
-                            <span class="text-[10px] text-slate-500 font-bold uppercase">Poin</span>
-                            <span id="point-val" class="text-lg font-black text-blue-400">0</span>
-                        </div>
+                <div class="flex items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/5">
+                    <img id="ref-photo" src="" class="w-16 h-16 rounded-xl object-cover border-2 border-[#d4af37]">
+                    <div class="flex-1">
+                        <h4 id="target-name" class="text-lg font-bold text-white uppercase">---</h4>
+                        <p id="target-id" class="text-xs text-slate-500 font-mono">---</p>
                     </div>
                 </div>
 
-                <button id="btn-save" onclick="saveTransaction()" class="w-full gold-bg py-4 rounded-xl font-black text-white text-xs uppercase tracking-widest shadow-lg hover:opacity-90 active:scale-[0.98] transition-all">
-                    Simpan Transaksi
+                <div id="camera-container" class="relative w-full aspect-square rounded-3xl overflow-hidden border-4 border-slate-800 shadow-inner bg-black">
+                    <video id="camera-view" autoplay muted playsinline></video>
+                    <div class="scan-line"></div>
+                    <div class="absolute bottom-0 inset-x-0 bg-black/80 backdrop-blur-md py-3 text-center">
+                        <span id="ai-status" class="text-xs font-black text-white uppercase tracking-widest animate-pulse">Inisialisasi AI...</span>
+                    </div>
+                </div>
+
+                <button onclick="resetToSearch()" class="w-full py-4 text-slate-400 font-bold uppercase text-xs tracking-widest hover:text-white transition-colors">
+                    <i class="fa-solid fa-arrow-left mr-2"></i> Batalkan & Cari Ulang
                 </button>
             </div>
-        </div>
+        </section>
+
+        <!-- STEP 3: FORM INPUT TRANSAKSI -->
+        <section id="step-form" class="step-container hidden-step flex-1 flex flex-col items-center justify-center">
+            <div class="card p-10 rounded-[40px] w-full max-w-3xl border-2 border-emerald-500/30 shadow-2xl relative">
+                <!-- Success Badge -->
+                <div class="absolute -top-6 left-1/2 -translate-x-1/2 bg-emerald-500 text-white px-6 py-2 rounded-full font-black text-xs uppercase tracking-widest flex items-center gap-2 shadow-xl">
+                    <i class="fa-solid fa-circle-check"></i> Driver Terverifikasi
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-10 mt-4">
+                    <!-- Data Driver Summary -->
+                    <div class="space-y-6">
+                        <div class="flex flex-col items-center p-6 bg-white/5 rounded-3xl border border-white/5">
+                            <img id="final-photo" src="" class="w-24 h-24 rounded-2xl object-cover mb-4 border-2 border-emerald-500">
+                            <h3 id="final-name" class="text-xl font-black text-white uppercase text-center">---</h3>
+                            <p id="final-id" class="text-xs text-slate-500 font-mono mt-1">---</p>
+                        </div>
+                        
+                        <div class="bg-emerald-500/10 p-6 rounded-3xl border border-emerald-500/20 space-y-4">
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs text-slate-400 font-bold uppercase">Estimasi Komisi</span>
+                                <span id="comm-val" class="text-2xl font-black gold-text">Rp 0</span>
+                            </div>
+                            <div class="flex justify-between items-center border-t border-white/5 pt-4">
+                                <span class="text-xs text-slate-400 font-bold uppercase">Poin Didapat</span>
+                                <span id="point-val" class="text-2xl font-black text-emerald-400">0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Input Fields -->
+                    <div class="space-y-5">
+                        <div>
+                            <label class="text-xs font-black text-slate-500 uppercase ml-1 mb-2 block">Pilih Layanan / Paket</label>
+                            <select id="service-id" class="input-field bg-slate-900 border-slate-700">
+                                <option value="">-- Pilih Layanan --</option>
+                            </select>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-xs font-black text-slate-500 uppercase ml-1 mb-2 block">Jumlah Tamu (Pax)</label>
+                                <input type="number" id="pax" value="1" min="1" class="input-field text-center font-black">
+                            </div>
+                            <div>
+                                <label class="text-xs font-black text-slate-500 uppercase ml-1 mb-2 block">Kategori Tamu</label>
+                                <select id="guest-cat" class="input-field">
+                                    <option value="Lokal">LOKAL</option>
+                                    <option value="Asing">ASING</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="text-xs font-black text-slate-500 uppercase ml-1 mb-2 block">Nomor Kamar / Catatan</label>
+                            <input type="text" id="room" placeholder="Contoh: Room 302" class="input-field">
+                        </div>
+
+                        <div class="pt-4 flex gap-3">
+                            <button onclick="resetToSearch()" class="flex-1 py-4 rounded-2xl bg-slate-800 font-black text-xs uppercase tracking-widest hover:bg-slate-700 transition-all">Batal</button>
+                            <button id="btn-save" onclick="saveTransaction()" class="flex-[2] gold-bg py-4 rounded-2xl font-black text-white text-xs uppercase tracking-widest shadow-lg hover:brightness-110 active:scale-95 transition-all">
+                                Simpan Transaksi
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
     </main>
 
     <script>
@@ -213,8 +205,7 @@
                 await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
                 await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
                 isAiLoaded = true;
-                document.getElementById('ai-status').innerText = "AI SIAP";
-            } catch (e) { console.error(e); }
+            } catch (e) { console.error("AI Load Failed", e); }
         }
 
         async function loadServices() {
@@ -231,6 +222,18 @@
             });
         }
 
+        // Logic Step Management
+        function showStep(stepId) {
+            document.querySelectorAll('.step-container').forEach(s => {
+                s.classList.remove('active-step');
+                s.classList.add('hidden-step');
+            });
+            const active = document.getElementById(stepId);
+            active.classList.remove('hidden-step');
+            active.classList.add('active-step');
+        }
+
+        // Search Logic
         const searchInput = document.getElementById('driver-search');
         const resultsBox = document.getElementById('search-results');
 
@@ -241,85 +244,99 @@
             const { data } = await supabaseClient.from('drivers')
                 .select('*')
                 .or(`driver_id.ilike.%${val}%,name.ilike.%${val}%`)
-                .limit(5);
+                .limit(6);
 
             if (data?.length > 0) {
                 resultsBox.innerHTML = data.map(d => `
-                    <div onclick="prepVerification('${d.driver_id}', '${d.name}', '${d.photo_url}')" 
-                         class="p-3 hover:bg-slate-800 cursor-pointer flex items-center gap-3 border-b border-white/5 last:border-0 transition-all">
-                        <img src="${d.photo_url}" class="w-8 h-8 rounded-md object-cover">
+                    <div onclick="startVerification('${d.driver_id}', '${d.name}', '${d.photo_url}')" 
+                         class="search-item p-4 cursor-pointer flex items-center gap-4 border-b border-white/5 last:border-0 transition-all">
+                        <img src="${d.photo_url}" class="w-12 h-12 rounded-xl object-cover border border-white/10">
                         <div class="min-w-0 flex-1">
-                            <p class="font-bold text-white uppercase text-xs truncate">${d.name}</p>
-                            <p class="text-[9px] text-slate-500 font-mono">${d.driver_id}</p>
+                            <p class="font-black text-white uppercase text-sm truncate">${d.name}</p>
+                            <p class="text-[10px] text-slate-500 font-mono tracking-wider">${d.driver_id}</p>
                         </div>
+                        <i class="fa-solid fa-chevron-right text-slate-700"></i>
                     </div>
                 `).join('');
+                resultsBox.classList.remove('hidden');
+            } else {
+                resultsBox.innerHTML = `<div class="p-6 text-center text-slate-500 text-sm">Mitra tidak ditemukan</div>`;
                 resultsBox.classList.remove('hidden');
             }
         };
 
-        async function prepVerification(id, name, photo) {
+        // Verification Logic
+        async function startVerification(id, name, photo) {
             resultsBox.classList.add('hidden');
             searchInput.value = "";
             selectedDriver = { id, name, photo };
             
-            document.getElementById('placeholder-ui').classList.add('hidden');
-            document.getElementById('verification-ui').classList.remove('hidden');
+            showStep('step-verify');
+            
             document.getElementById('ref-photo').src = photo + "?t=" + Date.now();
             document.getElementById('target-name').innerText = name;
             document.getElementById('target-id').innerText = id;
 
             try {
                 stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { width: 320, height: 320, facingMode: "user" } 
+                    video: { width: 480, height: 480, facingMode: "user" } 
                 });
                 const video = document.getElementById('camera-view');
                 video.srcObject = stream;
                 
+                document.getElementById('ai-status').innerText = "MENGANALISA FOTO...";
                 const refImg = document.getElementById('ref-photo');
+                
+                // Detection on Reference Photo
                 const detection = await faceapi.detectSingleFace(refImg, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
                 
                 if (detection) {
                     faceMatcher = new faceapi.FaceMatcher(detection, 0.55);
-                    startMatching();
+                    document.getElementById('ai-status').innerText = "MENUNGGU WAJAH...";
+                    runMatchingLoop();
                 } else {
-                    document.getElementById('ai-status').innerText = "FOTO TIDAK JELAS";
+                    document.getElementById('ai-status').innerText = "FOTO REFERENSI BERMASALAH";
                 }
-            } catch (err) { alert("Kamera Error"); }
+            } catch (err) { alert("Akses Kamera Ditolak"); resetToSearch(); }
         }
 
-        async function startMatching() {
+        async function runMatchingLoop() {
             const video = document.getElementById('camera-view');
             const status = document.getElementById('ai-status');
             
             const matchInterval = setInterval(async () => {
-                if (!stream) { clearInterval(matchInterval); return; }
+                if (document.getElementById('step-verify').classList.contains('hidden-step')) { 
+                    clearInterval(matchInterval); 
+                    return; 
+                }
+
                 const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
                 if (detection) {
                     const match = faceMatcher.findBestMatch(detection.descriptor);
                     if (match.distance < 0.55) {
                         clearInterval(matchInterval);
-                        onSuccess();
+                        onVerificationSuccess();
                     } else {
-                        status.innerText = "WAJAH BERBEDA";
+                        status.innerText = "WAJAH TIDAK COCOK";
                     }
                 } else {
-                    status.innerText = "MENCARI WAJAH...";
+                    status.innerText = "POSISIKAN WAJAH DI KOTAK";
                 }
             }, 600);
         }
 
-        function onSuccess() {
+        function onVerificationSuccess() {
             if (stream) stream.getTracks().forEach(t => t.stop());
-            document.getElementById('verification-ui').classList.add('hidden');
-            document.getElementById('success-ui').classList.remove('hidden');
             
-            document.getElementById('form-container').classList.remove('locked');
-            const badge = document.getElementById('auth-badge');
-            badge.className = "mt-1 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-[9px] font-bold uppercase tracking-widest";
-            badge.innerHTML = `<i class="fa-solid fa-circle-check"></i> Terverifikasi`;
+            // Populate Step 3 Data
+            document.getElementById('final-photo').src = selectedDriver.photo;
+            document.getElementById('final-name').innerText = selectedDriver.name;
+            document.getElementById('final-id').innerText = selectedDriver.id;
+            
+            showStep('step-form');
         }
 
+        // Form Logic
         const serviceSelect = document.getElementById('service-id');
         const paxInput = document.getElementById('pax');
 
@@ -339,10 +356,10 @@
         async function saveTransaction() {
             const btn = document.getElementById('btn-save');
             const opt = serviceSelect.options[serviceSelect.selectedIndex];
-            if (!opt.value) { alert("Pilih layanan"); return; }
+            if (!opt.value) { alert("Pilih layanan terlebih dahulu"); return; }
 
             btn.disabled = true;
-            btn.innerText = "PROSES...";
+            btn.innerText = "MENYIMPAN...";
 
             const payload = {
                 driver_id: selectedDriver.id,
@@ -360,17 +377,25 @@
 
             const { error } = await supabaseClient.from('commissions').insert([payload]);
             if (!error) {
-                location.reload();
+                alert("Transaksi Berhasil Disimpan!");
+                resetToSearch();
             } else {
-                alert("Gagal: " + error.message);
+                alert("Error: " + error.message);
                 btn.disabled = false;
-                btn.innerText = "Simpan";
+                btn.innerText = "SIMPAN TRANSAKSI";
             }
         }
 
-        function resetSelection() {
+        function resetToSearch() {
             if (stream) stream.getTracks().forEach(t => t.stop());
-            location.reload();
+            selectedDriver = null;
+            faceMatcher = null;
+            document.getElementById('service-id').value = "";
+            document.getElementById('pax').value = "1";
+            document.getElementById('room').value = "";
+            document.getElementById('comm-val').innerText = "Rp 0";
+            document.getElementById('point-val').innerText = "0";
+            showStep('step-search');
         }
 
         function updateTime() {
