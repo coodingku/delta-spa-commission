@@ -24,10 +24,17 @@
         input:focus {
             box-shadow: 0 0 15px rgba(197, 160, 89, 0.3);
         }
+        .shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
     </style>
 </head>
 <body class="min-h-screen flex items-center justify-center p-6">
-    <div class="card w-full max-w-md p-10 rounded-[2.5rem] text-center relative overflow-hidden">
+    <div class="card w-full max-w-md p-10 rounded-[2.5rem] text-center relative overflow-hidden" id="login-card">
         <!-- Dekorasi Cahaya -->
         <div class="absolute -top-24 -right-24 w-48 h-48 bg-[#c5a059] opacity-10 blur-[80px]"></div>
         
@@ -44,9 +51,9 @@
             
             <form id="login-form" class="space-y-6">
                 <div class="text-left">
-                    <label class="block text-xs font-bold mb-2 text-slate-400 uppercase tracking-widest ml-1">Admin Access Key</label>
+                    <label class="block text-xs font-bold mb-2 text-slate-400 uppercase tracking-widest ml-1">System Access Key</label>
                     <div class="relative">
-                        <input type="password" id="admin-password" required placeholder="Masukkan Password" 
+                        <input type="password" id="admin-password" required placeholder="••••••••" 
                             class="w-full bg-slate-900/50 border border-slate-800 rounded-2xl px-6 py-4 focus:outline-none focus:border-[#c5a059] transition-all text-white text-center tracking-[0.5em] font-bold placeholder:tracking-normal placeholder:font-normal placeholder:text-slate-600">
                     </div>
                 </div>
@@ -60,17 +67,23 @@
             <div id="error-box" class="mt-6 h-6 opacity-0 transition-opacity duration-300">
                 <p class="text-red-400 text-sm font-medium flex items-center justify-center gap-2">
                     <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
-                    Password salah, silakan coba lagi.
+                    Password salah atau akses ditolak.
                 </p>
             </div>
         </div>
         
-        <p class="mt-8 text-slate-600 text-[10px] uppercase tracking-widest">Authorized Personnel Only</p>
+        <div class="mt-8 flex justify-center gap-4 text-[9px] uppercase tracking-widest text-slate-600 font-bold">
+            <span class="flex items-center gap-1"><i class="w-1 h-1 bg-slate-700 rounded-full"></i> Admin Access</span>
+            <span class="flex items-center gap-1"><i class="w-1 h-1 bg-slate-700 rounded-full"></i> Cashier Access</span>
+        </div>
     </div>
 
     <script>
-        // Password Admin (Ganti sesuai keinginan)
-        const ADMIN_PASSWORD = "admin123";
+        // Data Login Sederhana (Mapping Password ke Role)
+        const AUTH_KEYS = {
+            "admin123": { role: "admin", name: "Administrator" },
+            "kasir123": { role: "kasir", name: "Kasir Delta" }
+        };
 
         // Cek jika sudah login, langsung ke dashboard
         if (sessionStorage.getItem('isLoggedIn') === 'true') {
@@ -82,27 +95,35 @@
             const passwordInput = document.getElementById('admin-password');
             const btn = document.getElementById('btn-login');
             const errorBox = document.getElementById('error-box');
+            const card = document.getElementById('login-card');
 
-            if (passwordInput.value === ADMIN_PASSWORD) {
-                // Beri efek loading sebentar
+            const inputVal = passwordInput.value;
+
+            if (AUTH_KEYS[inputVal]) {
+                const userData = AUTH_KEYS[inputVal];
+                
+                // Beri efek loading
+                btn.disabled = true;
                 btn.innerHTML = `<svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>`;
                 
                 setTimeout(() => {
                     sessionStorage.setItem('isLoggedIn', 'true');
+                    sessionStorage.setItem('userRole', userData.role);
+                    sessionStorage.setItem('userName', userData.name);
                     window.location.replace('dashboard.html');
                 }, 800);
             } else {
-                // Tampilkan error
+                // Tampilkan error & Animasi Shake
                 errorBox.classList.remove('opacity-0');
                 passwordInput.classList.add('border-red-500');
+                card.classList.add('shake');
                 
-                // Shake effect sederhana
-                document.querySelector('.card').classList.add('animate-bounce');
-                setTimeout(() => document.querySelector('.card').classList.remove('animate-bounce'), 500);
+                setTimeout(() => card.classList.remove('shake'), 500);
 
                 setTimeout(() => {
                     errorBox.classList.add('opacity-0');
                     passwordInput.classList.remove('border-red-500');
+                    passwordInput.value = '';
                 }, 3000);
             }
         });
