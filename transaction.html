@@ -27,20 +27,23 @@
         .input-field { background: rgba(30, 41, 59, 0.5); border: 1px solid rgba(148, 163, 184, 0.1); color: white; width: 100%; padding: 14px 20px; border-radius: 16px; outline: none; transition: 0.3s; }
         .input-field:focus { border-color: var(--gold); box-shadow: 0 0 15px rgba(212, 175, 55, 0.1); }
 
+        /* Fix Pointer Events */
+        #search-section.dimmed { opacity: 0.4; pointer-events: none; }
+        #selected-mitra-card { pointer-events: auto !important; position: relative; z-index: 50; }
+
         /* Camera UI */
-        #camera-wrapper { position: relative; width: 100%; max-width: 320px; aspect-ratio: 1/1; margin: 20px auto; border-radius: 50%; overflow: hidden; border: 4px solid var(--gold); box-shadow: 0 0 30px rgba(212, 175, 55, 0.2); display: none; }
+        #camera-wrapper { position: relative; width: 100%; max-width: 300px; aspect-ratio: 1/1; margin: 20px auto; border-radius: 50%; overflow: hidden; border: 4px solid var(--gold); box-shadow: 0 0 30px rgba(212, 175, 55, 0.2); display: none; }
         #video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
         .scan-anim { position: absolute; width: 100%; height: 3px; background: var(--gold); box-shadow: 0 0 20px var(--gold); top: 0; animation: scan 2.5s linear infinite; z-index: 10; }
         @keyframes scan { 0% { top: 0% } 100% { top: 100% } }
 
-        /* Modal Pop-up */
+        /* Modal */
         .modal-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(10px); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
         .modal-overlay.active { display: flex; }
-        .modal-content { transform: scale(0.95); opacity: 0; transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); width: 100%; max-width: 800px; }
-        .modal-overlay.active .modal-content { transform: scale(1); opacity: 1; }
-
-        .btn-desktop { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); transition: 0.3s; }
-        .btn-desktop:hover { background: rgba(255, 255, 255, 0.1); border-color: var(--gold); }
+        
+        .btn-gold { background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%); color: white; transition: 0.3s; }
+        .btn-gold:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(212, 175, 55, 0.2); }
+        .btn-gold:active { transform: translateY(0); }
     </style>
 </head>
 <body class="min-h-screen flex">
@@ -52,162 +55,122 @@
             <p class="text-[10px] text-slate-500 font-bold tracking-[0.3em] uppercase mt-1">BeautyBloom System</p>
         </div>
         <nav class="flex-1 px-4">
-            <!-- Tombol Kembali ke Desktop di Sidebar -->
             <a href="dashboard.html" class="nav-link bg-white/5 mb-6 text-white hover:bg-white/10">
                 <i class="fa-solid fa-desktop w-5 text-[#d4af37]"></i> KEMBALI KE DESKTOP
             </a>
-            
             <div class="h-px bg-white/5 mb-6 mx-4"></div>
-
             <a href="dashboard.html" class="nav-link"><i class="fa-solid fa-chart-pie w-5"></i> DASHBOARD</a>
             <a href="transaksi_komisi.html" class="nav-link active"><i class="fa-solid fa-receipt w-5"></i> INPUT TRANSAKSI</a>
             <a href="pendaftaran_driver.html" class="nav-link"><i class="fa-solid fa-users w-5"></i> DATA MITRA</a>
             <a href="riwayat_transaksi.html" class="nav-link"><i class="fa-solid fa-clock-rotate-left w-5"></i> RIWAYAT</a>
         </nav>
-        
-        <div class="p-6">
-            <div class="bg-gradient-to-br from-slate-800 to-slate-900 p-4 rounded-2xl border border-white/5 text-center">
-                <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Status Sistem</p>
-                <div class="flex items-center justify-center gap-2">
-                    <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                    <span class="text-xs font-bold text-emerald-500">Online</span>
-                </div>
-            </div>
-        </div>
     </aside>
 
     <!-- Main Content -->
     <main class="flex-1 p-6 lg:p-12 overflow-y-auto">
         <div class="max-w-4xl mx-auto">
             
-            <!-- Header with Back Button -->
-            <div class="flex items-center justify-between mb-12">
-                <a href="dashboard.html" class="btn-desktop px-5 py-3 rounded-2xl flex items-center gap-3 text-xs font-bold tracking-widest text-slate-300 hover:text-white group">
-                    <i class="fa-solid fa-arrow-left group-hover:-translate-x-1 transition-transform"></i>
-                    DESKTOP MENU
+            <div class="flex items-center justify-between mb-8">
+                <a href="dashboard.html" class="px-5 py-3 rounded-2xl bg-white/5 border border-white/10 flex items-center gap-3 text-xs font-bold tracking-widest text-slate-300 hover:text-white transition-all">
+                    <i class="fa-solid fa-arrow-left"></i> DESKTOP
                 </a>
-                
-                <div class="flex items-center gap-4">
-                     <span class="text-[10px] font-black text-slate-500 uppercase tracking-widest hidden md:block">Finex Pos v2.0</span>
-                     <div class="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
-                         <i class="fa-solid fa-user-gear text-slate-400"></i>
-                     </div>
-                </div>
             </div>
 
-            <header class="mb-12 flex flex-col items-center text-center">
+            <header class="mb-12 text-center">
                 <div id="status-badge" class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-red-500/10 border border-red-500/20 text-red-500 text-[10px] font-black uppercase tracking-widest mb-6">
                     <i class="fa-solid fa-fingerprint"></i> Belum Terverifikasi
                 </div>
                 <h2 class="text-4xl font-extrabold tracking-tight">Input <span class="text-[#d4af37] italic">Komisi Mitra</span></h2>
-                <p class="text-slate-500 mt-2 font-medium">Lakukan verifikasi wajah mitra kerja BeautyBloom sebelum memasukkan transaksi.</p>
+                <p class="text-slate-500 mt-2">Lakukan verifikasi wajah sebelum input transaksi layanan.</p>
             </header>
 
-            <!-- Search Section -->
-            <div id="search-section" class="glass-card p-10 rounded-[3rem] space-y-8 shadow-2xl">
-                <div class="relative max-w-xl mx-auto">
-                    <label class="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4 text-center">Cari Driver atau Mitra</label>
-                    <input type="text" id="search-driver" placeholder="Nama Mitra / NIK Driver..." class="input-field pl-14 h-16 text-lg font-bold">
-                    <i class="fa-solid fa-magnifying-glass absolute left-6 top-[64px] -translate-y-1/2 text-slate-500"></i>
-                    <div id="driver-results" class="absolute z-50 w-full mt-3 bg-[#0f172a] border border-white/5 rounded-2xl hidden shadow-2xl overflow-hidden"></div>
+            <div class="relative">
+                <!-- Search Section -->
+                <div id="search-section" class="glass-card p-10 rounded-[3rem] space-y-8 shadow-2xl relative z-10">
+                    <div class="relative max-w-xl mx-auto">
+                        <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4 text-center">Cari Nama Mitra / Driver</label>
+                        <input type="text" id="search-driver" placeholder="Ketik nama di sini..." class="input-field pl-14 h-16 text-lg font-bold">
+                        <i class="fa-solid fa-magnifying-glass absolute left-6 top-[64px] -translate-y-1/2 text-slate-500"></i>
+                        <div id="driver-results" class="absolute z-[100] w-full mt-3 bg-[#0f172a] border border-white/10 rounded-2xl hidden shadow-2xl overflow-hidden"></div>
+                    </div>
                 </div>
 
-                <!-- Selected Mitra Box -->
-                <div id="selected-mitra-card" class="hidden animate-in fade-in zoom-in duration-300">
-                    <div class="flex flex-col items-center p-10 bg-white/5 rounded-[2.5rem] border border-white/5 relative">
-                        <button onclick="resetSelection()" class="absolute top-8 right-8 text-slate-500 hover:text-white transition-colors"><i class="fa-solid fa-rotate-left text-xl"></i></button>
+                <!-- Selected Mitra Box (Overlay) -->
+                <div id="selected-mitra-card" class="hidden absolute inset-0 z-50 flex items-center justify-center">
+                    <div class="glass-card p-10 rounded-[3rem] w-full h-full flex flex-col items-center justify-center text-center shadow-2xl border-white/20 animate-in fade-in zoom-in duration-300">
+                        <button onclick="resetSelection()" class="absolute top-8 right-8 w-12 h-12 rounded-full bg-white/5 flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-all">
+                            <i class="fa-solid fa-rotate-left"></i>
+                        </button>
                         
-                        <div class="w-28 h-28 rounded-[2rem] overflow-hidden border-2 border-[#d4af37] p-1.5 mb-6 shadow-xl">
-                            <img id="ref-photo" src="" class="w-full h-full object-cover rounded-[1.5rem] bg-slate-800" crossorigin="anonymous">
+                        <div class="w-28 h-28 rounded-3xl overflow-hidden border-2 border-[#d4af37] p-1 mb-4">
+                            <img id="ref-photo" src="" class="w-full h-full object-cover rounded-2xl bg-slate-800" crossorigin="anonymous">
                         </div>
-                        <h4 id="ref-name" class="text-2xl font-black uppercase tracking-tight text-white">-</h4>
-                        <p id="ref-id" class="text-xs font-bold text-[#d4af37] mt-1 bg-[#d4af37]/10 px-3 py-1 rounded-full">-</p>
+                        <h4 id="ref-name" class="text-2xl font-black uppercase tracking-tight">-</h4>
+                        <p id="ref-id" class="text-xs font-bold text-[#d4af37] mt-1">-</p>
 
-                        <button id="btn-verify" class="mt-10 px-12 py-5 bg-white text-black font-black rounded-2xl hover:bg-[#d4af37] hover:text-white transition-all flex items-center gap-3 shadow-lg shadow-white/5 active:scale-95">
+                        <button id="btn-verify" class="mt-8 px-10 py-5 btn-gold font-black rounded-2xl flex items-center gap-3 shadow-lg active:scale-95 cursor-pointer">
                             <i class="fa-solid fa-face-viewfinder text-xl"></i> MULAI VERIFIKASI WAJAH
                         </button>
 
                         <div id="camera-wrapper">
                             <video id="video" autoplay muted playsinline></video>
                             <div class="scan-anim"></div>
-                            <div class="absolute inset-0 flex items-end justify-center pb-8 bg-gradient-to-t from-black/90 to-transparent">
-                                <span id="ai-status" class="text-[10px] font-black text-white tracking-[0.2em] uppercase bg-black/50 px-4 py-2 rounded-full backdrop-blur-md">Menyiapkan Sistem AI...</span>
+                            <div class="absolute inset-0 flex items-end justify-center pb-4 bg-gradient-to-t from-black/80 to-transparent">
+                                <span id="ai-status" class="text-[10px] font-black text-white tracking-widest uppercase bg-black/50 px-3 py-1.5 rounded-lg">Menyiapkan Kamera...</span>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-
-            <!-- Footer simple -->
-            <footer class="mt-20 text-center opacity-30">
-                <p class="text-[10px] font-bold tracking-widest uppercase">Finex Pos &copy; 2026 - BeautyBloom Group</p>
-            </footer>
 
         </div>
     </main>
 
-    <!-- MODAL POP-UP INPUT LAYANAN -->
+    <!-- Modal Form Transaksi -->
     <div id="modal-input" class="modal-overlay">
-        <div class="modal-content glass-card rounded-[3rem] p-8 lg:p-12 shadow-2xl border-white/10">
-            <div class="flex items-center justify-between mb-10">
-                <div>
-                    <h3 class="text-3xl font-black uppercase italic tracking-tighter text-white">Input <span class="text-[#d4af37]">Transaksi</span></h3>
-                    <p class="text-slate-500 text-[10px] font-black uppercase tracking-[0.3em] mt-2">Detail Komisi Mitra Kerja</p>
-                </div>
-                <button onclick="closeModal()" class="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center text-slate-400 hover:text-white hover:bg-red-500/20 transition-all border border-white/5"><i class="fa-solid fa-xmark text-2xl"></i></button>
+        <div class="glass-card rounded-[3rem] p-10 max-w-4xl w-full shadow-2xl">
+            <div class="flex items-center justify-between mb-8">
+                <h3 class="text-2xl font-black uppercase italic">Input <span class="text-[#d4af37]">Layanan</span></h3>
+                <button onclick="closeModal()" class="text-slate-500 hover:text-white"><i class="fa-solid fa-xmark text-2xl"></i></button>
             </div>
 
-            <form id="form-transaksi" class="grid grid-cols-1 lg:grid-cols-2 gap-10">
+            <form id="form-transaksi" class="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <input type="hidden" id="f-id">
                 <input type="hidden" id="f-name">
-
-                <div class="space-y-8">
+                <div class="space-y-6">
                     <div>
-                        <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 ml-2">Paket Layanan BeautyBloom</label>
-                        <select id="f-service" class="input-field font-bold uppercase h-16" required>
-                            <option value="">-- PILIH LAYANAN --</option>
-                        </select>
+                        <label class="block text-[10px] font-black text-slate-500 uppercase mb-2">Pilih Layanan BeautyBloom</label>
+                        <select id="f-service" class="input-field font-bold h-14" required></select>
                     </div>
-                    <div class="grid grid-cols-2 gap-6">
+                    <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 ml-2">Kategori Tamu</label>
-                            <select id="f-guest" class="input-field font-bold uppercase h-16">
-                                <option value="Lokal">Domestik / Lokal</option>
-                                <option value="Asing">Mancanegara / Asing</option>
+                            <label class="block text-[10px] font-black text-slate-500 uppercase mb-2">Kategori</label>
+                            <select id="f-guest" class="input-field font-bold h-14">
+                                <option value="Lokal">Lokal</option>
+                                <option value="Asing">Asing</option>
                             </select>
                         </div>
                         <div>
-                            <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 ml-2">Jumlah Pax (Tamu)</label>
-                            <input type="number" id="f-pax" value="1" min="1" class="input-field font-bold text-center h-16 text-xl">
+                            <label class="block text-[10px] font-black text-slate-500 uppercase mb-2">Jumlah Pax</label>
+                            <input type="number" id="f-pax" value="1" min="1" class="input-field font-bold text-center h-14">
                         </div>
                     </div>
-                    <div>
-                        <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 ml-2">Catatan Operasional (No Kamar/Meja)</label>
-                        <input type="text" id="f-note" placeholder="Contoh: Room 302" class="input-field font-bold h-16">
-                    </div>
+                    <input type="text" id="f-note" placeholder="Catatan (No Kamar/Meja)" class="input-field font-bold h-14">
                 </div>
 
-                <div class="flex flex-col">
-                    <div class="flex-1 bg-gradient-to-br from-slate-900 to-black rounded-[2.5rem] border border-white/5 p-8 flex flex-col justify-center space-y-8 shadow-inner">
-                        <div class="flex justify-between items-center border-b border-white/5 pb-5">
-                            <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Transaksi</span>
-                            <span id="v-total" class="text-2xl font-black italic text-white">Rp 0</span>
-                        </div>
-                        <div class="flex justify-between items-center border-b border-white/5 pb-5">
-                            <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Komisi Diterima</span>
-                            <span id="v-comm" class="text-2xl font-black text-[#d4af37] italic">Rp 0</span>
+                <div class="flex flex-col justify-between">
+                    <div class="p-6 bg-black/40 rounded-3xl border border-white/5 space-y-4">
+                        <div class="flex justify-between items-center">
+                            <span class="text-[10px] font-black text-slate-400 uppercase">Total Bill</span>
+                            <span id="v-total" class="text-xl font-black">Rp 0</span>
                         </div>
                         <div class="flex justify-between items-center">
-                            <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Poin Loyalitas</span>
-                            <div class="text-right">
-                                <span id="v-points" class="text-2xl font-black text-emerald-400">0</span>
-                                <span class="text-[10px] font-bold text-emerald-500/50 ml-1">PTS</span>
-                            </div>
+                            <span class="text-[10px] font-black text-slate-400 uppercase">Komisi Mitra</span>
+                            <span id="v-comm" class="text-xl font-black text-[#d4af37]">Rp 0</span>
                         </div>
                     </div>
-                    
-                    <button type="submit" id="btn-submit" class="mt-8 w-full h-20 rounded-[1.8rem] bg-gradient-to-r from-[#d4af37] to-[#a67c00] text-white font-black uppercase tracking-[0.3em] shadow-[0_15px_35px_rgba(166,124,0,0.3)] hover:scale-[1.02] transition-all flex items-center justify-center gap-4 active:scale-95">
-                        <i class="fa-solid fa-cloud-check text-2xl"></i> SIMPAN TRANSAKSI
+                    <button type="submit" id="btn-submit" class="mt-6 w-full h-16 rounded-2xl btn-gold font-black uppercase tracking-widest flex items-center justify-center gap-3">
+                        <i class="fa-solid fa-cloud-check"></i> SIMPAN TRANSAKSI
                     </button>
                 </div>
             </form>
@@ -223,8 +186,8 @@
         let aiReady = false;
 
         window.onload = async () => {
-            loadModels();
-            fetchServices();
+            await loadModels();
+            await fetchServices();
         };
 
         async function loadModels() {
@@ -236,15 +199,14 @@
                     faceapi.nets.faceRecognitionNet.loadFromUri(URL)
                 ]);
                 aiReady = true;
-                console.log("Sistem AI BeautyBloom Siap");
-            } catch (e) {
-                console.error("Gagal memuat AI", e);
-            }
+                console.log("AI Ready");
+            } catch (e) { console.error(e); }
         }
 
         async function fetchServices() {
             const { data } = await sb.from('services').select('*').order('name');
             const sel = document.getElementById('f-service');
+            sel.add(new Option("-- PILIH LAYANAN --", ""));
             data?.forEach(s => {
                 const opt = new Option(s.name.toUpperCase(), s.id);
                 opt.dataset.comm = s.commission;
@@ -256,28 +218,36 @@
             document.getElementById('f-pax').oninput = calculate;
         }
 
+        function calculate() {
+            const sel = document.getElementById('f-service');
+            const opt = sel.options[sel.selectedIndex];
+            const pax = parseInt(document.getElementById('f-pax').value) || 0;
+            if (opt.value) {
+                const total = parseInt(opt.dataset.price) * pax;
+                const comm = parseInt(opt.dataset.comm) * pax;
+                document.getElementById('v-total').innerText = `Rp ${total.toLocaleString('id-ID')}`;
+                document.getElementById('v-comm').innerText = `Rp ${comm.toLocaleString('id-ID')}`;
+            }
+        }
+
         const input = document.getElementById('search-driver');
         const results = document.getElementById('driver-results');
 
         input.oninput = async (e) => {
             const val = e.target.value.trim();
             if (val.length < 2) { results.classList.add('hidden'); return; }
-
             const { data } = await sb.from('drivers').select('*').or(`name.ilike.%${val}%,driver_id.ilike.%${val}%`).limit(5);
-
             if (data?.length > 0) {
                 results.innerHTML = data.map(d => `
-                    <div onclick="selectMitra('${d.driver_id}', '${d.name}', '${d.photo_url}')" class="p-5 hover:bg-white/5 cursor-pointer flex items-center gap-5 border-b border-white/5 last:border-0 transition-all">
-                        <img src="${d.photo_url}" class="w-12 h-12 rounded-2xl object-cover border border-white/10 shadow-lg">
+                    <div onclick="selectMitra('${d.driver_id}', '${d.name}', '${d.photo_url}')" class="p-4 hover:bg-white/5 cursor-pointer flex items-center gap-4 border-b border-white/5">
+                        <img src="${d.photo_url}" class="w-10 h-10 rounded-lg object-cover">
                         <div>
-                            <p class="font-black text-white uppercase text-sm tracking-tight">${d.name}</p>
-                            <p class="text-[10px] font-bold text-[#d4af37] tracking-widest mt-0.5">${d.driver_id}</p>
+                            <p class="font-bold text-white text-sm uppercase">${d.name}</p>
+                            <p class="text-[10px] text-[#d4af37]">${d.driver_id}</p>
                         </div>
                     </div>
                 `).join('');
                 results.classList.remove('hidden');
-            } else {
-                results.classList.add('hidden');
             }
         };
 
@@ -285,26 +255,25 @@
             document.getElementById('ref-photo').src = photo;
             document.getElementById('ref-name').innerText = name;
             document.getElementById('ref-id').innerText = id;
-            
             document.getElementById('f-id').value = id;
             document.getElementById('f-name').value = name;
 
+            document.getElementById('search-section').classList.add('dimmed');
             document.getElementById('selected-mitra-card').classList.remove('hidden');
-            document.getElementById('search-section').classList.add('opacity-40', 'pointer-events-none');
-            document.getElementById('search-driver').value = "";
             results.classList.add('hidden');
         }
 
         function resetSelection() {
             stopCamera();
+            document.getElementById('search-section').classList.remove('dimmed');
             document.getElementById('selected-mitra-card').classList.add('hidden');
-            document.getElementById('search-section').classList.remove('opacity-40', 'pointer-events-none');
             document.getElementById('camera-wrapper').style.display = 'none';
             document.getElementById('btn-verify').style.display = 'flex';
         }
 
-        document.getElementById('btn-verify').onclick = async () => {
-            if (!aiReady) return alert("Sistem sedang memuat AI, silakan tunggu...");
+        // Fix: Explicitly bind the click event
+        document.getElementById('btn-verify').addEventListener('click', async () => {
+            if (!aiReady) return alert("Sistem AI masih memuat, mohon tunggu sebentar...");
             
             const wrapper = document.getElementById('camera-wrapper');
             const video = document.getElementById('video');
@@ -316,13 +285,13 @@
             try {
                 videoStream = await navigator.mediaDevices.getUserMedia({ video: true });
                 video.srcObject = videoStream;
-                status.innerText = "MENCARI WAJAH MITRA...";
+                status.innerText = "MENGANALISA WAJAH...";
                 
                 const refImg = document.getElementById('ref-photo');
                 const refDetect = await faceapi.detectSingleFace(refImg).withFaceLandmarks().withFaceDescriptor();
                 
                 if (!refDetect) {
-                    status.innerHTML = "<span class='text-red-500'>FOTO REFERENSI INVALID</span>";
+                    status.innerHTML = "<span class='text-red-500'>FOTO TIDAK VALID</span>";
                     return;
                 }
 
@@ -335,65 +304,32 @@
                         const match = matcher.findBestMatch(detect.descriptor);
                         if (match.distance < 0.5) {
                             clearInterval(interval);
-                            status.innerHTML = "<span class='text-emerald-500 font-black'>TERVERIFIKASI!</span>";
+                            status.innerHTML = "<span class='text-emerald-500 font-black'>COCOK!</span>";
                             setTimeout(() => {
                                 stopCamera();
-                                openModal();
+                                document.getElementById('modal-input').classList.add('active');
+                                const b = document.getElementById('status-badge');
+                                b.className = "inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-[10px] font-black uppercase tracking-widest mb-6";
+                                b.innerHTML = `<i class="fa-solid fa-circle-check"></i> Terverifikasi`;
                             }, 800);
                         } else {
-                            status.innerText = "WAJAH TIDAK COCOK...";
+                            status.innerText = "WAJAH BERBEDA...";
                         }
-                    } else {
-                        status.innerText = "POSISIKAN WAJAH DI TENGAH...";
                     }
                 }, 1000);
             } catch (e) {
-                alert("Izin kamera ditolak atau kamera tidak ditemukan.");
+                alert("Kamera tidak dapat diakses.");
                 resetSelection();
             }
-        };
+        });
 
         function stopCamera() {
-            if (videoStream) {
-                videoStream.getTracks().forEach(t => t.stop());
-                videoStream = null;
-            }
-            document.getElementById('camera-wrapper').style.display = 'none';
-        }
-
-        function openModal() {
-            document.getElementById('modal-input').classList.add('active');
-            const badge = document.getElementById('status-badge');
-            badge.className = "inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-[10px] font-black uppercase tracking-widest mb-6";
-            badge.innerHTML = `<i class="fa-solid fa-circle-check"></i> Mitra Terverifikasi`;
+            if (videoStream) { videoStream.getTracks().forEach(t => t.stop()); videoStream = null; }
         }
 
         function closeModal() {
             document.getElementById('modal-input').classList.remove('active');
             resetSelection();
-            const badge = document.getElementById('status-badge');
-            badge.className = "inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-red-500/10 border border-red-500/20 text-red-500 text-[10px] font-black uppercase tracking-widest mb-6";
-            badge.innerHTML = `<i class="fa-solid fa-fingerprint"></i> Belum Terverifikasi`;
-        }
-
-        function calculate() {
-            const sel = document.getElementById('f-service');
-            const opt = sel.options[sel.selectedIndex];
-            const pax = parseInt(document.getElementById('f-pax').value) || 0;
-
-            if (opt.value) {
-                const total = parseInt(opt.dataset.price) * pax;
-                const comm = parseInt(opt.dataset.comm) * pax;
-                const pts = Math.floor(comm / 10000);
-
-                document.getElementById('v-total').innerText = `Rp ${total.toLocaleString('id-ID')}`;
-                document.getElementById('v-comm').innerText = `Rp ${comm.toLocaleString('id-ID')}`;
-                document.getElementById('v-points').innerText = pts.toLocaleString('id-ID');
-            } else {
-                document.getElementById('v-total').innerText = `Rp 0`;
-                document.getElementById('v-comm').innerText = `Rp 0`;
-                document.getElementById('v-points').innerText = "0";
-            }
         }
 
         document.getElementById('form-transaksi').onsubmit = async (e) => {
@@ -403,7 +339,7 @@
             const opt = sel.options[sel.selectedIndex];
 
             btn.disabled = true;
-            btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin text-xl"></i> PROSES SIMPAN...`;
+            btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> MENYIMPAN...`;
 
             const payload = {
                 driver_id: document.getElementById('f-id').value,
@@ -413,24 +349,18 @@
                 guest_category: document.getElementById('f-guest').value,
                 massage_guests: parseInt(document.getElementById('f-pax').value),
                 commission_amount: parseInt(opt.dataset.comm) * parseInt(document.getElementById('f-pax').value),
-                points_earned: Math.floor((parseInt(opt.dataset.comm) * parseInt(document.getElementById('f-pax').value)) / 10000),
                 total_massage_value: parseInt(opt.dataset.price) * parseInt(document.getElementById('f-pax').value),
                 notes: document.getElementById('f-note').value,
                 created_at: new Date().toISOString()
             };
 
             const { error } = await sb.from('commissions').insert([payload]);
-
             if (!error) {
-                btn.innerHTML = `<i class="fa-solid fa-check"></i> TRANSAKSI BERHASIL`;
-                btn.className = "mt-8 w-full h-20 rounded-[1.8rem] bg-emerald-500 text-white font-black uppercase tracking-[0.3em]";
-                setTimeout(() => {
-                    location.reload();
-                }, 1500);
+                btn.innerHTML = `<i class="fa-solid fa-check"></i> BERHASIL`;
+                setTimeout(() => location.reload(), 1000);
             } else {
-                alert("Gagal menyimpan transaksi: " + error.message);
+                alert("Error: " + error.message);
                 btn.disabled = false;
-                btn.innerHTML = `<i class="fa-solid fa-cloud-check text-2xl"></i> SIMPAN TRANSAKSI`;
             }
         };
     </script>
