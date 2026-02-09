@@ -48,7 +48,6 @@
             box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.15);
         }
 
-        /* Transitions */
         .step-content {
             display: none;
             opacity: 0;
@@ -62,7 +61,6 @@
             transform: translateY(0);
         }
 
-        /* Camera Aesthetics */
         #camera-wrapper {
             position: relative;
             width: 260px;
@@ -96,19 +94,32 @@
             100% { transform: scale(0.98); opacity: 0.8; }
         }
 
-        .loading-shimmer {
-            background: linear-gradient(90deg, #161B22 25%, #1c2128 50%, #161B22 75%);
-            background-size: 200% 100%;
-            animation: shimmer 1.5s infinite;
-        }
-
-        @keyframes shimmer {
-            0% { background-position: 200% 0; }
-            100% { background-position: -200% 0; }
+        /* Modal Custom */
+        #custom-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.9);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
         }
     </style>
 </head>
 <body class="flex">
+
+    <!-- Modal Notifikasi Manual -->
+    <div id="custom-modal">
+        <div class="bg-[#161B22] border border-[#30363D] p-8 rounded-[32px] max-w-sm w-full text-center">
+            <div class="w-16 h-16 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                <i class="fa-solid fa-camera-slash text-2xl"></i>
+            </div>
+            <h3 class="text-xl font-bold text-white mb-2">Kamera Diblokir</h3>
+            <p id="modal-msg" class="text-slate-400 text-sm mb-8 leading-relaxed">Browser Anda memblokir akses kamera. Silakan klik ikon gembok di bar alamat (URL) dan aktifkan Kamera.</p>
+            <button onclick="closeModal()" class="w-full py-4 rounded-2xl gold-gradient text-white font-bold uppercase text-xs tracking-widest">Saya Mengerti</button>
+        </div>
+    </div>
 
     <!-- Sidebar -->
     <aside class="w-20 lg:w-64 border-r border-[#30363D] flex flex-col items-center lg:items-stretch py-8 px-4 z-50 bg-[#0D1117]">
@@ -170,7 +181,6 @@
             <!-- STEP 2: VERIFICATION -->
             <section id="step-verify" class="step-content w-full max-w-md flex flex-col items-center">
                 <div id="camera-wrapper" class="mb-8">
-                    <!-- Placeholder loading saat kamera start -->
                     <div id="camera-placeholder" class="absolute inset-0 flex items-center justify-center bg-[#0D1117] z-10">
                         <i class="fa-solid fa-camera-rotate fa-spin text-slate-700 text-4xl"></i>
                     </div>
@@ -195,7 +205,7 @@
                 </button>
             </section>
 
-            <!-- STEP 3: TRANSACTION FORM -->
+            <!-- STEP 3: TRANSACTION FORM (BeautyBloom) -->
             <section id="step-form" class="step-content w-full max-w-4xl flex flex-col">
                 <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
                     <div class="lg:col-span-4 space-y-4">
@@ -279,7 +289,23 @@
             fetchServices();
             updateClock();
             setInterval(updateClock, 1000);
+            checkSecurity();
         };
+
+        function checkSecurity() {
+            if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
+                showModal("Kamera hanya dapat diaktifkan pada koneksi aman (HTTPS). Pastikan URL diawali dengan https://");
+            }
+        }
+
+        function showModal(msg) {
+            document.getElementById('modal-msg').innerText = msg;
+            document.getElementById('custom-modal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('custom-modal').style.display = 'none';
+        }
 
         async function initAI() {
             const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
@@ -290,7 +316,7 @@
                     faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
                 ]);
             } catch (e) {
-                console.error("AI Models failed to load", e);
+                console.error("AI Models failed", e);
             }
         }
 
@@ -310,16 +336,14 @@
             document.querySelectorAll('.step-content').forEach(s => s.classList.remove('active'));
             document.getElementById(stepId).classList.add('active');
             currentStep = stepId;
-
-            const titles = {
+            document.getElementById('header-title').innerText = {
                 'step-search': 'Pencarian Mitra',
                 'step-verify': 'Verifikasi Identitas',
                 'step-form': 'Detail Transaksi'
-            };
-            document.getElementById('header-title').innerText = titles[stepId] || 'Finex POS';
+            }[stepId] || 'Finex POS';
         }
 
-        // --- Search Logic ---
+        // --- Search ---
         const searchInput = document.getElementById('driver-search-input');
         const resultsContainer = document.getElementById('results-container');
         const resultsList = document.getElementById('results-list');
@@ -327,12 +351,7 @@
         searchInput.oninput = async (e) => {
             const query = e.target.value.trim();
             if (query.length < 2) { resultsContainer.classList.add('hidden'); return; }
-
-            const { data } = await sb.from('drivers')
-                .select('*')
-                .or(`name.ilike.%${query}%,driver_id.ilike.%${query}%`)
-                .limit(5);
-
+            const { data } = await sb.from('drivers').select('*').or(`name.ilike.%${query}%,driver_id.ilike.%${query}%`).limit(5);
             if (data?.length > 0) {
                 resultsList.innerHTML = data.map(d => `
                     <div onclick="selectDriver('${d.driver_id}', '${d.name}', '${d.photo_url}')" 
@@ -358,39 +377,39 @@
             startVerification();
         }
 
-        // --- Verification & Camera Fix ---
+        // --- Camera Logic ---
         async function startVerification() {
             changeStep('step-verify');
             document.getElementById('verify-name').innerText = selectedMitra.name;
             document.getElementById('verify-id').innerText = selectedMitra.id;
             document.getElementById('camera-placeholder').style.display = 'flex';
             document.getElementById('ai-status').innerText = "Membuka Kamera...";
-            document.getElementById('status-dot').className = "w-2.5 h-2.5 rounded-full bg-yellow-500 animate-pulse";
 
             try {
-                // Gunakan constraints yang standar
-                const constraints = { 
-                    video: { 
-                        width: { ideal: 640 },
-                        height: { ideal: 480 },
-                        facingMode: 'user' 
-                    } 
-                };
+                // Cek apakah browser mendukung kamera
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    throw new Error("Browser ini tidak mendukung akses kamera.");
+                }
+
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: "user" } 
+                });
                 
-                videoStream = await navigator.mediaDevices.getUserMedia(constraints);
+                videoStream = stream;
                 const video = document.getElementById('camera-view');
-                video.srcObject = videoStream;
-                
-                // Tunggu video beneran play
+                video.srcObject = stream;
                 video.onloadedmetadata = () => {
                     video.play();
                     document.getElementById('camera-placeholder').style.display = 'none';
                     initFaceMatcher();
                 };
-
             } catch (err) {
                 console.error("Camera error:", err);
-                alert("Kamera tidak dapat diakses. Pastikan izin kamera diberikan.");
+                if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+                    showModal("Akses kamera ditolak. Harap izinkan kamera melalui pengaturan browser (klik ikon gembok di sebelah URL).");
+                } else {
+                    showModal("Gagal mengakses kamera: " + err.message);
+                }
                 changeStep('step-search');
             }
         }
@@ -398,12 +417,10 @@
         async function initFaceMatcher() {
             const status = document.getElementById('ai-status');
             status.innerText = "Memuat Data Wajah...";
-            
             try {
                 const img = new Image();
                 img.crossOrigin = "anonymous";
                 img.src = selectedMitra.photo;
-                
                 img.onload = async () => {
                     const detect = await faceapi.detectSingleFace(img, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
                     if (detect) {
@@ -412,37 +429,27 @@
                         document.getElementById('status-dot').className = "w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse";
                         startAnalysisLoop();
                     } else {
-                        status.innerText = "Foto Profil Tidak Terdeteksi";
-                        document.getElementById('status-dot').className = "w-2.5 h-2.5 rounded-full bg-red-500";
+                        status.innerText = "Foto Profil Tidak Valid";
                     }
                 };
-            } catch (e) {
-                status.innerText = "Gagal Memvalidasi Foto";
-            }
+            } catch (e) { status.innerText = "Gagal Memvalidasi Wajah"; }
         }
 
         function startAnalysisLoop() {
             const video = document.getElementById('camera-view');
-            const status = document.getElementById('ai-status');
-
             analysisInterval = setInterval(async () => {
                 if (currentStep !== 'step-verify') { clearInterval(analysisInterval); return; }
-
                 const detect = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
-                
                 if (detect) {
                     const match = matcher.findBestMatch(detect.descriptor);
                     if (match.distance < 0.5) {
-                        status.innerText = "Terverifikasi!";
+                        document.getElementById('ai-status').innerText = "Terverifikasi!";
                         document.getElementById('status-dot').className = "w-2.5 h-2.5 rounded-full bg-emerald-500";
                         clearInterval(analysisInterval);
                         setTimeout(onVerified, 800);
                     } else {
-                        status.innerText = "Wajah Tidak Cocok (" + Math.round((1 - match.distance) * 100) + "%)";
-                        document.getElementById('status-dot').className = "w-2.5 h-2.5 rounded-full bg-orange-500";
+                        document.getElementById('ai-status').innerText = "Wajah Tidak Cocok";
                     }
-                } else {
-                    status.innerText = "Posisikan Wajah di Lingkaran";
                 }
             }, 500);
         }
@@ -457,7 +464,7 @@
 
         function stopCamera() {
             if (videoStream) {
-                videoStream.getTracks().forEach(track => track.stop());
+                videoStream.getTracks().forEach(t => t.stop());
                 videoStream = null;
             }
             if (analysisInterval) clearInterval(analysisInterval);
@@ -468,42 +475,36 @@
             changeStep('step-search');
         }
 
-        // --- Transaction Logic ---
+        // --- Transaksi ---
         const svcSelect = document.getElementById('service-select');
         const paxInput = document.getElementById('pax-count');
 
         function adjPax(val) {
-            const current = parseInt(paxInput.value) || 1;
-            paxInput.value = Math.max(1, current + val);
+            paxInput.value = Math.max(1, (parseInt(paxInput.value) || 1) + val);
             updateSummary();
         }
-
-        svcSelect.onchange = updateSummary;
-        paxInput.oninput = updateSummary;
 
         function updateSummary() {
             const opt = svcSelect.options[svcSelect.selectedIndex];
             const pax = parseInt(paxInput.value) || 0;
             if (opt.value) {
-                const totalComm = parseInt(opt.dataset.comm) * pax;
-                document.getElementById('display-comm').innerText = `Rp ${totalComm.toLocaleString('id-ID')}`;
+                const total = parseInt(opt.dataset.comm) * pax;
+                document.getElementById('display-comm').innerText = `Rp ${total.toLocaleString('id-ID')}`;
                 document.getElementById('display-pax').innerText = pax;
-            } else {
-                document.getElementById('display-comm').innerText = `Rp 0`;
-                document.getElementById('display-pax').innerText = `0`;
             }
         }
+
+        svcSelect.onchange = updateSummary;
+        paxInput.oninput = updateSummary;
 
         async function processSubmit() {
             const btn = document.getElementById('submit-btn');
             const opt = svcSelect.options[svcSelect.selectedIndex];
-            
-            if (!opt.value) { alert("Pilih layanan terlebih dahulu"); return; }
-
+            if (!opt.value) { alert("Pilih layanan"); return; }
             btn.disabled = true;
             btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i> Menyimpan...`;
 
-            const payload = {
+            const { error } = await sb.from('commissions').insert([{
                 driver_id: selectedMitra.id,
                 driver_name: selectedMitra.name,
                 service_id: svcSelect.value,
@@ -515,27 +516,20 @@
                 total_massage_value: parseInt(opt.dataset.price) * parseInt(paxInput.value),
                 notes: document.getElementById('room-no').value,
                 created_at: new Date().toISOString()
-            };
+            }]);
 
-            const { error } = await sb.from('commissions').insert([payload]);
             if (!error) {
-                alert("✅ Berhasil: Transaksi " + selectedMitra.name + " telah disimpan.");
+                alert("✅ Transaksi " + selectedMitra.name + " Berhasil Disimpan.");
                 stopCameraAndReturn();
-                // Reset form
-                svcSelect.value = "";
-                paxInput.value = 1;
-                document.getElementById('room-no').value = "";
-                updateSummary();
             } else {
-                alert("Gagal menyimpan: " + error.message);
+                alert("Error: " + error.message);
             }
             btn.disabled = false;
             btn.innerHTML = `Simpan Transaksi <i class="fa-solid fa-paper-plane ml-2"></i>`;
         }
 
         function updateClock() {
-            const now = new Date();
-            document.getElementById('clock').innerText = now.toLocaleTimeString('id-ID', { hour12: false });
+            document.getElementById('clock').innerText = new Date().toLocaleTimeString('id-ID', { hour12: false });
         }
     </script>
 </body>
